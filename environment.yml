@@ -1,0 +1,10 @@
+name: website-redesign
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - beautifulsoup4==4.12.3
+  - pandoc==3.6.2
+  - pip==25.0
+  - pypandoc==1.15
+  - markdown=3.4

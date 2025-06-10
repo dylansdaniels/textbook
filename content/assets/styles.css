@@ -1,0 +1,1418 @@
+/* 
+# ------------------------------------------------------------
+# Basic style elements for body, main, content
+# ------------------------------------------------------------ 
+*/
+
+/* 
+# Default (light mode) styling for basic elements
+# ------------------------------------------------------------ 
+*/
+
+body {
+    font-family: 'Merriweather', Georgia, serif;
+    color: var(--text-light);
+    line-height: 1.6;
+    transition: margin-left .5s;
+    margin: 0px;
+    padding: 0px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--sidebar-purple);
+    font-family: "Fira Sans", Helvetica, Arial, sans-serif;
+    font-weight: normal;
+}
+
+h1 {
+    font-size: 1.6em;
+    margin-bottom: 15px;
+}
+
+h2, h3 {
+    font-size: 1.5em;
+    margin-bottom: 15px;
+}
+
+h4 {
+    font-size: 1.4em;
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+
+h5 {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+
+h6 {
+    font-size: 1.1em;
+    margin-bottom: 5px;
+    margin-top: 5px;
+}
+
+/*
+    Element: h1::after, h2::after
+    Description: block-level pseudo-elements for h1 and h2
+*/
+h1::after, h2::after {
+    content: "";
+    display: block; 
+    height: 2px;
+    background: var(--sidebar-purple);
+    margin-top: 10px;
+}
+
+a {
+    color: var(--hnn-violet);
+}
+
+a:hover {
+    color: var(--hnn-purple);
+}
+
+.stylefig {
+  text-align:center;
+  max-width:650px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+#main {
+    transition: margin-left 0.5s;
+    padding: 0px;
+    margin: 0px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 450px;
+}
+
+#content-wrapper {
+    width: 100%;
+    margin-top: 50px;
+    max-width: 920px;
+    padding: 0 40px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+#content {
+    padding: 10px;
+    width: 100%;
+    font-size: 18px;
+
+}
+
+#content p {
+    font-family: 'Merriweather', Georgia, serif;
+    display: block;
+    color: inherit;
+    font-size: inherit;
+    padding: 0px;
+    line-height: 1.6;
+    overflow-wrap: break-word; 
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+#content img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+/*
+    Element: .code
+    Description: Style for inline code (single backticks in .md)
+*/
+code {
+    color: var(--hnn-violet);
+    background: none;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    display: inline;
+    padding: 0.2em 0.4em;
+    border-radius: 6px;
+    font-size: 85%;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; 
+    font-weight: normal;
+    border: 2px solid var(--lighter-gray);
+}
+
+#block {
+    color: var(--text-light);
+    display: block;
+    padding: 20px 40px;
+    margin: 15px;
+    word-wrap: break-word;
+}
+
+body.dark-mode #block {
+    color: #fff !important;
+    background-color: var(--sidebar-gray);
+}
+
+.callout code{
+    background: #fff;
+}
+  
+/*
+    Element: .code
+    Description: Style for block code (triple backticks in .md)
+*/
+pre code {
+    color: var(--text-light);
+    background-color: none;
+    display: block;
+    padding: 16px;
+    overflow-x: auto;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    border: solid 2px var(--light-purple);
+    border-radius: 5px;
+    word-wrap: break-word;
+    overflow: hidden;
+}
+
+/*
+    Element: .csl-entry
+    Description: adjust spacing in the automatically-generated bibliography
+*/
+.csl-entry {
+    line-height: 1.4;
+    padding-bottom: 15px;
+}
+
+/*
+    Element: .headerlink
+    Description: 
+        Style for the headerlink class that is automatically added to
+            each header via javascript
+*/
+.headerlink {
+    text-decoration: none;
+    color: inherit;
+    opacity: 0;
+    margin-left: 5px;
+}
+
+h1:hover .headerlink,
+h2:hover .headerlink,
+h3:hover .headerlink,
+h4:hover .headerlink,
+h5:hover .headerlink,
+h6:hover .headerlink {
+    opacity: 0.9;
+    color: inherit;
+    text-decoration: none;
+}
+
+body.dark-mode h1:hover .headerlink,
+body.dark-mode h2:hover .headerlink,
+body.dark-mode h3:hover .headerlink,
+body.dark-mode h4:hover .headerlink,
+body.dark-mode h5:hover .headerlink,
+body.dark-mode h6:hover .headerlink {
+    color: var(--hnn-yellow) !important;
+}
+
+/*
+# Dark mode (alternative) styling for basic elements
+# ------------------------------------------------------------ 
+*/
+
+body.dark-mode {
+    background-color: var(--content-gray);
+    color: var(--light-gray);
+}
+
+body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode h4,
+body.dark-mode h5, body.dark-mode h6 {
+    color: var(--light-gray);
+}
+
+body.dark-mode h1::after, body.dark-mode h2::after {
+    background: var(--light-gray);
+}
+
+body.dark-mode #content-wrapper a {
+    color: var(--hnn-yellow);
+}
+
+body.dark-mode #content-wrapper a:hover {
+    color: var(--light-purple);
+}
+
+body.dark-mode code {
+    color: var(--light-purple);
+    border: solid 2px var(--light-purple);
+}
+
+body.dark-mode #block {
+    color: var(--light-gray);
+}
+
+body.dark-mode .callout code{
+    background: inherit;
+}
+
+body.dark-mode pre code {
+    background-color: var(--sidebar-gray);
+    color: #fff;
+    text-shadow: none;
+}
+
+body.dark-mode #content img {
+    background-color: #fff;;
+}
+
+/* 
+# ------------------------------------------------------------
+# Sidebar 
+# ------------------------------------------------------------ 
+*/
+
+.sidebar {
+    /* font-family: "Lato", sans-serif; */
+    font-family: "Fira Sans", Helvetica, Arial;
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: var(--sidebar-purple);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overflow-x: hidden; 
+    transition: 0.3s;
+    padding-top: 10px;
+}
+
+.sidebar.dark-mode {
+    background-color: var(--sidebar-gray);
+    border-right: 2px solid var(--light-gray) !important;
+}
+
+/* 
+    Elements: .sidebar
+    Description: 
+        If the sidebar is closed, margin-left for main should be 0. If the
+            sidebar is opened, margin-left should be 350px
+*/
+body.sidebar-open .sidebar {
+    width: 350px;
+}
+body.sidebar-closed .sidebar {
+    width: 0;
+}
+
+/* 
+    Elements: #main
+    Description: 
+        If the sidebar is closed, margin-left for main should be 0. If the
+            sidebar is opened, margin-left should be 350px
+*/
+body.sidebar-open #main {
+    margin-left: 350px;
+}
+body.sidebar-closed #main {
+    margin-left: 0;
+}
+
+/*
+    Element: .sidebar::-webkit-scrollbar
+    Description: Hides scrollbar for WebKit browsers
+*/
+.sidebar::-webkit-scrollbar {
+    display: none;
+}
+
+/*
+    Element: .sidebar .sidebar-list:last-child
+    Description: Add bottom space to the last element when scrolling
+*/
+.sidebar .sidebar-list:last-child {
+    margin-bottom: 40px;
+}
+
+.sidebar a {
+    position: relative;
+    padding: 4px 24px;
+    margin: 8px 0px;
+    text-decoration: none;
+    font-size: 17px;
+    color: #fff;
+    display: block;
+    transition: 0.3s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar a:hover {
+    color: var(--hnn-yellow);
+}
+
+/*
+    Element: .sidebar a.active
+    Description: Style active page in sidebar
+*/
+.sidebar a.active {
+    color: #fff; 
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+    font-weight: bold; 
+}
+
+.sidebar a.active:hover {
+    color: var(--hnn-yellow);
+}
+
+.sidebar .toggle-icon {
+    float: right;
+    font-weight: bold;
+    transition: transform 0.3s;
+}
+
+/*
+    Element: .submenu
+    Description: Hides submenus by default
+    Notes:
+        'padding-left: 20px;' used to set indentation for submenu items
+*/
+.submenu {
+    display: none;
+    padding-left: 20px;
+}
+
+/*
+    Element: .sidebar-list .submenu
+    Description: Hides sidebar-list submenus by default
+    Notes:
+        'margin-left: 0px;' used to set indentation for sidebar-list 
+            submenu items
+*/
+.sidebar-list .submenu {
+    display: none;
+    margin-left: 0px;
+}
+
+/*
+    Element: .sidebar-list .submenu.open
+    Description: Shows the submenu when the 'open' class is added
+*/
+.sidebar-list .submenu.open {
+    display: block;
+    transition: max-height 0.3s ease-in-out;
+}
+
+/*
+    Element: .navbar-header
+    Description: Used for collapse all button
+*/
+.navbar-header {
+    display: flex;
+    padding: 10px 0px 20px 0px;
+    align-items: center;
+
+}
+
+.navbar-header a {
+    margin: 0px;
+}
+
+/* 
+    Element: .collapse-icon
+    Description: Styling for the SVG icon
+*/
+.collapse-icon {
+    display: block;
+    margin-left: auto;
+    padding-right: 20px;
+    width: 20px; 
+    fill: #fff; 
+    cursor: pointer;
+    transition: fill 0.3s ease-in-out; 
+}
+
+.collapse-icon:hover {
+    fill: var(--hnn-yellow);
+}
+
+/*
+# Custom sidebar tooltip
+# ------------------------------------------------------------ 
+*/
+
+/* 
+    Element: .sidebar-tooltip
+    Description: 
+        Style for the tooltip that appears when hovering over sidebar items
+    Notes:
+        'will-change: transform;' encourages browser to pre-render elements
+            for smoother scaling
+        'max-width: 200px;' prevents tooltips from expanding outside the area
+            of the sidebar
+*/
+.sidebar-tooltip {
+    will-change: transform;
+    font-family: "Lato", sans-serif;;
+    background: #fff;
+    border: 2px solid var(--tooltip-gray);
+    color: var(--tooltip-gray);
+    font-weight: bold;
+    padding: 3px 6px;
+    border-radius: 10px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 9999;
+    max-width: 200px;
+    word-wrap: break-word;
+}
+
+body.dark-mode .sidebar-tooltip {
+    background: var(--sidebar-gray);
+    color: #fff;
+    border: 2px solid var(--light-purple);
+}
+
+/*  
+    Element: .sidebar-tooltip::before
+    Description: styles the inner tooltip triangle
+*/
+.sidebar-tooltip::before {
+    background: #fff;
+    top: -5px;
+    width: 12px;
+    height: 6px;
+}
+
+body.dark-mode .sidebar-tooltip::before {
+    background: var(--sidebar-gray);
+}
+
+/*  
+    Element: .sidebar-tooltip::after
+    Description: styles the outer tooltip triangle
+*/
+.sidebar-tooltip::after {
+    background: var(--tooltip-gray);
+    top: -8px;
+    width: 14px;
+    height: 7px;
+    z-index: -1;
+}
+
+body.dark-mode .sidebar-tooltip::after {
+    background: var(--light-purple)
+}
+
+/*  
+    Elements: .sidebar-tooltip::before, .sidebar-tooltip::after
+    Description: styles shared by the inner/outer tooltip triangles
+    Notes:
+        Using 'clip-path' (as opposed to borders) for better rendering at
+            different zoom levels
+*/
+.sidebar-tooltip::before,
+.sidebar-tooltip::after {
+    content: '';
+    position: absolute;
+    left: 15%;
+    transform: translateX(-50%);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+/* 
+# ------------------------------------------------------------
+# Topbar
+# ------------------------------------------------------------ 
+*/
+
+/* 
+    Element: .topbar
+    Description: 'position: relative;' used here for the img centering
+*/
+.topbar {
+    height: 50px;
+    min-width: inherit;
+    display: flex;
+    align-items: center;
+    padding: 0 0px;
+    border-bottom: 2.5px solid var(--light-gray);
+    width: 100%;
+    position: fixed; 
+    background: white;
+    transition: margin-left 0.5s, width 0.5s;
+    z-index: 9999;
+}
+
+body.dark-mode .topbar {
+    background: #14181e;
+}
+
+.topbar-logo-container {
+    height: 30px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+#topbar-logo {
+    height: 30px;
+    margin: auto;
+    padding: 0px 50px;
+}
+
+/*
+# Social media icons
+# ------------------------------------------------------------ 
+*/
+
+.socials-container {
+    display: flex;
+    height: inherit;
+    padding: 0px 20px 0px 0px;
+    margin-left: auto;
+}
+
+.social-icons {
+    display: flex;
+    gap: 20px;
+    padding: 0px;
+}
+
+.social-icons a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+}
+
+.social-icons a img {
+    width: auto;
+    height: 20px;
+    object-fit: contain;
+    display: block;
+    filter: grayscale(100%) brightness(70%);
+}
+
+.social-icons a:hover {
+    transform: scale(1.1);
+    filter: grayscale(100%) brightness(50%);
+}
+
+/*
+# Topbar menu icons
+# ------------------------------------------------------------ 
+*/
+
+.menu-container {
+    display: flex;
+    height: inherit;
+    padding: 0px 0px 0px 25px;
+}
+
+.menu-icons {
+    display: flex;
+    gap: 15px;
+    padding: 0px;
+}
+
+.menu-icons img {
+    width: auto;
+    height: 20px;
+    padding: 0px;
+    object-fit: contain;
+    display: block;
+    filter: grayscale(100%) brightness(70%);
+}
+
+.menu-icons img:hover {
+    transform: scale(1.15);
+    transition: transform 0.2s ease;
+    filter: grayscale(100%) brightness(30%);
+}
+
+
+/*
+# Collapse navbar
+# ------------------------------------------------------------ 
+*/
+
+.openbtn {
+    font-size: 25px;
+    cursor: pointer;
+    background: none;
+    color: var(--icon-base);
+    padding: 0px 0px 3px 0px;
+    border: none;
+    height: inherit;
+    transition: transform 0.2s ease;
+}
+
+.openbtn:hover {
+    transform: scale(1.1);
+    color: var(--icon-hover);
+}
+
+/*
+# Home button
+# ------------------------------------------------------------ 
+*/
+
+.home-link {
+    display: inline-flex;
+    text-decoration: none;
+    height: inherit;
+    padding: 0px 0px;
+}
+
+.home-icon-container {
+    height: inherit;
+    align-items: center;
+    position: relative;
+    display: inline-flex;
+
+}
+
+.home-icon {
+    fill: var(--icon-base);
+    height: 22px;
+    width: auto;
+    transition: transform 0.2s ease;
+}
+
+.home-icon:hover {
+    transform: scale(1.15);
+    fill: var(--icon-hover);
+}
+
+/*
+# Light/dark button
+# ------------------------------------------------------------ 
+*/
+
+.theme-toggle {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto; 
+    height: inherit; 
+    border: none; 
+    background: none;
+    padding: 0 0px; 
+}
+
+.theme-toggle svg {
+    width: 20px; 
+    height: 19px;
+    fill: var(--icon-base); 
+    transition: transform 0.2s ease;
+}
+
+.theme-toggle svg:hover {
+    transform: scale(1.1);
+    fill: var(--icon-hover); 
+}
+
+
+/*
+# Change font size button
+# ------------------------------------------------------------ 
+*/
+
+.dropdown {
+    height: inherit;
+    align-items: center;
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+/*
+    Element: .dropdown-button
+    Notes:
+        'all: unset' used to remove default button styles
+*/
+.dropdown-button {
+    all: unset;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0px 0px;
+}
+
+.dropdown-button:hover {
+    color: var(--icon-hover);
+}
+
+/*
+    Element: .dropdown-content
+    Description: 
+        Style for the dropdown menu that appears when clicking the
+            'change font-size' button
+    Notes:
+        'will-change: transform;' ensure the child elements are rendered
+            together
+*/
+.dropdown-content {
+    will-change: transform;
+    display: none;
+    position: absolute;
+    width: auto;
+    white-space: nowrap;
+    top: 100%;
+    left: -12px;
+    border-radius: 10px;
+    background-color: #ffffff;
+    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.2);
+    padding: 5px 5px;
+    border: 3px solid var(--light-purple);
+}
+
+body.dark-mode .dropdown-content {
+    background-color: var(--sidebar-gray);
+}
+
+/* 
+    Element: .dropdown-content::before
+    Description: style the inner triangle pointing to the pressed font button
+    Notes:
+        Using 'clip-path' (as opposed to borders) for better rendering at
+            different zoom levels
+*/
+.dropdown-content::before {
+    content: "";
+    position: absolute;
+    top: -5px;
+    left: 0.8em;
+    width: 12px;
+    height: 6px;
+    background-color: #fff;
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+/* 
+    Element: body.dark-mode .dropdown-content::before
+    Description: change background of inner triangle in dark mode
+*/
+body.dark-mode .dropdown-content::before {
+    background-color: var(--sidebar-gray);
+}
+
+/*
+    Element: .dropdown-content::after
+    Description: style the outer triangle pointing to the pressed font button
+    Notes:
+        Using 'clip-path' (as opposed to borders) for better rendering at
+            different zoom levels
+*/
+.dropdown-content::after {
+    content: "";
+    position: absolute;
+    top: -9px; 
+    left: 0.7em;
+    width: 16px;
+    height: 8px;
+    background-color: var(--light-purple);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    z-index: -1;
+}
+
+.fontsize-btn {
+    display: inline-flex;
+    cursor: pointer;
+    background: none;
+    padding: 5px 7px;
+    border: none;
+    margin: 0px;
+}
+
+.fontsize-btn:hover {
+    color: var(--icon-hover);
+}
+
+/* 
+# ------------------------------------------------------------
+# Callout box
+# ------------------------------------------------------------ 
+*/
+
+.callout {
+    background-color: #f5f5f5;
+    border-radius: 5px;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 1.2em 0;
+}
+
+body.dark-mode .callout {
+    background-color: var(--sidebar-gray);
+    border-radius: 5px;
+    padding: 10px;
+    margin: 1.2em 0;
+}
+
+.callout-note {
+    border: 2px solid var(--hnn-yellow);
+}
+
+.callout-warning {
+    border: 2px solid var(--gentle-red);
+}
+
+.callout code {
+    border: 2px solid var(--light-purple);
+}
+
+/*
+    Element: .exclamation-icon
+    Description: Style for exclamation icon
+*/
+.exclamation-icon {
+    margin-top: 5px;
+    fill: var(--gentle-red);
+    width: 22px;
+    height: 22px;
+}
+
+/*
+    Element: .lightbulb-icon
+    Description: Style for lightbulb icon
+*/
+.lightbulb-icon{
+    margin-top: 5px;
+    fill: var(--hnn-yellow);
+    width: 22px;
+    height: 22px;
+}
+
+body.dark-mode .exclamation-icon {
+    fill: var(--gentle-red);
+}
+
+/* 
+    Element: .callout-table
+    Description: Table layout for callout box
+    Notes: 
+        'border-collapse: collapse;' used to prevent double borders
+*/
+.callout-table {
+    width: 100%; 
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.emoji-cell {
+    width: 5px; 
+    vertical-align: top !important; 
+    text-align: justify !important;
+    padding-left: 10px;
+    padding-right: 20px;
+}
+
+.text-cell {
+    vertical-align: top !important;
+    text-align: justify !important;
+
+}  
+
+/* 
+# ------------------------------------------------------------
+# Footer
+# ------------------------------------------------------------ 
+*/
+
+.footer-area {
+    display: flex;
+    height: auto;
+    width: 100%;
+    font-size: 0.85em;
+    font-family: "Fira Sans", Helvetica, Arial;
+    margin: 40px 0px;
+}
+
+.previous-area {
+    display: flex;
+    height: inherit;
+    margin: 0px;
+}
+
+.next-area {
+    display: flex;
+    height: inherit;
+    margin-left: auto;
+}
+
+.previous-area:hover, .next-area:hover {
+    cursor: pointer;
+}
+
+.previous-area:hover .previous-text a, .next-area:hover .next-text a {
+    color: var(--hnn-purple);
+}
+
+.previous-text, .next-text {
+    line-height: 1.1;
+    padding: 0px;
+    margin: 0px;
+    max-width: 250px !important;
+}
+
+/* 
+    Notes
+    -----
+    Element: .next-text
+    Description: 
+        The 'unused elements' below will fix an issue with the ellipses not
+        rendering with text-align: right, though this solution
+        would need to be implemented in a new div element that
+        wraps the next-text <a>
+    Unused elements:
+        display: flex;
+        justify-content: flex-end;
+*/
+.next-text {
+    text-align: right;
+}
+
+.previous-text p, .next-text p {
+    font-family: "Fira Sans", Helvetica, Arial !important;
+    padding: 0px;
+    margin: 0px;
+}
+
+.next-text p {
+    text-align: right;
+}
+
+.previous-text a, .next-text a {
+    font-size: 0.9em;
+    font-weight: normal;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+            line-clamp: 2;
+    max-height: 2.2em; 
+}
+
+.previous-icon {
+    display: flex;
+    align-items: center;
+    padding-right: 10px;
+}
+
+/* 
+    Element: .next-icon
+    Description: Rotate the icon on the horizontal axis 
+*/
+.next-icon {
+    display: flex;
+    align-items: center;
+    padding-right: 10px;
+    transform: scaleX(-1);
+}
+
+/* 
+    Element: .arrow-path
+    Description: Apply properties to svg path
+*/
+.arrow-path {
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.footer-area .previous-icon svg, .footer-area .next-icon svg {
+    color: #5e5d5d
+}
+
+/* 
+# ------------------------------------------------------------
+# Notebook html 
+# ------------------------------------------------------------ 
+*/
+
+.notebook-download-wrapper {
+    display: flex;
+    justify-content: center;
+    padding-top: 10px;
+}
+
+.notebook-download {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--light-purple);
+    color: white;
+    padding: 7px 14px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.notebook-download:hover {
+    background-color: var(--sidebar-purple);
+}
+
+.notebook-download svg {
+    vertical-align: middle;
+}
+
+.copy-button {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8em;
+    padding: 6px 8px;
+    color: var(--light-purple);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.copy-button svg {
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    stroke: currentColor; /* ensures icon color matches text */
+}
+
+.markdown-cell {
+    margin: 10px 0px;
+    padding: 0px;
+}
+
+.code-cell {
+    font-family: 'Courier New', monospace;
+    word-wrap: break-word;
+    margin: 10px 0;
+    padding: 0px;
+    border-radius: 5px;
+    border: solid 2px var(--light-purple);
+    overflow: hidden;
+    position: relative;
+}
+
+.code-cell code.language-python {
+    display: block;
+    background-color: #fff;
+    padding: 15px 30px;
+    margin: 0px;
+    font-size: 0.85em;
+    border: none;
+    white-space: pre;
+    overflow-x: auto;
+}
+
+body.dark-mode .code-cell code.language-python{
+    background-color: var(--sidebar-gray);
+    color: #fff;
+    text-shadow: none;
+}
+
+/* 
+    Element: .output-cell
+    Description: Styling for the jupyter notebook output cell
+    Notes: 
+        .output-cell:has(> .output-label) adds a left border 
+        *only* when .output-cell is followed by .output-label
+*/
+.output-cell {
+    display: flex;
+    align-items: flex-start;
+    font-family: 'Courier New', monospace;
+    margin: 20px 0;
+    border-radius: 2px;
+}
+
+
+.output-cell:has(> .output-label) {
+    border-left: 4px solid var(--gentle-red);
+    background: #f4dcdc85;
+}
+
+.output-label {
+    font-family: 'Courier New', monospace;
+    color: var(--gentle-red);
+    font-size: 0.9em;
+    padding: 10px 10px 0px 20px;
+    font-weight: bold;
+}
+
+body.dark-mode .output-cell:has(> .output-label) {
+    background: #fcc0c036;
+}
+
+/*
+    Element: .output-code
+    Description: Styling for the jupyter notebook output code
+    Notes: 
+        'max-height: calc(1em * 10);' used to set a max height of 10 lines
+            before scrolling
+        'flex-grow: 1;' used to allow the code output to fill the 
+            available space
+*/
+.output-code {
+    display: block;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: calc(1em * 10);
+    flex-grow: 1; 
+    white-space: pre-line;
+    color: var(--text-light) !important;
+    margin: 0px 0px 0px 10px;
+    margin-top: 0px;
+    padding: 10px 10px 10px 0px;
+    font-size: 0.9em;
+    scrollbar-gutter: stable;
+}
+
+.output-code::-webkit-scrollbar {
+    display: always; 
+}
+
+body.dark-mode .output-code {
+    color: #fff !important;
+    font-weight: 500;
+}
+
+.output-cell img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 5px;
+    padding: 10px;
+
+}
+
+/*
+# Adjust specific code syntax elements
+# ------------------------------------------------------------ 
+*/
+
+.code-cell code .token {
+    background: none !important;
+}
+
+body.dark-mode .code-cell code .token.number {
+    color: #ef9f43;
+}
+
+body.dark-mode .code-cell code .token.string {
+    color: #56d131;
+}
+
+body.dark-mode .code-cell code .token.keyword {
+    color: #038dfd;
+}
+
+body.dark-mode .code-cell code .token.operator {
+    color: #decf03;
+}
+
+body.dark-mode .code-cell code .token.punctuation {
+    color: var(--light-purple);
+}
+
+/* 
+# ------------------------------------------------------------
+# Workshop page
+# ------------------------------------------------------------ 
+*/
+
+/*
+# Collapsible Toggles
+# ------------------------------------------------------------ 
+*/
+
+.collapsible-section.active {
+    border: 2px solid var(--light-purple);
+    background-color: #fff;
+    border-radius: 5px;
+    padding: 0px 15px;
+}
+
+body.dark-mode .collapsible-section.active {
+    background: var(--sidebar-gray);
+    border: 2px solid var(--light-gray);
+}
+
+.collapsible-header {
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    background-color: #fff;
+    padding: 15px;
+    margin: 0;
+    border: 2px solid var(--light-purple);
+    border-radius: 5px;
+}
+
+body.dark-mode .collapsible-header{
+    border: 2px solid var(--light-gray);
+    background: var(--sidebar-gray);
+}
+
+.collapsible-header.active, body.dark-mode .collapsible-header.active {
+    border: 0px;
+    padding-left: 0px;
+    padding-right: 0px;
+    padding-bottom: 0px;
+}
+
+.collapsible-header:after {
+    content: '\002B'; /* Plus sign */
+    font-weight: bold;
+    float: right;
+}
+
+.collapsible-header.active:after {
+    content: "\2212"; /* Minus sign */
+}
+
+.collapsible-content {
+    padding: 0 18px;
+    display: none;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+body.dark-mode .collapsible-content {
+    border-bottom: 0px;
+    background: var(--sidebar-gray);
+    border-radius: 5px;
+}
+
+/*
+# Schedule table
+# ------------------------------------------------------------ 
+*/
+
+.schedule-table {
+    border-collapse: collapse;
+    margin: 0px 0px 20px 0px;
+    font-size: 18px;
+}
+
+body.dark-mode .schedule-table {
+    background: var(--sidebar-gray);
+}
+
+.schedule-table td {
+    padding: 5px 9px;
+    border: 2px solid var(--light-gray);
+    text-align: center;
+}
+
+.schedule-table .title-row {
+    font-weight: bold;
+    text-align: left;
+}
+
+body.dark-mode .schedule-table .title-row {
+    color: #fff;
+}
+
+.schedule-table td:nth-child(1) {
+    width: 23%; /* Adjust as needed */
+    word-wrap: break-word; /* Ensures text wraps naturally */
+}
+
+.schedule-table td:nth-child(2) {
+    width: 13%; /* Adjust as needed */
+    word-wrap: break-word; /* Ensures text wraps naturally */
+}
+
+.schedule-table td:nth-child(4) {
+    width: 23%; /* Adjust as needed */
+    word-wrap: break-word; /* Ensures text wraps naturally */
+}
+
+code.workshop-button {
+    color: #fff;
+    border-color: #fff;
+    font-family: "Fira Sans", Helvetica, Arial;
+    font-size: 17px;
+}
+
+body.dark-mode code.workshop-button {
+    color: var(--hnn-yellow);
+    border-color: var(--hnn-yellow);    
+}
+
+code.workshop-button:hover {
+    color: var(--hnn-yellow);
+    border-color: var(--hnn-yellow);
+}
+
+body.dark-mode code.workshop-button:hover {
+    color: #fff;
+    border-color: #fff;
+}
+
+/* 
+# ------------------------------------------------------------
+# Responsiveness
+# ------------------------------------------------------------ 
+*/
+
+@media screen and (max-height: 450px) {
+    .sidebar {padding-top: 15px;}
+    .sidebar a {font-size: 18px;}
+}
+
+/* 
+# ------------------------------------------------------------
+# Variables 
+# ------------------------------------------------------------ 
+*/
+
+/*
+# Custom HNN colors
+# ------------------------------------------------------------ 
+*/
+
+.hnn-blue { color: #1156A3; }
+.hnn-purple { color: #474095; }
+.hnn-violet { color: #812A89; }
+.hnn-yellow { color: #e5a734; }
+
+:root {
+    --hnn-blue: #1156A3;
+    --hnn-purple: #474095;
+    --hnn-violet: #812A89;
+    --hnn-yellow: #e5a734;
+    --light-purple: #ba83be;
+    --light-gray: #d3d3d3;
+    --gentle-red: #ff7777;
+    --text-light: #333; 
+    --icon-base: #bababa;
+    --icon-hover: #444;
+    --sidebar-purple: #88548c;
+    --sidebar-gray: #313438;
+    --content-gray: #14181e;
+    --tooltip-gray: #555;
+    --lighter-gray: #e1e4e8;
+}
+
