@@ -24,7 +24,7 @@ jobs:
 
       - name: Test MPI
         run: |
-          conda run -n website-redesign-mpi \
+          conda run -n textbook-env-mpi \
           mpiexec -np 2 nrniv -mpi -python -c '
           from neuron import h;
           from mpi4py import MPI;
@@ -38,7 +38,7 @@ jobs:
           cat .gitignore
 
       - name: Build Website
-        run: conda run -n website-redesign-mpi env PYTHONUNBUFFERED=1 python build.py --execute-notebooks
+        run: conda run -n textbook-env-mpi env PYTHONUNBUFFERED=1 python build.py --execute-notebooks
 
       - name: Deploy to GitHub Pages
         if: github.repository == 'jonescompneurolab/textbook' && github.ref == 'refs/heads/main'
