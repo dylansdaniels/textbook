@@ -37,8 +37,17 @@ jobs:
           grep -v '^content/\*\*/\*.html$' .gitignore > .gitignore.tmp && mv .gitignore.tmp .gitignore
           cat .gitignore
 
+      - name: Determine Build Method
+        run: |
+          if conda run -n textbook-env-mpi python scripts/check_nb_versions.py; then
+            echo "BUILD_FLAG=--execute-notebooks" >> $GITHUB_ENV
+          else
+            echo "BUILD_FLAG=--force-execute-all" >> $GITHUB_ENV
+            echo "Not all notebooks were executed on the latest version. Forcing re-execution."
+          fi
+
       - name: Build Website
-        run: conda run -n textbook-env-mpi env PYTHONUNBUFFERED=1 python build.py --execute-notebooks
+        run: conda run -n textbook-env-mpi env PYTHONUNBUFFERED=1 python build.py $BUILD_FLAG
 
       - name: Deploy to GitHub Pages
         if: github.repository == 'jonescompneurolab/textbook' && github.ref == 'refs/heads/main'
