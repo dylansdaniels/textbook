@@ -824,5 +824,90 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </script>
 
+<!----------------------------- #
+# Style standard markdown table #
+# ------------------------------>
+<!--
+    Notes
+    To apply the standard markdown table formatting, insert the 
+    following code (including the new line) before your table in 
+    your markdown file.
+        ```
+        <div class="md_table md_table--equal-cols">
+
+        ```
+    Additionally, you must close the div element as follows, 
+    again including the new line.
+        ```
+
+        </div>
+        ```
+    Note that the "md_table--equal-cols" class is an optional
+    addition that ensures the columns widths are equal. 
+-->
+<script>
+
+// set equal column widths when the --equal-cols class is added 
+// to the div
+document.querySelectorAll('.md_table.md-equal-cols').forEach(container => {
+    const table = container.querySelector('table');
+    if (!table) return;
+
+    // Get number of columns from first row's cells
+    const firstRow = table.querySelector('tr');
+    if (!firstRow) return;
+
+    const colCount = firstRow.children.length;
+    container.style.setProperty('--col-count', colCount);
+});
+
+// blur the table edges when scroll is present
+document.querySelectorAll('.md_table').forEach(container => {
+    // Create wrapper div with relative position
+    const wrapper = document.createElement('div');
+    wrapper.className = 'md_table-wrapper';
+    wrapper.style.position = 'relative';
+
+    // Move container into wrapper
+    container.parentNode.insertBefore(wrapper, container);
+    wrapper.appendChild(container);
+
+    // Create blur overlays
+    const leftBlur = document.createElement('div');
+    const rightBlur = document.createElement('div');
+    leftBlur.className = 'md-table-blur left';
+    rightBlur.className = 'md-table-blur right';
+
+    wrapper.appendChild(leftBlur);
+    wrapper.appendChild(rightBlur);
+
+    // Position blur overlays inside wrapper
+    const positionBlur = () => {
+        leftBlur.style.top = '0';
+        leftBlur.style.left = '0';
+        leftBlur.style.height = '100%';
+
+        rightBlur.style.top = '0';
+        rightBlur.style.right = '0';
+        rightBlur.style.height = '100%';
+    };
+
+  // Update blur opacity based on scroll position
+    const updateBlur = () => {
+        const scrollLeft = container.scrollLeft;
+        const maxScrollLeft = container.scrollWidth - container.clientWidth;
+
+        leftBlur.style.opacity = scrollLeft > 0 ? 1 : 0;
+        rightBlur.style.opacity = scrollLeft < maxScrollLeft ? 1 : 0;
+        positionBlur();
+    };
+
+    container.addEventListener('scroll', updateBlur);
+    window.addEventListener('resize', updateBlur);
+    updateBlur();
+});
+
+</script>
+
 </body>
 </html>
