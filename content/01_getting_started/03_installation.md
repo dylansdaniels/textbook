@@ -186,7 +186,7 @@ python -c "import neuron"
 
 ### `pip` on Windows (WSL)
 
-The following include instructions on how to install both WSL and the [Anaconda Python Distribution](https://www.anaconda.com/download/success) inside WSL.
+The following include instructions on how to install both "Windows Subsystem for Linux" (WSL) and the [Anaconda Python Distribution](https://www.anaconda.com/download/success) inside WSL.
 
 1. Install WSL: Open the "PowerShell" or "Windows Command Prompt" programs in administrator mode by right-clicking the program icon and selecting "Run as administrator". Then, in the window, run the following command:
 
@@ -288,11 +288,11 @@ To install HNN with its MPI dependencies using the `pip` method, follow the belo
 
 #### `pip` MPI: Windows (native)
 
-Unfortunately, we do not officially support MPI usage on native Windows due to the complexity required. However, we do support MPI through Windows Subsystem for Linux (WSL); see below.
+Unfortunately, we do not officially support MPI usage on native Windows due to the complexity required. However, we do support MPI through "Windows Subsystem for Linux" (WSL); see below.
 
 #### `pip` MPI: MacOS, Linux, or Windows (WSL)
 
-1. Install the [Anaconda Python Distribution](https://www.anaconda.com/download/success). (If you have followed Step 2 for Windows WSL, you can skip this.)
+1. Install the [Anaconda Python Distribution](https://www.anaconda.com/download/success). (If you have followed instructions in Step 2 for Windows WSL above, you can skip this.)
 
 2. Create and activate a new `conda` environment using commands like the following:
 
@@ -373,7 +373,7 @@ Trial 1: 0.03 ms...
 Trial 1: 10.0 ms...
 ```
 
-8. For guidance on using MPI, see our "Using the HNN API" notebook in the sidebar[here](../08_using_hnn_api/parallelism_mpi.html)
+8. For guidance on using MPI, see our "Using the HNN API" notebook in the sidebar [here](../08_using_hnn_api/parallelism_mpi.html)
 
 </div>
 </div>
@@ -385,7 +385,7 @@ Trial 1: 10.0 ms...
 
 <a id="pip-source-installation"></a>
 
-To begin installing HNN via source code, you first need to follow **all** of the instructions above in **`pip` Package Installation** for your desired platform and features **except** for the final `pip install "hnn_core[<features>]"` command. If you want to contribute to HNN development, then it is strongly recommended you follow the MPI installation instructions in the above section.
+To begin installing HNN via source code, you first need to follow **all** of the instructions above in **`pip` Package Installation** for your desired platform and features **except** for the final `pip install "hnn_core[<features>]"` command. If you want to contribute to HNN development, then it is strongly recommended you follow the MPI installation instructions in the previous **`pip` Package Installation** section.
 
 ### Installing custom versions with no changes:
 
@@ -401,13 +401,13 @@ where you would replace `[gui]` with the features you want, and `https://github.
 
 If instead you want to install a custom version of `hnn_core` from Github, but you **DO want to edit the code yourself**, you should do the following. **This is what you should do if you want to contribute to development**.
 
-1. [Setup `git` using the instructions here](https://docs.github.com/en/get-started/git-basics/set-up-git). Note that you need to both make sure `git` is installed [using these steps](https://docs.github.com/en/get-started/git-basics/set-up-git#setting-up-git) and that your `git` program has authenticated to Github [using these steps](https://docs.github.com/en/get-started/git-basics/set-up-git#authenticating-with-github-from-git).
+1. [Setup `git` using the instructions here](https://docs.github.com/en/get-started/git-basics/set-up-git). Note that you need to both make sure `git` is installed [using these steps](https://docs.github.com/en/get-started/git-basics/set-up-git#setting-up-git) **and** that your `git` program has authenticated to Github [using these steps](https://docs.github.com/en/get-started/git-basics/set-up-git#authenticating-with-github-from-git).
 
 2. You should do a `git clone <fork URL>` of the fork you are interested in, which will download the source code to a new directory. If you want to contribute to development, you should use your own personal fork. As an example, you could do either `git clone https://github.com/asoplata/hnn-core.git` or `git clone git@github.com:asoplata/hnn-core` to download `asoplata`'s fork, depending on if you authenticated using HTTPS or SSH.
 
 3. Enter the directory that you just downloaded, using the command `cd hnn-core`.
 
-4. Install an "editable" version of the local source code with the features you want to use. If you do not want to contribute to development, but you want to install the GUI and Optimization features, you can use the following command:
+4. Install an "editable" version of the local source code with the features you want to use. If, for example, you do not want to contribute to development, but you want to install the GUI and Optimization features, you can use the following command:
 
 ```
 pip install --editable ".[gui,opt]"
