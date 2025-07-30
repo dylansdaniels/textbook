@@ -35,7 +35,7 @@ You can directly [download the hnn-data folder by clicking here](https://github.
 git clone https://github.com/jonescompneurolab/hnn-data.git
 ```
 
-## Installation
+## Local Installation
 
 We **strongly** recommend that you install HNN from our **`conda` package** instead of from `pip`. This `conda` package is "batteries included" and contains ALL features of HNN: the HNN API, the HNN GUI, Optimization, Joblib Parallelism, and MPI Parallelism. This is *significantly* easier to install than using `pip`.
 
