@@ -1436,10 +1436,6 @@ body.dark-mode .collapsible-content {
     border-radius: 5px;
 }
 
-.collapsible-content pre code {
-    overflow-x: auto;
-}
-
 /*
 # Schedule table
 # ------------------------------------------------------------ 

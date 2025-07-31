@@ -11,6 +11,14 @@
 
 # 5.1 GUI Tutorial of Alpha/Beta Rhythms
 
+## Video Walkthrough
+
+In addition to the written tutorial below, we also provide a video walkthrough of simulating alpha/beta oscillations in the GUI from one of our recent online workshop. Note that the video tutorial is not a 1-1 match to the workflows described below, and it is meant as a supplementary tool to give you more expose to simulating alpha/beta oscillations in the GUI. 
+
+<div style="text-align:center;">
+<iframe src="https://drive.google.com/file/d/14FSnc2wKDJRBqZPvzx5yzhSjrlhx8uoB/preview" width="640" height="480" allow="autoplay"></iframe>
+</div>
+
 ## Tutorial Table of Contents
 
 1. [Background](#toc-1)
@@ -396,7 +404,7 @@ You should see the values displayed in the dialogue boxes below.
 
 For this simulation, the only difference in the parameters from that of the prior `AlphaAndBeta.json` simulation is that `Start time dev (ms)` for both drives has been increased from 0 to 50 ms. Both drives will still input at a 10 Hz rate, but the distal versus proximal inputs are less likely to occur at the same time.
 
-Finally, we need to change one more parameter before we run the simulations: `Trials`. If we increase `Trials` above 1, this will cause HNN to run that number of consecutive simulations, each with different randomized initial conditions for the drives. After all trial simulations are complete, the averaged data will automatically be computed and plotted. You will then be able to do further plots using the averaged signal. Note that increasing the number of trials will correspondingly increase the amount of time needed to run the simulations; e.g. if you are using the Google Colab notebook, running 3 trials may take approximately 12 minutes if a single simulation takes 4 minutes. (We do support parallelization of simulation across trials, but this is beyond the scope of this tutorial; see our [Installation guide](../01_getting_started/installation.html) for how to install it, and [our Joblib usage guide here](../08_using_hnn_api/parallelism_joblib.html).)
+Finally, we need to change one more parameter before we run the simulations: `Trials`. If we increase `Trials` above 1, this will cause HNN to run that number of consecutive simulations, each with different randomized initial conditions for the drives. After all trial simulations are complete, the averaged data will automatically be computed and plotted. You will then be able to do further plots using the averaged signal. Note that increasing the number of trials will correspondingly increase the amount of time needed to run the simulations; e.g. if you are using the Google Colab notebook, running 3 trials may take approximately 12 minutes if a single simulation takes 4 minutes. (We do support parallelization of simulation across trials, but this is beyond the scope of this tutorial; see [our Joblib instructions here](https://jonescompneurolab.github.io/hnn-core/stable/install.html#parallelism-joblib-installation).)
 
 Do the following:
 
