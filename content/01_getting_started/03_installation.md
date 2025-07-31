@@ -124,6 +124,8 @@ If you see output similar to `WARNING: Your machine hardware does not appear to 
 </div>
 </div>
 
+<span style="height: 30px;" />
+
 <div class="collapsible-section">
 <h5 class="collapsible-header"> `pip` Package Installation </h5>
 <div class="collapsible-content">
@@ -378,6 +380,7 @@ Trial 1: 10.0 ms...
 </div>
 </div>
 
+<span style="height: 30px;" />
 
 <div class="collapsible-section">
 <h5 class="collapsible-header"> `pip` Source Installation </h5>
@@ -421,6 +424,8 @@ pip install --editable ".[dev]"
 
 </div>
 </div>
+
+<span style="height: 30px;" />
 
 <div class="collapsible-section">
 <h5 class="collapsible-header"> Testing Your Installation </h5>
