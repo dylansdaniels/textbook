@@ -2,42 +2,9 @@ import sys
 
 from scripts.logger_setup import setup_logger
 
+logger = setup_logger(__name__)
 
-def check_version(enable_debug=True):
-    """
-    Return True if all notebooks are run on the same version of hnn_core,
-    else False
-
-    This function performs the following steps:
-    1. Get notebooks to skip from 'notebooks_to_skip.json'.
-    2. Get the json output files for notebooks and extract the version used
-       to run the notebook
-    3. Get the latest version of hnn-core from pypi
-    4. Check if all notebooks are run on the same version of hnn-core
-        - If not, warn user
-    5. If yes, compare the version used for execution with the latest version from pypi
-        - If not, warn user
-    7. Print all notebooks and versions used for execution in the format:
-        {
-            'plot_simulate_evoked.json': {'hnn_version': '0.4.2'},
-            'plot_simulate_gamma.json': {'hnn_version': '0.4.1'},
-            ...
-        }
-
-    Inputs
-    ------
-    debug : bool
-        If True, enables debug logging to print verbose information about
-        the process
-
-    Returns
-    -------
-    bool
-        True if all executed notebooks were run with the latest
-        version of hnn-core, else False
-    """
-
-    logger = setup_logger(__name__, enable_debug=enable_debug)
+def check_version(debug=False):
 
     logger.debug(
         'DEV',

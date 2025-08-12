@@ -438,13 +438,19 @@ def convert_notebooks_to_html(
     Executes and converts .ipynb files in the input folder to HTML.
     """
 
+    # ==================== #
+    #        SETUP
+    # ==================== #
+
+    # default input folder is the 'content' folder, which is
+    # the directory from which our site is published
     if not input_folder:
         input_folder = os.getcwd().split("scripts")[0]
         input_folder += "content"
 
     # load saved notebook hashes
-    notebook_hashes = load_notebook_hashes(hash_path)
     # create a copy of the hashes to update and save
+    notebook_hashes = load_notebook_hashes(hash_path)
     updated_hashes = notebook_hashes.copy()
 
     # get list of notebooks to skip
@@ -455,6 +461,7 @@ def convert_notebooks_to_html(
         notebooks_to_skip = json.load(f)
     notebooks_to_skip = notebooks_to_skip["skip_execution"]
 
+    # notify user of forced notebook re execution
     if force_execute_all:
         print(
             "The force_execute_all argument has been set to True. All "
@@ -462,15 +469,18 @@ def convert_notebooks_to_html(
             "in the notebooks_to_skip.json file."
         )
 
+    # ==================== #
+    # Loop through notebooks
+    # ==================== #
+
     # iterate through input directory and process notebooks
     for root, list_folders, list_files in os.walk(input_folder):
         for filename in list_files:
             if filename.endswith(".ipynb"):
                 print(f"\nProcessing notebook: {filename}")
 
-                # get current hash of the notebook
+                # get the path to the notebook
                 nb_path = os.path.join(root, filename)
-                current_hash = hash_notebook(nb_path)
 
                 # get the notebook without executing it
                 loaded_notebook = get_notebook(
@@ -483,6 +493,9 @@ def convert_notebooks_to_html(
                     root,
                     filename,
                 )
+
+                # get current hash of the notebook
+                current_hash = hash_notebook(nb_path)
 
                 # default value for skip_notebook, to be updated based
                 # on notebooks_to_skip.json per the main loop below
@@ -685,14 +698,13 @@ def convert_notebooks_to_html(
 
     return
 
-
-# %%
 def test_nb_conversion(input_folder=None):
     convert_notebooks_to_html(
         input_folder=input_folder,
         use_base64=False,
         write_html=True,
+        execute_notebooks=True,
     )
 
 
-# _ = test_nb_conversion()
+# test_nb_conversion('tests')
