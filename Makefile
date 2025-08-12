@@ -38,3 +38,24 @@ create-conda-env-mpi:
 	fi; \
 	conda run -n textbook-env-mpi pip install 'hnn_core[dev]==$(HNN_VERSION)'; \
 	echo "Conda environment 'textbook-env-mpi' successfully created."
+
+create-conda-env-master:
+	conda env create --yes --file environment.yml --name textbook-env-master
+	conda install -y -n textbook-env-master conda-forge::openmpi conda-forge::mpi4py
+	@CONDA_ENV_PATH=$$(conda run -n textbook-env-master python -c "import os; print(os.environ['CONDA_PREFIX'])"); \
+	mkdir -p $$CONDA_ENV_PATH/etc/conda/activate.d ; \
+	mkdir -p $$CONDA_ENV_PATH/etc/conda/deactivate.d ; \
+	if [ "$(OS)" = "Darwin" ]; then \
+		echo "export OLD_DYLD_FALLBACK_LIBRARY_PATH=\$$DYLD_FALLBACK_LIBRARY_PATH" >> "$$CONDA_ENV_PATH/etc/conda/activate.d/env_vars.sh"; \
+		echo "export DYLD_FALLBACK_LIBRARY_PATH=\$$DYLD_FALLBACK_LIBRARY_PATH:$$CONDA_ENV_PATH/lib" >> "$$CONDA_ENV_PATH/etc/conda/activate.d/env_vars.sh"; \
+		echo "export DYLD_FALLBACK_LIBRARY_PATH=\$$OLD_DYLD_FALLBACK_LIBRARY_PATH" >> "$$CONDA_ENV_PATH/etc/conda/deactivate.d/env_vars.sh"; \
+		echo "unset OLD_DYLD_FALLBACK_LIBRARY_PATH" >> "$$CONDA_ENV_PATH/etc/conda/deactivate.d/env_vars.sh"; \
+	elif [ "$(OS)" = "Linux" ]; then \
+		echo "export OLD_LD_LIBRARY_PATH=\$$LD_LIBRARY_PATH" >> "$$CONDA_ENV_PATH/etc/conda/activate.d/env_vars.sh"; \
+		echo "export LD_LIBRARY_PATH=\$$LD_LIBRARY_PATH:$$CONDA_ENV_PATH/lib" >> "$$CONDA_ENV_PATH/etc/conda/activate.d/env_vars.sh"; \
+		echo "export LD_LIBRARY_PATH=\$$OLD_LD_LIBRARY_PATH" >> "$$CONDA_ENV_PATH/etc/conda/deactivate.d/env_vars.sh"; \
+		echo "unset OLD_LD_LIBRARY_PATH" >> "$$CONDA_ENV_PATH/etc/conda/deactivate.d/env_vars.sh"; \
+	fi; \
+	LATEST_HASH=$$(git ls-remote https://github.com/jonescompneurolab/hnn-core.git master | cut -f1);
+	conda run -n textbook-env-master pip install git+https://github.com/jonescompneurolab/hnn-core.git@$$LATEST_HASH#egg=hnn_core[dev]; \
+	echo "Conda environment 'textbook-env-master' successfully created."
