@@ -1,18 +1,19 @@
 import argparse
-import re
-import requests
-import subprocess
-import pypandoc
 import json
+import os
+import re
+import subprocess
+
+import pypandoc
+import requests
 from hnn_core import __version__ as installed_hnn_version
-from scripts.create_page_index import update_page_index
-from scripts.create_navbar import generate_navbar_html
+
 from scripts.convert_notebooks import convert_notebooks_to_html
 from scripts.create_navbar import generate_navbar_html
 from scripts.create_page_index import update_page_index
 
 
-def compile_page_components():
+def compile_page_components(dev_build=False):
     """Compile base html components for building webpage"""
 
     templates_folder = os.path.join(
@@ -36,8 +37,8 @@ def compile_page_components():
             html_parts[template] = f.read()
 
     update_page_index()
-    navbar_html, ordered_links = generate_navbar_html()
-    html_parts["navbar"] = navbar_html
+    navbar_html, ordered_links = generate_navbar_html(dev_build=dev_build)
+    html_parts['navbar'] = navbar_html
 
     return html_parts, ordered_links
 
@@ -75,7 +76,7 @@ def generate_page_html(
     """
 
     # get the .html templates for building pages
-    html_parts, ordered_links = compile_page_components()
+    html_parts, ordered_links = compile_page_components(dev_build=dev_build)
 
     # specify the order of components for assembling pages
     order = [
@@ -159,6 +160,12 @@ def generate_page_html(
         ordered_links = ordered_page_links["links"]
         ordered_titles = ordered_page_links["titles"]
 
+        if dev_build:
+            ordered_links = [
+                link.replace('content', 'dev') for link in ordered_page_links['links']
+            ]
+            out_path = out_path.replace('content', 'dev')
+
         location = None
         last_page = len(ordered_links) - 1
         for i, link in enumerate(ordered_links):
@@ -238,8 +245,38 @@ def generate_page_html(
             ],
         )
 
-        # optionally add Jupyter notebook ouptuts to converted html
+        # set relative image paths when doing a dev build
         # ------------------------------------------------------------
+        # images stored locally in "content" are not automatically propagated to the
+        # new dev build folder "dev".
+        #
+        # html filepaths therefore need to be adjusted for images local to the repo
+        #
+        # to handle this, we match on the `img src="images` pattern, which
+        # indicates a local image. This necessitates that any images are in an
+        # "images" folder in "content". We could expand this later to find all images,
+        # but for now, all images in "content" should be contained in an "images"
+        # sub directory
+        if dev_build:
+            textbook_root = out_directory.split('textbook')[0] + "textbook"
+            dev_path = out_directory.split('textbook')[-1]
+
+            rel_path = os.path.relpath(
+                textbook_root,
+                out_directory,
+            )
+
+            rel_path = \
+                rel_path \
+                + dev_path.replace(
+                    "dev",
+                    "content"
+                )
+
+            converted_html = converted_html.replace(
+                'img src="images',
+                f'img src="{rel_path}images'
+            )
 
         def get_html_from_json(
             nb_name,
@@ -391,14 +428,14 @@ def main():
         help="To identify if the build is for cloud deployment"
     )
 
-    parser.add_argument(
-        "--build-on-dev",
-        action="store_true",
-        help="Indicator to build notebooks from the current master"
-    )
+    # parser.add_argument(
+    #     "--build-on-dev",
+    #     action="store_true",
+    #     help="Indicator to build notebooks from the current master"
+    # )
 
     parser.add_argument(
-        "--dev-version",
+        "--build-on-dev",
         type=str,
         help="Optionally provide the commit from upstream/master"
     )
@@ -439,9 +476,9 @@ def main():
             f"Could not import hnn_core and retrieve the latest commit:\n{e}"
         )
 
-    if args.dev_version is not None:
+    if args.build_on_dev is not None:
 
-        if args.dev_version == "master":
+        if args.build_on_dev == "master":
         # get the latest commit from upstream/master
             url = "https://api.github.com/repos/jonescompneurolab/hnn-core/commits/master"
             response = requests.get(url)
@@ -458,7 +495,7 @@ def main():
                     "\nmake create-textbook-dev-build"
                     "\nconda activate textbook-dev-build")
         else:
-            repo_hash = args.dev_version.strip()
+            repo_hash = args.build_on_dev.strip()
             try:
                 repo, commit = repo_hash.split(":")
 
@@ -500,7 +537,7 @@ def main():
                     "\nUse 'installed' for the latest commit on your installed hnn-core"
                 )
     else:
-        commit_hash = None
+        commit_hash = False
 
         latest_stable = requests.get(
             "https://pypi.org/pypi/hnn-core/json"
@@ -527,7 +564,8 @@ def main():
                 "\n\nIf your installed version is behind the latest stable "
                 "version, pase consider updating your local install before "
                 "pushing any changes."
-                "\n\nIf your installed version references a particular commit or branch (e.g.: hnn-core @ git+https://github.com/jonescompneurolab"
+                "\n\nIf your installed version references a particular commit or "
+                "branch (e.g.: hnn-core @ git+https://github.com/jonescompneurolab"
                 "/hnn-core.git@1413550b2c610b700b7bb12ce7e1ae408ef8d4d3),"
                 " we recommend that you use the --build-on-dev flag to specify "
                 "the version of hnn-core that should be used."
@@ -549,8 +587,8 @@ def main():
         execute_notebooks=args.execute_notebooks,
         force_execute_all=args.force_execute_all,
         cloud_deploy=args.cloud_deploy,
-        dev_build=args.build_on_dev,
-        dev_version=commit_hash,
+        # dev_build=args.build_on_dev,
+        dev_build=commit_hash,
     )
 
     page_paths = get_page_paths()

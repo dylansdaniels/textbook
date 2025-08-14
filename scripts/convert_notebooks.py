@@ -454,7 +454,7 @@ def convert_notebooks_to_html(
         force_execute_all=False,
         cloud_deploy=False,
         dev_build=False,
-        dev_version=None,
+        # dev_version=None,
         hash_path="notebook_hashes.json",
         ):
     """
@@ -475,7 +475,7 @@ def convert_notebooks_to_html(
     if not input_folder:
         input_folder = os.path.join(root, 'content')
 
-    # when dev_build=True, html pages will save to the dev folder
+    # when doing a dev build, html pages will save to the dev folder
     if dev_build:
         dev_folder = os.path.join(root, 'dev')
 
@@ -610,9 +610,14 @@ def convert_notebooks_to_html(
                     elif (filename in notebook_hashes) and \
                             (notebook_hashes[filename] == current_hash):
 
-                        # check if the version is correct for dev
-                        if dev_version:
-                            if dev_version != commit_check:
+                        if dev_build:
+                        # check if the commit specified to use by the dev build
+                        # matches the commit last used to run the notebook per the
+                        # commit_check (returned by notebook_has_json_output)
+                        #
+                        # if the versions do not match, the notebook is flagged to
+                        # be re-executed by setting "notebook_executed=False"
+                            if dev_build != commit_check:
                                 notebook_executed=False
                         else:
                             if hnn_version > nb_version:
@@ -745,7 +750,7 @@ def convert_notebooks_to_html(
                     }
                     if dev_build:
                         print('Dev version to use:', dev_build)
-                        nb_html_json['commit'] = dev_version
+                        nb_html_json['commit'] = dev_build
                 else:
                     # get previously-used hnn version from json file
                     previous_version = "NA"
@@ -761,7 +766,7 @@ def convert_notebooks_to_html(
                         **nb_html_json,
                     }
                     if dev_build:
-                        nb_html_json['commit'] = dev_version
+                        nb_html_json['commit'] = dev_build
 
                 with open(output_json, "w") as f:
                     json.dump(nb_html_json, f, indent=4)
