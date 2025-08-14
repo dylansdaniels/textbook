@@ -11,5 +11,5 @@
             "html": "<div class='markdown-cell'>\n    <h2>References</h2>\n<p>[1] Jones, S. R., Pritchett, D. L., Stufflebeam, S. M., H\u00e4m\u00e4l\u00e4inen,\nM. &amp; Moore, C. I. Neural correlates of tactile detection: a combined\nmagnetoencephalography and biophysically based computational modeling\nstudy. J. Neurosci. 27, 10751\u201310764 (2007).</p>\n<p>[2] Neymotin SA, Daniels DS, Caldwell B, McDougal RA, Carnevale NT,\nJas M, Moore CI, Hines ML, H\u00e4m\u00e4l\u00e4inen M, Jones SR. Human Neocortical\nNeurosolver (HNN), a new software tool for interpreting the cellular and\nnetwork origin of human MEG/EEG data. eLife 9, e51214 (2020).\nhttps://doi.org/10.7554/eLife.51214</p>\n\n</div>"
         }
     },
-    "commit": null
+    "commit": "029b98e97037c43c4d00bb6205ec758e9d4fcfbf"
 }
