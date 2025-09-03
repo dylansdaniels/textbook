@@ -3,6 +3,7 @@ import json
 import os
 import re
 import subprocess
+import textwrap
 
 import pypandoc
 import requests
@@ -88,6 +89,121 @@ def get_page_paths(path=None):
                 md_pages[rel_path] = item_path
 
     return md_pages
+
+def get_html_from_json(
+    nb_name,
+    nb_path,
+):
+    """Get the structured .json output for a specified
+    .ipynb notebook, extract the relevent html components,
+    and return the aggregated html as a string.
+
+    Arguments
+    ---------
+    nb_name : str
+        Jupyter notebook file name
+        E.g., 'simulate_erps.ipynb'
+    nb_path : str
+        Path to notebook
+        E.g.: 'website/content/erps/simulate_erps.ipynb'
+
+    Returns
+    -------
+    agg_html : str
+    """
+    json_path = nb_path.split(".ipynb")[0] + ".json"
+    with open(json_path, "r") as file:
+        nb_outputs = json.load(file)
+        nb_outputs = nb_outputs.get(nb_name, {})
+        agg_html = ""
+        for section, content in nb_outputs.items():
+            if isinstance(content, dict) and "html" in content:
+                agg_html += content["html"]
+    return agg_html
+
+def add_notebook_to_html(
+    converted_html,
+    path,
+    md_page,
+):
+    """
+    Function to insert Jupyter notebook html outputs into html
+    pages converted from markdown files
+
+    Arguments
+    ---------
+    converted_html : str
+
+    Returns
+    -------
+    combined_html : str
+    """
+    # regex pattern match for "[[notebook_name.ipynb]" with only
+    # a single closing bracket, as additional parameters may be
+    # included in the notebook specification line
+    nb_match_pattern = re.compile(r"\[\[(.+?\.ipynb)\]")
+    # notebook specifications with additional arguments will
+    # match the exact pattern ".ipynb][" as defined below
+    nb_arguments_pattern = ".ipynb]["
+
+    nb_button_indent = '\t\t'
+
+    nb_button = textwrap.dedent("""
+        <div class="notebook-download-wrapper">
+            <a href='notebook_name' download>
+                <button class="notebook-download">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    <span style="width: 8px"></span>
+                    <span>Download Notebook</span>
+                </button>
+            </a>
+        </div>
+
+    """)
+
+    nb_button = textwrap.indent(
+        nb_button,
+        nb_button_indent,
+    )
+
+    output_lines = []
+    for line in converted_html.splitlines():
+        match = nb_match_pattern.search(line)
+        args = nb_arguments_pattern in line
+
+        if match and args:
+            notebook_name = match.group(1)
+            nb_path = path.split(md_page)[0] + notebook_name
+            print(f"nb with args found: {line}")
+            print("Argument handling will be added in a future update")
+            output_lines.append(line)
+        elif match:
+            notebook_name = match.group(1)
+            nb_path = path.split(md_page)[0] + notebook_name
+
+            # specify notebook button with correct file reference
+            nb_button = nb_button.replace(
+                "notebook_name",
+                notebook_name,
+            )
+            output_lines.append(
+                nb_button,
+            )
+
+            # generate and append the notebook html output
+            notebook_html = get_html_from_json(notebook_name, nb_path)
+            output_lines.append(notebook_html)
+        else:
+            output_lines.append(line)
+
+    combined_html = "\n".join(output_lines)
+    return combined_html
 
 
 def generate_page_html(
@@ -307,111 +423,11 @@ def generate_page_html(
                 'img src="images', f'img src="{rel_path}images'
             )
 
-        def get_html_from_json(
-            nb_name,
-            nb_path,
-        ):
-            """Get the structured .json output for a specified
-            .ipynb notebook, extract the relevent html components,
-            and return the aggregated html as a string.
-
-            Arguments
-            ---------
-            nb_name : str
-                Jupyter notebook file name
-                E.g., 'simulate_erps.ipynb'
-            nb_path : str
-                Path to notebook
-                E.g.: 'website/content/erps/simulate_erps.ipynb'
-
-            Returns
-            -------
-            agg_html : str
-            """
-            json_path = nb_path.split(".ipynb")[0] + ".json"
-            with open(json_path, "r") as file:
-                nb_outputs = json.load(file)
-                nb_outputs = nb_outputs.get(nb_name, {})
-                agg_html = ""
-                for section, content in nb_outputs.items():
-                    if isinstance(content, dict) and "html" in content:
-                        agg_html += content["html"]
-            return agg_html
-
-        def add_notebook_to_html(converted_html):
-            """
-            Function to insert Jupyter notebook html outputs into html
-            pages converted from markdown files
-
-            Arguments
-            ---------
-            converted_html : str
-
-            Returns
-            -------
-            combined_html : str
-            """
-            # regex pattern match for "[[notebook_name.ipynb]" with only
-            # a single closing bracket, as additional parameters may be
-            # included in the notebook specification line
-            nb_match_pattern = re.compile(r"\[\[(.+?\.ipynb)\]")
-            # notebook specifications with additional arguments will
-            # match the exact pattern ".ipynb][" as defined below
-            nb_arguments_pattern = ".ipynb]["
-
-            nb_button = """
-        <div class="notebook-download-wrapper">
-            <a href='notebook_name' download>
-                <button class="notebook-download">
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                        width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                    <span style="width: 8px"></span>
-                    <span>Download Notebook</span>
-                </button>
-            </a>
-        </div>
-
-    """
-
-            output_lines = []
-            for line in converted_html.splitlines():
-                match = nb_match_pattern.search(line)
-                args = nb_arguments_pattern in line
-
-                if match and args:
-                    notebook_name = match.group(1)
-                    nb_path = path.split(md_page)[0] + notebook_name
-                    print(f"nb with args found: {line}")
-                    print("Argument handling will be added in a future update")
-                    output_lines.append(line)
-                elif match:
-                    notebook_name = match.group(1)
-                    nb_path = path.split(md_page)[0] + notebook_name
-
-                    # specify notebook button with correct file
-                    nb_button = nb_button.replace(
-                        "notebook_name",
-                        notebook_name,
-                    )
-                    output_lines.append(
-                        nb_button,
-                    )
-
-                    # generate and append the notebook html output
-                    notebook_html = get_html_from_json(notebook_name, nb_path)
-                    output_lines.append(notebook_html)
-                else:
-                    output_lines.append(line)
-
-            combined_html = "\n".join(output_lines)
-            return combined_html
-
-        combined_html = add_notebook_to_html(converted_html)
+        combined_html = add_notebook_to_html(
+            converted_html,
+            path,
+            md_page,
+        )
 
         # Aggregate all page components and write output
         # ------------------------------------------------------------
