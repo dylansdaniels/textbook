@@ -33,20 +33,59 @@ def compile_page_components(dev_build=False):
 
 
 def get_page_paths(path=None):
-    """Get paths to all .md pages to be converted to html"""
+    """
+    Recursively get paths to all markdown files in a directory
+
+    Parameters
+    ----------
+    path : (str | None)
+        The root directory to search. If None, defaults to the "content" folder in the
+        working directory. This parameter is used internally for recursion and should
+        initially be called with None or excluded.
+
+    Returns
+    -------
+    dict
+        A dictionary mapping markdown page paths relative to the "content" directory
+        to their absolute paths in the form of: { relative_path: absolute_path, ...}
+
+        This may seem redundant at a first glance, but having the absolute paths as
+        well aids greatly in producing the correct path links for local/dev builds
+        where the absolute URL is not known
+
+    Notes
+    -----
+    - README.md files are excluded.
+    - Keys in the returned dictionary are paths relative to the "content" directory
+    """
 
     md_pages = {}
     if path is None:
-        path = os.path.join(os.getcwd(), "content")
+        path = os.path.join(
+            os.getcwd(),
+            "content",
+        )
     directories = os.listdir(path)
     for item in directories:
-        item_path = os.path.join(path, item)
+        item_path = os.path.join(
+            path,
+            item,
+        )
         if os.path.isdir(item_path):
             # add items from new dict into md_pages
-            md_pages.update(get_page_paths(item_path))
+            md_pages.update(
+                get_page_paths(item_path),
+            )
         else:
             if not item == "README.md" and item.endswith(".md"):
-                md_pages[item] = item_path
+                rel_path = os.path.relpath(
+                    item_path,
+                    start=os.path.join(
+                        os.getcwd(),
+                        "content",
+                    ),
+                )
+                md_pages[rel_path] = item_path
 
     return md_pages
 
@@ -55,7 +94,25 @@ def generate_page_html(
     page_paths,
     dev_build=False,
 ):
-    """ """
+    """
+    Converts markdown pages into HTML pages and saves them in the same directory.
+
+    This function handles all processing steps involved in page conversion by calling
+    various helper functions (which, in turn, call on imported scripts)
+
+    Parameters
+    ----------
+    page_paths : dict
+        A dictionary mapping markdown page paths relative to the "content" directory
+        to their absolute paths in the form: { relative_path: absolute_path, ...}
+
+    dev_build  : bool
+        An indicator for doing a "development" build of the website
+
+    Returns
+    -------
+    None
+    """
 
     # get the .html templates for building pages
     html_parts, ordered_links = compile_page_components(dev_build=dev_build)
@@ -70,11 +127,13 @@ def generate_page_html(
         "script",
     ]
 
-    # print(ordered_links)
-
+    # iterate over all markdown pages found in the "content" directory (excluding ...
+    # README.md files)
     for md_page, path in page_paths.items():
         page_components = html_parts.copy()
 
+        # get the filename from the realtive path
+        md_page = os.path.basename(md_page)
         # get the directory containing the markdown file
         out_directory = path.split(md_page)[0]
 
