@@ -16,29 +16,18 @@ from scripts.create_page_index import update_page_index
 def compile_page_components(dev_build=False):
     """Compile base html components for building webpage"""
 
-    templates_folder = os.path.join(
-        os.getcwd(),
-        "templates",
-    )
-    templates = [
-        "header",
-        "topbar",
-        "footer",
-        "script",
-    ]
+    templates_folder = os.path.join(os.getcwd(), "templates")
+    templates = ["header", "topbar", "footer", "script"]
     html_parts = {}
 
     for template in templates:
-        templates_path = os.path.join(
-            templates_folder,
-            f"{template}.html",
-        )
+        templates_path = os.path.join(templates_folder, f"{template}.html")
         with open(templates_path, "r") as f:
             html_parts[template] = f.read()
 
     update_page_index()
     navbar_html, ordered_links = generate_navbar_html(dev_build=dev_build)
-    html_parts['navbar'] = navbar_html
+    html_parts["navbar"] = navbar_html
 
     return html_parts, ordered_links
 
@@ -69,11 +58,10 @@ def get_page_paths(path=None):
 
 
 def generate_page_html(
-        page_paths,
-        dev_build=False,
-    ):
-    """
-    """
+    page_paths,
+    dev_build=False,
+):
+    """ """
 
     # get the .html templates for building pages
     html_parts, ordered_links = compile_page_components(dev_build=dev_build)
@@ -98,8 +86,8 @@ def generate_page_html(
 
         if dev_build:
             out_directory = out_directory.replace(
-                'content',
-                'dev',
+                "content",
+                "dev",
             )
 
         # remove leading `##_` from page and change extension to .html
@@ -148,11 +136,7 @@ def generate_page_html(
 
         # update 'footer' page_component with the correct links
         # ------------------------------------------------------------
-        footer_path = os.path.join(
-            os.getcwd(),
-            "templates",
-            "ordered_page_links.json",
-        )
+        footer_path = os.path.join(os.getcwd(), "templates", "ordered_page_links.json")
 
         with open(footer_path, "r") as f:
             ordered_page_links = json.load(f)
@@ -162,9 +146,9 @@ def generate_page_html(
 
         if dev_build:
             ordered_links = [
-                link.replace('content', 'dev') for link in ordered_page_links['links']
+                link.replace("content", "dev") for link in ordered_page_links["links"]
             ]
-            out_path = out_path.replace('content', 'dev')
+            out_path = out_path.replace("content", "dev")
 
         location = None
         last_page = len(ordered_links) - 1
@@ -204,12 +188,10 @@ def generate_page_html(
         )
 
         page_components["footer"] = page_components["footer"].replace(
-            "<a>PreviousTitle</a>",
-            f"<a>{prev_title}</a>",
+            "<a>PreviousTitle</a>", f"<a>{prev_title}</a>"
         )
         page_components["footer"] = page_components["footer"].replace(
-            "<a>NextTitle</a>",
-            f"<a>{next_title}</a>",
+            "<a>NextTitle</a>", f"<a>{next_title}</a>"
         )
 
         # load markdown and add yaml metadata
@@ -258,24 +240,18 @@ def generate_page_html(
         # but for now, all images in "content" should be contained in an "images"
         # sub directory
         if dev_build:
-            textbook_root = out_directory.split('textbook')[0] + "textbook"
-            dev_path = out_directory.split('textbook')[-1]
+            textbook_root = out_directory.split("textbook")[0] + "textbook"
+            dev_path = out_directory.split("textbook")[-1]
 
             rel_path = os.path.relpath(
                 textbook_root,
                 out_directory,
             )
 
-            rel_path = \
-                rel_path \
-                + dev_path.replace(
-                    "dev",
-                    "content"
-                )
+            rel_path = rel_path + dev_path.replace("dev", "content")
 
             converted_html = converted_html.replace(
-                'img src="images',
-                f'img src="{rel_path}images'
+                'img src="images', f'img src="{rel_path}images'
             )
 
         def get_html_from_json(
@@ -397,7 +373,7 @@ def generate_page_html(
             # check that folder exists else create it
             os.makedirs(out_directory, exist_ok=True)
 
-        with open(out_path, 'w') as out:
+        with open(out_path, "w") as out:
             out.write(file_contents)
 
     return
@@ -425,7 +401,7 @@ def main():
     parser.add_argument(
         "--cloud-deploy",
         type=str,
-        help="To identify if the build is for cloud deployment"
+        help="To identify if the build is for cloud deployment",
     )
 
     # parser.add_argument(
@@ -437,7 +413,7 @@ def main():
     parser.add_argument(
         "--build-on-dev",
         type=str,
-        help="Optionally provide the commit from upstream/master"
+        help="Optionally provide the commit from upstream/master",
     )
 
     # add all above arguments to the parser
@@ -456,10 +432,7 @@ def main():
     # get the version of hnn installed in the environment
     # this is needed for the checks below
     try:
-        installed_hnn_commit = subprocess.check_output(
-            ["pip", "freeze"],
-            text=True
-        )
+        installed_hnn_commit = subprocess.check_output(["pip", "freeze"], text=True)
         for line in installed_hnn_commit.splitlines():
             if "hnn" in line:
                 if "@" in line:
@@ -477,10 +450,11 @@ def main():
         )
 
     if args.build_on_dev is not None:
-
         if args.build_on_dev == "master":
-        # get the latest commit from upstream/master
-            url = "https://api.github.com/repos/jonescompneurolab/hnn-core/commits/master"
+            # get the latest commit from upstream/master
+            url = (
+                "https://api.github.com/repos/jonescompneurolab/hnn-core/commits/master"
+            )
             response = requests.get(url)
             response.raise_for_status()
             commit_hash = response.json()["sha"]
@@ -493,7 +467,8 @@ def main():
                     "Try creating an environment by running the following commands "
                     "in a terminal:"
                     "\nmake create-textbook-dev-build"
-                    "\nconda activate textbook-dev-build")
+                    "\nconda activate textbook-dev-build"
+                )
         else:
             repo_hash = args.build_on_dev.strip()
             try:
@@ -507,7 +482,7 @@ def main():
             except Exception as e:
                 raise RuntimeError(
                     "the --dev-version argument must be specified in the "
-                    "format: --dev-version \"your-repository:your-commit-hash\" "
+                    'format: --dev-version "your-repository:your-commit-hash" '
                     "\nE.g., a valid input would be: jonescompneurolab:9e14b99"
                     f"\n\nError message: {e}"
                 )
@@ -527,7 +502,7 @@ def main():
                     "\n   $ make create-textbook-dev-build"
                     "\n   $ conda activate textbook-dev-build"
                     "\n   $ pip install --upgrade --force-reinstall --no-cache-dir "
-                    f"\"hnn-core[dev] @ git+https://github.com/{repo}/hnn-core.git@{commit}\""
+                    f'"hnn-core[dev] @ git+https://github.com/{repo}/hnn-core.git@{commit}"'
                 )
             else:
                 raise RuntimeError(
@@ -539,10 +514,9 @@ def main():
     else:
         commit_hash = False
 
-        latest_stable = requests.get(
-            "https://pypi.org/pypi/hnn-core/json"
-        ).json()["info"]["version"]
-
+        latest_stable = requests.get("https://pypi.org/pypi/hnn-core/json").json()[
+            "info"
+        ]["version"]
 
         if installed_hnn_version > latest_stable:
             print(
