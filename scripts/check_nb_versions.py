@@ -1,7 +1,14 @@
 import sys
 
+from scripts.logger_setup import setup_logger
 
-def check_version():
+logger = setup_logger(__name__)
+
+def check_version(debug=False):
+
+    logger.debug(
+        'DEV',
+    )
     import json
     import os
 
@@ -27,6 +34,11 @@ def check_version():
 
     # get names of notebooks to skip
     notebooks_to_skip = notebooks_to_skip["skip_execution"]
+    logger.debug(
+        '\n',
+        'Notebooks to skip:\n',
+        notebooks_to_skip,
+    )
 
     # get json filenames for executed notebooks only
     json_fnames = [
@@ -34,6 +46,11 @@ def check_version():
         for notebook in notebook_hashes.keys()
         if notebook not in notebooks_to_skip
     ]
+    logger.debug(
+        '\n',
+        'Notebooks to run:\n',
+        json_fnames,
+    )
 
     # get filepaths for each filename in json_fnames
     json_fpaths = []
@@ -44,13 +61,20 @@ def check_version():
 
     # get the value of the "hnn_version" key from each json
     notebook_versions = []
+    execution_statuses = dict()
     for file in json_fpaths:
+        file_key = file.split(os.sep)[-1]
+        if file_key not in execution_statuses.keys():
+            execution_statuses[file_key] = dict()
         with open(file, "r") as f:
             contents = json.load(f)
             if "hnn_version" in contents:
                 notebook_versions.append(contents["hnn_version"])
+                execution_statuses[file_key]['hnn_version'] = contents["hnn_version"]
             else:
                 print(f"Version key not found in {file}")
+            # if "master_commit" in contents:
+                # execution_statuses[file]['master_commit'] =
 
     # unique versions for executed notebooks
     notebook_versions = list(set(notebook_versions))
@@ -70,11 +94,20 @@ def check_version():
         )
     else:
         print(
-            f"Latest version of hnn-core: {latest}",
-            f"Versions of hnn-core used in executed notebooks: {notebook_versions}",
-            "Notebooks should be re-executed using the latest version"
+            f"\nLatest version of hnn-core: {latest}",
+            f"\nVersions of hnn-core used in executed notebooks: {notebook_versions}",
+            "Notebooks should be re-executed using the latest version",
         )
 
+    logger.debug(
+        '\nExecution statuses:',
+        '\n',
+        execution_statuses
+    )
+
+    print(
+        '\nReturn:'
+    )
     return latest_version_check
 
 
