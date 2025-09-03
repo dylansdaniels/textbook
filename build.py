@@ -1,19 +1,14 @@
-import argparse
-import json
 import os
+import argparse
 import re
-import subprocess
-
 import pypandoc
-import requests
-from hnn_core import __version__ as installed_hnn_version
-
-from scripts.convert_notebooks import convert_notebooks_to_html
-from scripts.create_navbar import generate_navbar_html
+import json
 from scripts.create_page_index import update_page_index
+from scripts.create_navbar import generate_navbar_html
+from scripts.convert_notebooks import convert_notebooks_to_html
 
 
-def compile_page_components(dev_build=False):
+def compile_page_components():
     """Compile base html components for building webpage"""
 
     templates_folder = os.path.join(os.getcwd(), 'templates')
@@ -26,7 +21,7 @@ def compile_page_components(dev_build=False):
             html_parts[template] = f.read()
 
     update_page_index()
-    navbar_html, ordered_links = generate_navbar_html(dev_build=dev_build)
+    navbar_html, ordered_links = generate_navbar_html()
     html_parts['navbar'] = navbar_html
 
     return html_parts, ordered_links
@@ -51,15 +46,12 @@ def get_page_paths(path=None):
     return md_pages
 
 
-def generate_page_html(
-        page_paths,
-        dev_build=False,
-    ):
+def generate_page_html(page_paths):
     """
     """
 
     # get the .html templates for building pages
-    html_parts, ordered_links = compile_page_components(dev_build=dev_build)
+    html_parts, ordered_links = compile_page_components()
 
     # specify the order of components for assembling pages
     order = [
@@ -78,12 +70,6 @@ def generate_page_html(
 
         # get the directory containing the markdown file
         out_directory = path.split(md_page)[0]
-
-        if dev_build:
-            out_directory = out_directory.replace(
-                'content',
-                'dev',
-            )
 
         # remove leading `##_` from page and change extension to .html
         html_page = md_page.split("_", 1)[1]
@@ -143,25 +129,13 @@ def generate_page_html(
         ordered_links = ordered_page_links['links']
         ordered_titles = ordered_page_links['titles']
 
-        if dev_build:
-            ordered_links = [
-                link.replace('content', 'dev') for link in ordered_page_links['links']
-            ]
-            out_path = out_path.replace('content', 'dev')
-
         location = None
         last_page = len(ordered_links)-1
         for i, link in enumerate(ordered_links):
             # print(f'{link} | {out_path}')
             if link in out_path:
                 location = i
-
-        if location is None:
-            prev_page = ""
-            prev_title = ""
-            next_page = ""
-            next_title = ""
-        elif location == 0:
+        if location == 0:
             prev_page = "None"
             prev_title = ""
             next_page = ordered_links[location+1]
@@ -232,38 +206,8 @@ def generate_page_html(
             ],
         )
 
-        # set relative image paths when doing a dev build
+        # optionally add Jupyter notebook ouptuts to converted html
         # ------------------------------------------------------------
-        # images stored locally in "content" are not automatically propagated to the
-        # new dev build folder "dev".
-        #
-        # html filepaths therefore need to be adjusted for images local to the repo
-        #
-        # to handle this, we match on the `img src="images` pattern, which
-        # indicates a local image. This necessitates that any images are in an
-        # "images" folder in "content". We could expand this later to find all images,
-        # but for now, all images in "content" should be contained in an "images"
-        # sub directory
-        if dev_build:
-            textbook_root = out_directory.split('textbook')[0] + "textbook"
-            dev_path = out_directory.split('textbook')[-1]
-
-            rel_path = os.path.relpath(
-                textbook_root,
-                out_directory,
-            )
-
-            rel_path = \
-                rel_path \
-                + dev_path.replace(
-                    "dev",
-                    "content"
-                )
-
-            converted_html = converted_html.replace(
-                'img src="images',
-                f'img src="{rel_path}images'
-            )
 
         def get_html_from_json(
                 nb_name,
@@ -321,8 +265,8 @@ def generate_page_html(
         <div class="notebook-download-wrapper">
             <a href='notebook_name' download>
                 <button class="notebook-download">
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                        width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+                        width="20" height="20" viewBox="0 0 24 24" fill="none" 
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="7 10 12 15 17 10"/>
@@ -381,10 +325,6 @@ def generate_page_html(
             file_contents += page_components[section]
         file_contents += '\n</body>\n</html>'
 
-        if dev_build:
-            # check that folder exists else create it
-            os.makedirs(out_directory, exist_ok=True)
-
         with open(out_path, 'w') as out:
             out.write(file_contents)
 
@@ -411,157 +351,10 @@ def main():
         action="store_true",
         help="Force execute all notebooks regardless of their status"
     )
-
-    parser.add_argument(
-        "--cloud-deploy",
-        type=str,
-        help="To identify if the build is for cloud deployment"
-    )
-
-    # parser.add_argument(
-    #     "--build-on-dev",
-    #     action="store_true",
-    #     help="Indicator to build notebooks from the current master"
-    # )
-
-    parser.add_argument(
-        "--build-on-dev",
-        type=str,
-        help="Optionally provide the commit from upstream/master"
-    )
-
-    # add all above arguments to the parser
     args = parser.parse_args()
 
     content_path = os.path.join(os.getcwd(), "content")
     hash_path = os.path.join(os.getcwd(), "scripts", "notebook_hashes.json")
-
-    # get the version of hnn installed in the environment
-    # this is needed for the checks below
-    try:
-        installed_hnn_commit = subprocess.check_output(
-            ["pip", "freeze"],
-            text=True
-        )
-        for line in installed_hnn_commit.splitlines():
-            if "hnn" in line:
-                if "@" in line:
-                    installed_hnn_commit = line.split("@")[2].split("#")[0]
-                else:
-                    installed_hnn_commit = line.split("hnn-core==")[-1]
-        print(
-            "\nThe installed version of hnn-core being used for this "
-            f"build is:\n   {installed_hnn_commit}"
-        )
-
-    except Exception as e:
-        raise RuntimeError(
-            f"Could not import hnn_core and retrieve the latest commit:\n{e}"
-        )
-
-    if args.build_on_dev is not None:
-
-        if args.build_on_dev == "master":
-        # get the latest commit from upstream/master
-            url = "https://api.github.com/repos/jonescompneurolab/hnn-core/commits/master"
-            response = requests.get(url)
-            response.raise_for_status()
-            commit_hash = response.json()["sha"]
-            if commit_hash != installed_hnn_commit:
-                raise RuntimeError(
-                    f"The latest commit on master ({commit_hash}) "
-                    "does not match the latest commit on the installed "
-                    f"version of hnn-core ({installed_hnn_commit})."
-                    "\n"
-                    "Try creating an environment by running the following commands "
-                    "in a terminal:"
-                    "\nmake create-textbook-dev-build"
-                    "\nconda activate textbook-dev-build")
-        else:
-            repo_hash = args.build_on_dev.strip()
-            try:
-                repo, commit = repo_hash.split(":")
-
-                url = f"https://api.github.com/repos/{repo}/hnn-core/commits/{commit}"
-                response = requests.get(url)
-                response.raise_for_status()
-                commit_hash = response.json()["sha"]
-
-            except Exception as e:
-                raise RuntimeError(
-                    "the --dev-version argument must be specified in the "
-                    "format: --dev-version \"your-repository:your-commit-hash\" "
-                    "\nE.g., a valid input would be: jonescompneurolab:9e14b99"
-                    f"\n\nError message: {e}"
-                )
-
-            if commit_hash != installed_hnn_commit:
-                raise RuntimeError(
-                    "The repository and commit you specified: "
-                    f"\n   Repository: {repo}"
-                    f"\n   Commit: {commit_hash} "
-                    "\nDo not match the latest commit on the installed "
-                    "version of hnn-core: "
-                    f"\n   Installed version / commit: {installed_hnn_commit}"
-                    "\nPlease ensure you have installed the proper version of "
-                    "hnn-core in your local environment."
-                    "\nTry creating an environment by running the following "
-                    "commands in a terminal:"
-                    "\n   $ make create-textbook-dev-build"
-                    "\n   $ conda activate textbook-dev-build"
-                    "\n   $ pip install --upgrade --force-reinstall --no-cache-dir "
-                    f"\"hnn-core[dev] @ git+https://github.com/{repo}/hnn-core.git@{commit}\""
-                )
-            else:
-                raise RuntimeError(
-                    "\nInvalid dev_version argument."
-                    "\nUse 'local' for the latest commit on your local dev version."
-                    "\nUse 'master' for the latest commit on the upstream master."
-                    "\nUse 'installed' for the latest commit on your installed hnn-core"
-                )
-    else:
-        commit_hash = False
-
-        latest_stable = requests.get(
-            "https://pypi.org/pypi/hnn-core/json"
-        ).json()["info"]["version"]
-
-
-        if installed_hnn_version > latest_stable:
-            print(
-                "Warning: your installed version of hnn-core is ahead of the "
-                "current stable version, but you did not use the --build-on-dev "
-                "flag:"
-                f"\n   Stable version: {latest_stable}"
-                f"\n   Installed version: {installed_hnn_version}"
-                "\nIt is generally advisable to use the --build-on-dev flag "
-                "when generating the textbook on versions of hnn-core that are "
-                "ahead of the current stable version."
-            )
-        elif installed_hnn_version != latest_stable:
-            print(
-                "\nWarning: you are attempting to build the textbook on a "
-                "version of hnn-core that does not match the latest stable version."
-                f"\n   Stable version: {latest_stable}"
-                f"\n   Installed version: {installed_hnn_version}"
-                "\n\nIf your installed version is behind the latest stable "
-                "version, pase consider updating your local install before "
-                "pushing any changes."
-                "\n\nIf your installed version references a particular commit or "
-                "branch (e.g.: hnn-core @ git+https://github.com/jonescompneurolab"
-                "/hnn-core.git@1413550b2c610b700b7bb12ce7e1ae408ef8d4d3),"
-                " we recommend that you use the --build-on-dev flag to specify "
-                "the version of hnn-core that should be used."
-            )
-
-    ##################################################
-    # left off here
-    # not sure if having dev_version installed makes sense
-    # but i can at least use this for testing i guess
-    # next up: track the versions run in dev in the dev_hashes file
-    # might want to check against version run in /content? or maybe not?
-    # start simple and add complexity?
-    ##################################################
 
     convert_notebooks_to_html(
         input_folder=content_path,
@@ -569,17 +362,10 @@ def main():
         write_html=True,
         execute_notebooks=args.execute_notebooks,
         force_execute_all=args.force_execute_all,
-        cloud_deploy=args.cloud_deploy,
-        # dev_build=args.build_on_dev,
-        dev_build=commit_hash,
     )
 
     page_paths = get_page_paths()
-
-    generate_page_html(
-        page_paths,
-        dev_build=args.build_on_dev,
-    )
+    generate_page_html(page_paths)
 
 
 if __name__ == "__main__":
