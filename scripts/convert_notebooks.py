@@ -738,18 +738,22 @@ def convert_notebooks_to_html(
                 # standalone html file
                 if write_html:
                     if dev_build:
+                        dev_dir = current_directory.replace(
+                            "content",
+                            "dev",
+                        )
                         output_file = os.path.join(
-                            current_directory.replace(
-                                "content",
-                                "dev",
-                            ),
+                            dev_dir,
                             f"{os.path.splitext(filename)[0]}.html",
                         )
+                        if not os.path.exists(dev_dir):
+                            os.makedirs(dev_dir)
                     else:
                         output_file = os.path.join(
                             current_directory,
                             f"{os.path.splitext(filename)[0]}.html",
                         )
+
                     with open(output_file, "w", encoding="utf-8") as f:
                         f.write("<html><body>\n")
                         f.write(html_content)
