@@ -635,7 +635,7 @@ def main():
         write_html=True,
         execute_notebooks=args.execute_notebooks,
         force_execute_all=args.force_execute_all,
-        cloud_deploy=args.cloud_deploy,
+        # cloud_deploy=args.cloud_deploy,
         # dev_build=args.build_on_dev,
         dev_build=commit_hash,
     )
