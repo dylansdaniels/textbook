@@ -835,7 +835,7 @@ def convert_notebooks_to_html(
 
 # %%
 
-run_test = True
+run_test = False
 
 def test_nb_conversion(input_folder=None):
     convert_notebooks_to_html(
