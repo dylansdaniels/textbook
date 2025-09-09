@@ -13,6 +13,7 @@ from nbconvert.preprocessors import (
     ClearOutputPreprocessor,
     ExecutePreprocessor,
 )
+from packaging.version import Version
 
 
 def save_plot_as_image(img_data, img_filename, output_dir,):
@@ -31,7 +32,7 @@ def html_to_json(html: str, filename: str):
     contents = {filename: {}}
 
     # variable to track section content and metadata
-    current_html = None
+    current_html = list()
     current_title = None
     current_level = None
 
@@ -476,26 +477,6 @@ def convert_notebooks_to_html(
     if not input_folder:
         input_folder = os.path.join(root, 'content')
 
-    # when doing a dev build, html pages will save to the dev folder
-    if dev_build:
-        dev_folder = os.path.join(root, 'dev')
-
-    # load saved notebook hashes
-    # create a copy of the hashes to update and save
-
-    # We should NOT use separate dev hashes
-    # since the .ipynb should remain in "content"
-    # and we want a single source of truth
-    #
-    # if dev_build:
-    #     hash_path = os.path.join(
-    #         dev_folder,
-    #         "dev_hashes.json",
-    #     )
-    #     if not os.path.exists(hash_path):
-    #         with open(hash_path, 'w') as f:
-    #             json.dump({}, f)
-
     notebook_hashes = load_notebook_hashes(hash_path)
     updated_hashes = notebook_hashes.copy()
 
@@ -629,7 +610,7 @@ def convert_notebooks_to_html(
                             if dev_build != commit_check:
                                 notebook_executed=False
                         else:
-                            if hnn_version > nb_version:
+                            if Version(hnn_version) > Version(nb_version):
                                 raise Warning(
                                     "The notebook may have been executed on an "
                                     "older version of hnn-core, as your installed "
@@ -804,6 +785,10 @@ def convert_notebooks_to_html(
 
     return
 
+# %%
+
+run_test = False
+
 def test_nb_conversion(input_folder=None):
 
     convert_notebooks_to_html(
@@ -813,5 +798,5 @@ def test_nb_conversion(input_folder=None):
         execute_notebooks=True,
     )
 
-
-# test_nb_conversion('tests')
+if run_test:
+    test_nb_conversion('tests')
