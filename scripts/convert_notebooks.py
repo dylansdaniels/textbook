@@ -16,9 +16,16 @@ from nbconvert.preprocessors import (
 from packaging.version import Version
 
 
-def save_plot_as_image(img_data, img_filename, output_dir,):
+def save_plot_as_image(
+    img_data,
+    img_filename,
+    output_dir,
+):
     """Saves the plot image to the specified directory."""
-    img_path = os.path.join(output_dir, img_filename,)
+    img_path = os.path.join(
+        output_dir,
+        img_filename,
+    )
     with open(img_path, "wb") as img_file:
         img_file.write(base64.b64decode(img_data))
     return
@@ -50,10 +57,7 @@ def html_to_json(
         # identify lines with header tag
         # note: the match is performed on the line stripped of any
         # spaces or newlines
-        line_match = re.match(
-            r"(<h[1-6]>)(.*?)(</h[1-6]>)",
-            line.strip(),
-        )
+        line_match = re.match(r"(<h[1-6]>)(.*?)(</h[1-6]>)", line.strip())
 
         if line_match:
             # when a new header is found, save the previous section
@@ -160,12 +164,12 @@ def structure_json(contents):
 
 
 def extract_html_from_notebook(
-        notebook,
-        input_dir,
-        filename,
-        dev_build=False,
-        use_base64=False,
-        ):
+    notebook,
+    input_dir,
+    filename,
+    dev_build=False,
+    use_base64=False,
+):
     """Extracts HTML for cell contents and outputs,
     including code and markdown."""
 
@@ -385,14 +389,8 @@ def get_notebook(
         notebook = nbformat.read(f, as_version=4)
 
     if execute:
-        ep = ExecutePreprocessor(
-            timeout=timeout,
-            kernel_name="python3",
-        )
-        ep.preprocess(
-            notebook,
-            {"metadata": {"path": os.path.dirname(notebook_path)}},
-        )
+        ep = ExecutePreprocessor(timeout=timeout, kernel_name="python3")
+        ep.preprocess(notebook, {"metadata": {"path": os.path.dirname(notebook_path)}})
 
     return notebook
 
@@ -409,20 +407,20 @@ def is_notebook_fully_executed(notebook):
 
 
 def notebook_has_json_output(
-        root,
-        cwd,
-        filename,
-        dev_build=False,
-    ):
+    root,
+    cwd,
+    filename,
+    dev_build=False,
+):
     """
     Check if the notebook has been fully executed by checking against the
     json output file.
     """
     if dev_build:
-        wd = cwd.split('content')[-1].lstrip(os.sep)
+        wd = cwd.split("content")[-1].lstrip(os.sep)
         json_path = os.path.join(
             root,
-            'dev',
+            "dev",
             wd,
             f"{os.path.splitext(filename)[0]}.json",
         )
@@ -434,30 +432,30 @@ def notebook_has_json_output(
         )
 
     execution_check = False
-    version_check=False
-    commit_check=False
+    version_check = False
+    commit_check = False
 
     if os.path.exists(json_path):
         with open(json_path, "r") as file:
             nb_outputs = json.load(file)
-            execution_check = nb_outputs.get('full_executed', False)
-            version_check = nb_outputs.get('hnn_version', False)
-            commit_check = nb_outputs.get('commit', False)
+            execution_check = nb_outputs.get("full_executed", False)
+            version_check = nb_outputs.get("hnn_version", False)
+            commit_check = nb_outputs.get("commit", False)
 
     return execution_check, version_check, commit_check
 
 
 def convert_notebooks_to_html(
-        input_folder=None,
-        use_base64=False,
-        write_html=False,
-        execute_notebooks=False,
-        force_execute_all=False,
-        cloud_deploy=False,
-        dev_build=False,
-        # dev_version=None,
-        hash_path="notebook_hashes.json",
-        ):
+    input_folder=None,
+    use_base64=False,
+    write_html=False,
+    execute_notebooks=False,
+    force_execute_all=False,
+    cloud_deploy=False,
+    dev_build=False,
+    # dev_version=None,
+    hash_path="notebook_hashes.json",
+):
     """
     Executes and converts .ipynb files in the input folder to HTML.
     """
@@ -468,32 +466,26 @@ def convert_notebooks_to_html(
 
     # if wd doesn't end in 'textbook', look for 'textbook' in the path
     root = os.getcwd()
-    while os.path.basename(root) != 'textbook':
+    while os.path.basename(root) != "textbook":
         root = os.path.dirname(root)
 
     # default input folder is the 'content' folder, which is
     # the directory from which our site is published
     if not input_folder:
-        input_folder = os.path.join(root, 'content')
+        input_folder = os.path.join(root, "content")
 
     notebook_hashes = load_notebook_hashes(hash_path)
     updated_hashes = notebook_hashes.copy()
 
     # get list of notebooks to skip
     # -----------------------------
-    with open(
-        os.path.join(
-            os.getcwd(),
-            'scripts',
-            'notebooks_to_skip.json'
-        ), 'r'
-    ) as f:
+    with open(os.path.join(os.getcwd(), "scripts", "notebooks_to_skip.json"), "r") as f:
         notebooks_to_skip = json.load(f)
 
     if dev_build:
-        notebooks_to_skip = notebooks_to_skip['dev']
+        notebooks_to_skip = notebooks_to_skip["dev"]
     else:
-        notebooks_to_skip = notebooks_to_skip['skip_execution']
+        notebooks_to_skip = notebooks_to_skip["skip_execution"]
 
     # notify user of forced notebook re execution
     if force_execute_all:
@@ -588,18 +580,18 @@ def convert_notebooks_to_html(
                         )
                     # 2) if the hash has not changed
                     # --------------------------------------------------
-                    elif (filename in notebook_hashes) and \
-                            (notebook_hashes[filename] == current_hash):
-
+                    elif (filename in notebook_hashes) and (
+                        notebook_hashes[filename] == current_hash
+                    ):
                         if dev_build:
-                        # check if the commit specified to use by the dev build
-                        # matches the commit last used to run the notebook per the
-                        # commit_check (returned by notebook_has_json_output)
-                        #
-                        # if the versions do not match, the notebook is flagged to
-                        # be re-executed by setting "notebook_executed=False"
+                            # check if the commit specified to use by the dev build
+                            # matches the commit last used to run the notebook per the
+                            # commit_check (returned by notebook_has_json_output)
+                            #
+                            # if the versions do not match, the notebook is flagged to
+                            # be re-executed by setting "notebook_executed=False"
                             if dev_build != commit_check:
-                                notebook_executed=False
+                                notebook_executed = False
                         else:
                             if Version(hnn_version) > Version(nb_version):
                                 raise Warning(
@@ -685,7 +677,7 @@ def convert_notebooks_to_html(
                     if dev_build:
                         output_file = os.path.join(
                             current_directory.replace("content", "dev"),
-                            f"{os.path.splitext(filename)[0]}.html"
+                            f"{os.path.splitext(filename)[0]}.html",
                         )
                     else:
                         output_file = os.path.join(
@@ -730,8 +722,8 @@ def convert_notebooks_to_html(
                         **nb_html_json,
                     }
                     if dev_build:
-                        print('Dev version to use:', dev_build)
-                        nb_html_json['commit'] = dev_build
+                        print("Dev version to use:", dev_build)
+                        nb_html_json["commit"] = dev_build
                 else:
                     # get previously-used hnn version from json file
                     previous_version = "NA"
@@ -747,7 +739,7 @@ def convert_notebooks_to_html(
                         **nb_html_json,
                     }
                     if dev_build:
-                        nb_html_json['commit'] = dev_build
+                        nb_html_json["commit"] = dev_build
 
                 with open(output_json, "w") as f:
                     json.dump(nb_html_json, f, indent=4)
@@ -772,9 +764,11 @@ def convert_notebooks_to_html(
 
     return
 
+
 # %%
 
 run_test = False
+
 
 def test_nb_conversion(input_folder=None):
     convert_notebooks_to_html(
@@ -784,5 +778,6 @@ def test_nb_conversion(input_folder=None):
         execute_notebooks=True,
     )
 
+
 if run_test:
-    test_nb_conversion('tests')
+    test_nb_conversion("tests")
