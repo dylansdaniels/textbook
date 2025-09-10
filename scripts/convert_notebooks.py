@@ -404,7 +404,7 @@ def hash_notebook(notebook_path):
     return hasher.hexdigest()
 
 
-def load_notebook_hashes(hash_path):
+def _load_notebook_hashes(hash_path):
     """Load previously-recorded hashes notebook hashes"""
     if os.path.exists(hash_path):
         with open(hash_path, "r") as f:
@@ -460,7 +460,11 @@ def notebook_has_json_output(
     Check if the notebook has been fully executed by checking against the
     json output file.
     """
+
+    # update the filepath when doing a dev build
     if dev_build:
+        # get filepath after "content"
+        # strip the os separator in a safe way with lstrip
         wd = cwd.split("content")[-1].lstrip(os.sep)
         json_path = os.path.join(
             root,
@@ -479,6 +483,8 @@ def notebook_has_json_output(
     version_check = False
     commit_check = False
 
+    # if the json output exists, get the execution status, base version,
+    # and latest commit used to execute the notebook
     if os.path.exists(json_path):
         with open(json_path, "r") as file:
             nb_outputs = json.load(file)
@@ -504,10 +510,10 @@ def convert_notebooks_to_html(
     write_html=False,
     execute_notebooks=False,
     force_execute_all=False,
-    # cloud_deploy=False,
     dev_build=False,
-    # dev_version=None,
     hash_path="notebook_hashes.json",
+    # cloud_deploy=False,
+    # dev_version=None,
 ):
     """
     Executes and converts .ipynb files in the input folder to HTML.
@@ -517,38 +523,14 @@ def convert_notebooks_to_html(
     #        SETUP
     # ==================== #
 
-    # if wd doesn't end in 'textbook', look for 'textbook' in the path
-    root = os.getcwd()
-    while os.path.basename(root) != "textbook":
-        root = os.path.dirname(root)
+    root, input_folder = _setup_root_and_input(input_folder)
 
-    # default input folder is the 'content' folder, which is
-    # the directory from which our site is published
-    if not input_folder:
-        input_folder = os.path.join(
-            root,
-            "content",
-        )
-
-    notebook_hashes = load_notebook_hashes(hash_path)
+    # get notebook hashes from json
+    notebook_hashes = _load_notebook_hashes(hash_path)
     updated_hashes = notebook_hashes.copy()
 
     # get list of notebooks to skip
-    # -----------------------------
-    with open(
-        os.path.join(
-            os.getcwd(),
-            "scripts",
-            "notebooks_to_skip.json",
-        ),
-        "r",
-    ) as f:
-        notebooks_to_skip = json.load(f)
-
-    if dev_build:
-        notebooks_to_skip = notebooks_to_skip["dev"]
-    else:
-        notebooks_to_skip = notebooks_to_skip["skip_execution"]
+    notebooks_to_skip = _load_notebooks_to_skip(dev_build)
 
     # notify user of forced notebook re execution
     if force_execute_all:
@@ -616,13 +598,9 @@ def convert_notebooks_to_html(
                     else:
                         print(f"Executing {filename}")
 
-                        loaded_notebook = get_notebook(
-                            nb_path,
-                            execute=True,
-                        )
-                        notebook_was_run = True
-                        print("Notebook has been executed")
-                        notebook_executed = is_notebook_fully_executed(loaded_notebook)
+                        loaded_notebook, \
+                        notebook_was_run, \
+                        notebook_executed = _execute_notebook(nb_path)
 
                 # when force_execute_all is False, notebooks are
                 # conditionally executed based on the hash and
@@ -674,15 +652,10 @@ def convert_notebooks_to_html(
                             )
                             # execute the notebook if execute_notebooks is True
                             if execute_notebooks:
-                                loaded_notebook = get_notebook(
-                                    nb_path,
-                                    execute=True,
-                                )
-                                notebook_was_run = True
-                                print("Notebook has been executed")
-                                notebook_executed = is_notebook_fully_executed(
-                                    loaded_notebook,
-                                )
+                                loaded_notebook, \
+                                notebook_was_run, \
+                                notebook_executed = _execute_notebook(nb_path)
+
                             # skip notebook if execute_notebooks is False
                             else:
                                 print(
@@ -706,15 +679,10 @@ def convert_notebooks_to_html(
                         )
                         # execute the notebook if execute_notebooks is True
                         if execute_notebooks:
-                            loaded_notebook = get_notebook(
-                                nb_path,
-                                execute=True,
-                            )
-                            notebook_was_run = True
-                            print("Notebook has been executed")
-                            notebook_executed = is_notebook_fully_executed(
-                                loaded_notebook,
-                            )
+                            loaded_notebook, \
+                            notebook_was_run, \
+                            notebook_executed = _execute_notebook(nb_path)
+
                         # skip notebook if execute_notebooks is False
                         else:
                             print(
@@ -836,6 +804,55 @@ def convert_notebooks_to_html(
 
     return
 
+def _setup_root_and_input(input_folder):
+    """
+    if the current directory doesn't end in 'textbook', recursively look
+    for 'textbook' in the parent directories
+    """
+    root = os.getcwd()
+    while os.path.basename(root) != "textbook":
+        root = os.path.dirname(root)
+
+    # default input folder is the 'content' folder, which is
+    # the directory from which our site is published
+    if not input_folder:
+        input_folder = os.path.join(root, "content")
+
+    return root, input_folder
+
+def _load_notebooks_to_skip(dev_build):
+    """
+    Get the list of notebooks to skip from the 'notebooks_to_skip.json'
+    The "dev_build" flag determines which list is extracted from the json
+    """
+    with open(
+        os.path.join(
+            os.getcwd(),
+            "scripts",
+            "notebooks_to_skip.json",
+        ),
+        "r",
+    ) as f:
+        notebooks_to_skip = json.load(f)
+
+    if dev_build:
+        notebooks_to_skip = notebooks_to_skip["dev"]
+    else:
+        notebooks_to_skip = notebooks_to_skip["skip_execution"]
+
+    return notebooks_to_skip
+
+def _execute_notebook(nb_path):
+    loaded_notebook = get_notebook(
+        nb_path,
+        execute=True,
+    )
+    notebook_was_run = True
+    print("Notebook has been executed")
+    notebook_executed = is_notebook_fully_executed(
+        loaded_notebook,
+    )
+    return loaded_notebook, notebook_was_run, notebook_executed
 
 # %%
 
@@ -852,3 +869,4 @@ def test_nb_conversion(input_folder=None):
 
 if run_test:
     test_nb_conversion("tests")
+
