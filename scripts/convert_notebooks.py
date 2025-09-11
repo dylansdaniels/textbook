@@ -6,6 +6,7 @@ import json
 import os
 import re
 import textwrap
+import warnings
 
 import nbformat
 import pypandoc
@@ -503,307 +504,6 @@ def notebook_has_json_output(
 
     return execution_check, version_check, commit_check
 
-
-def convert_notebooks_to_html(
-    input_folder=None,
-    use_base64=False,
-    write_html=False,
-    execute_notebooks=False,
-    force_execute_all=False,
-    dev_build=False,
-    hash_path="notebook_hashes.json",
-    # cloud_deploy=False,
-    # dev_version=None,
-):
-    """
-    Executes and converts .ipynb files in the input folder to HTML.
-    """
-
-    # ==================== #
-    #        SETUP
-    # ==================== #
-
-    root, input_folder = _setup_root_and_input(input_folder)
-
-    # get notebook hashes from json
-    notebook_hashes = _load_notebook_hashes(hash_path)
-    updated_hashes = notebook_hashes.copy()
-
-    # get list of notebooks to skip
-    notebooks_to_skip = _load_notebooks_to_skip(dev_build)
-
-    # notify user of forced notebook re execution
-    if force_execute_all:
-        print(
-            "The force_execute_all argument has been set to True. All "
-            "notebooks will be re-executed unless flagged to be skipped "
-            "in the notebooks_to_skip.json file."
-        )
-
-    # ==================== #
-    # Loop through notebooks
-    # ==================== #
-
-    # iterate through input directory and process notebooks
-    for current_directory, list_folders, list_files in os.walk(input_folder):
-        for filename in list_files:
-            if filename.endswith(".ipynb"):
-                print(f"\nProcessing notebook: {filename}")
-
-                # get the path to the notebook
-                nb_path = os.path.join(current_directory, filename)
-
-                # get the notebook without executing it
-                loaded_notebook = get_notebook(
-                    nb_path,
-                    execute=False,
-                )
-
-                # check if the notebook has been fully executed
-                notebook_executed, nb_version, commit_check = notebook_has_json_output(
-                    root=root,
-                    cwd=current_directory,
-                    filename=filename,
-                    dev_build=dev_build,
-                )
-
-                # get current hash of the notebook
-                current_hash = hash_notebook(nb_path)
-
-                # default value for skip_notebook, to be updated based
-                # on notebooks_to_skip.json per the main loop below
-                skip_notebook = False
-
-                # flag for whether the notebook was run
-                notebook_was_run = False
-
-                # when force_execute_all is True, all notebooks
-                # should be executed unless flagged to be skipped
-                # --------------------------------------------------
-                if force_execute_all:
-                    # update the skip_notebook flag
-                    if filename in notebooks_to_skip:
-                        skip_notebook = True
-
-                    # check if notebook should be skipped
-                    # --------------------------------------------------
-                    if skip_notebook:
-                        print(
-                            f"Notebook '{filename}' has been flagged to be"
-                            " skipped. Execution will not be attempted for"
-                            " this notebook."
-                        )
-                    # run all notebooks not flagged to be skipped
-                    # --------------------------------------------------
-                    else:
-                        print(f"Executing {filename}")
-
-                        loaded_notebook, \
-                        notebook_was_run, \
-                        notebook_executed = _execute_notebook(nb_path)
-
-                # when force_execute_all is False, notebooks are
-                # conditionally executed based on the hash and
-                # the skip condition
-                # --------------------------------------------------
-                else:
-                    # check if notebook should be skipped
-                    if filename in notebooks_to_skip:
-                        skip_notebook = True
-
-                    # 1) skip notebook if indicated in json
-                    # --------------------------------------------------
-                    if skip_notebook:
-                        print(
-                            f"Notebook '{filename}' has been flagged to be"
-                            " skipped. Execution will not be attempted for"
-                            " this notebook."
-                        )
-                    # 2) if the hash has not changed
-                    # --------------------------------------------------
-                    elif (filename in notebook_hashes) and (
-                        notebook_hashes[filename] == current_hash
-                    ):
-                        if dev_build:
-                            # check if the commit specified to use by the dev build
-                            # matches the commit last used to run the notebook per the
-                            # commit_check (returned by notebook_has_json_output)
-                            #
-                            # if the versions do not match, the notebook is flagged to
-                            # be re-executed by setting "notebook_executed=False"
-                            if dev_build != commit_check:
-                                notebook_executed = False
-                        else:
-                            if Version(hnn_version) > Version(nb_version):
-                                raise Warning(
-                                    "The notebook may have been executed on an "
-                                    "older version of hnn-core, as your installed "
-                                    "version is greater than version used to run "
-                                    "the notebook previously. Please consider re-"
-                                    "executing this notebook."
-                                )
-
-                        # case when notebook is *not* fully executed
-                        if not notebook_executed:
-                            print(
-                                f"Warning: Notebook {filename} has not been"
-                                " fully executed on the specified version"
-                                " of hnn-core."
-                            )
-                            # execute the notebook if execute_notebooks is True
-                            if execute_notebooks:
-                                loaded_notebook, \
-                                notebook_was_run, \
-                                notebook_executed = _execute_notebook(nb_path)
-
-                            # skip notebook if execute_notebooks is False
-                            else:
-                                print(
-                                    "Notebook execution skipped since"
-                                    " execute_notebooks is False."
-                                )
-                        # case when notebook *is* fully executed
-                        else:
-                            print(
-                                f"Notebook {filename} is unchanged and already"
-                                " fully executed"
-                            )
-
-                    # 3) if the file is new (un-hashed) or has been changed,
-                    # conditionally execute the notebook and update the hash dict
-                    # --------------------------------------------------
-                    else:
-                        print(
-                            f"Notebook {filename} is new or has been updated and"
-                            " needs to be executed"
-                        )
-                        # execute the notebook if execute_notebooks is True
-                        if execute_notebooks:
-                            loaded_notebook, \
-                            notebook_was_run, \
-                            notebook_executed = _execute_notebook(nb_path)
-
-                        # skip notebook if execute_notebooks is False
-                        else:
-                            print(
-                                "Skipping notebook execution since"
-                                " execute_notebook is False"
-                            )
-
-                # update the hash dictionary
-                updated_hashes[filename] = current_hash
-
-                # extract and process the html from the notebook
-                html_content = extract_html_from_notebook(
-                    loaded_notebook,
-                    current_directory,
-                    filename,
-                    dev_build=dev_build,
-                    use_base64=use_base64,
-                )
-
-                # optionally write the converted notebook to a
-                # standalone html file
-                if write_html:
-                    if dev_build:
-                        dev_dir = current_directory.replace(
-                            "content",
-                            "dev",
-                        )
-                        output_file = os.path.join(
-                            dev_dir,
-                            f"{os.path.splitext(filename)[0]}.html",
-                        )
-                        if not os.path.exists(dev_dir):
-                            os.makedirs(dev_dir)
-                    else:
-                        output_file = os.path.join(
-                            current_directory,
-                            f"{os.path.splitext(filename)[0]}.html",
-                        )
-
-                    with open(output_file, "w", encoding="utf-8") as f:
-                        f.write("<html><body>\n")
-                        f.write(html_content)
-                        f.write("\n</body></html>")
-
-                # ----------------------------------------
-                # generated structured json output
-                # ----------------------------------------
-                # Note: this section pertains to a planned enhancement
-                # to enable inserting sections of a notebook into an
-                # html file by specifing the headers to include; e.g.,
-                # including [[notebook][start header][end header]] in your
-                # .md file would inject only the .html for those header
-                # sections into your html output file
-
-                nb_html_json = html_to_json(
-                    html_content,
-                    filename,
-                )
-
-                if dev_build:
-                    output_json = os.path.join(
-                        current_directory.replace("content", "dev"),
-                        f"{os.path.splitext(filename)[0]}.json",
-                    )
-                else:
-                    output_json = os.path.join(
-                        current_directory,
-                        f"{os.path.splitext(filename)[0]}.json",
-                    )
-
-                if notebook_was_run:
-                    # Add execution status directly to json output
-                    # Track version used in notebook execution
-                    nb_html_json = {
-                        "full_executed": notebook_executed,
-                        "hnn_version": hnn_version,
-                        **nb_html_json,
-                    }
-                    if dev_build:
-                        print("Dev version to use:", dev_build)
-                        nb_html_json["commit"] = dev_build
-                else:
-                    # get previously-used hnn version from json file
-                    previous_version = "NA"
-                    if os.path.exists(output_json):
-                        with open(output_json, "r") as f:
-                            nb_html_json = json.load(f)
-                        # check for hnn_version key
-                        if "hnn_version" in nb_html_json:
-                            previous_version = nb_html_json["hnn_version"]
-                    nb_html_json = {
-                        "full_executed": notebook_executed,
-                        "hnn_version": previous_version,
-                        **nb_html_json,
-                    }
-                    if dev_build:
-                        nb_html_json["commit"] = dev_build
-
-                with open(output_json, "w") as f:
-                    json.dump(nb_html_json, f, indent=4)
-                # ----------------------------------------
-
-                print(f"Successfully converted '{filename}' to html")
-
-                if not skip_notebook and not notebook_executed:
-                    print(
-                        f"Warning: the html and json outputs for '{filename}'"
-                        " may be incomplete."
-                        "\nPlease re-run the script with"
-                        " 'execute_notebooks=True' to ensure that the"
-                        " notebook outputs are correct."
-                    )
-
-    # save updated hashes
-    save_notebook_hashes(
-        updated_hashes,
-        hash_path,
-    )
-
-    return
-
 def _setup_root_and_input(input_folder):
     """
     if the current directory doesn't end in 'textbook', recursively look
@@ -854,9 +554,431 @@ def _execute_notebook(nb_path):
     )
     return loaded_notebook, notebook_was_run, notebook_executed
 
+def convert_notebooks_to_html(
+    input_folder=None,
+    use_base64=False,
+    write_html=False,
+    execute_notebooks=False,
+    force_execute_all=False,
+    dev_build=False,
+    hash_path="notebook_hashes.json",
+):
+    """
+    Executes and converts .ipynb files in the input folder to HTML.
+    """
+
+    # ==================== #
+    #        SETUP
+    # ==================== #
+
+    root, input_folder = _setup_root_and_input(input_folder)
+
+    # get notebook hashes from json
+    notebook_hashes = _load_notebook_hashes(hash_path)
+    updated_hashes = notebook_hashes.copy()
+
+    # get list of notebooks to skip
+    notebooks_to_skip = _load_notebooks_to_skip(dev_build)
+
+    # notify user of forced notebook re-execution
+    if force_execute_all:
+        print(
+            "The force_execute_all argument has been set to True. All "
+            "notebooks will be re-executed unless flagged to be skipped "
+            "in the notebooks_to_skip.json file."
+        )
+
+    # ==================== #
+    # Loop through notebooks
+    # ==================== #
+
+    # iterate through input directory and process notebooks
+    for current_directory, list_folders, list_files in os.walk(input_folder):
+        for filename in list_files:
+            if not filename.endswith(".ipynb"):
+                continue
+
+            print(f"\nProcessing notebook: {filename}")
+
+            # get the path to the notebook
+            nb_path = os.path.join(current_directory, filename)
+
+            # process notebook and update hash
+            processed_hash, \
+            loaded_notebook, \
+            notebook_executed, \
+            notebook_was_run = _process_notebook(
+                root=root,
+                nb_path=nb_path,
+                filename=filename,
+                current_directory=current_directory,
+                notebook_hashes=notebook_hashes,
+                notebooks_to_skip=notebooks_to_skip,
+                execute_notebooks=execute_notebooks,
+                force_execute_all=force_execute_all,
+                dev_build=dev_build,
+            )
+
+            # write notebook to html
+            html_content = _write_notebook_html(
+                loaded_notebook,
+                current_directory,
+                filename,
+                write_html=write_html,
+                dev_build=dev_build,
+                use_base64=use_base64,
+            )
+
+            # generate complete json output file
+            _write_notebook_json(
+                html_content,
+                filename,
+                current_directory,
+                notebook_executed,
+                notebook_was_run,
+                dev_build=dev_build,
+            )
+
+            updated_hashes[filename] = processed_hash
+
+    # save updated hashes
+    save_notebook_hashes(
+        updated_hashes,
+        hash_path,
+    )
+
+    return
+
+
+def _process_notebook(
+    root,
+    nb_path,
+    filename,
+    current_directory,
+    notebook_hashes,
+    notebooks_to_skip,
+    execute_notebooks,
+    force_execute_all,
+    dev_build,
+    # use_base64,
+    # write_html,
+):
+    """
+    Execute notebooks as needed, convert them to html and json,
+    and return the updated hash.
+    """
+
+    # get the notebook without executing it
+    loaded_notebook = get_notebook(
+        nb_path,
+        execute=False,
+    )
+
+    # check if the notebook has been fully executed
+    notebook_executed, \
+    nb_version, \
+    commit_check = notebook_has_json_output(
+        root=root,
+        cwd=current_directory,
+        filename=filename,
+        dev_build=dev_build,
+    )
+
+    # get current hash of the notebook
+    current_hash = hash_notebook(nb_path)
+
+    # flag for whether the notebook was run
+    notebook_was_run = False
+
+    skip_notebook = filename in notebooks_to_skip
+
+    if skip_notebook:
+        print(
+            f"Notebook '{filename}' has been flagged to be"
+            " skipped. Execution will not be attempted for"
+            " this notebook."
+        )
+        return (current_hash, loaded_notebook, notebook_executed, notebook_was_run)
+
+    # determine if notebook should be executed
+    # --------------------------------------------------
+    print(f"Checking status of {filename}")
+
+    should_execute = _should_execute_notebook(
+        filename,
+        notebook_hashes,
+        current_hash,
+        execute_notebooks,
+        force_execute_all,
+        dev_build,
+        commit_check,
+        notebook_executed,
+        nb_version,
+    )
+
+    if should_execute:
+        loaded_notebook, \
+        notebook_was_run, \
+        notebook_executed = _execute_notebook(nb_path)
+
+        print("Notebook has been executed")
+
+    # html_content = _write_notebook_html(
+    #     loaded_notebook,
+    #     current_directory,
+    #     filename,
+    #     write_html=write_html,
+    #     dev_build=dev_build,
+    #     use_base64=use_base64,
+    # )
+
+    # _write_notebook_json(
+    #     html_content,
+    #     filename,
+    #     current_directory,
+    #     notebook_executed,
+    #     notebook_was_run,
+    #     dev_build=dev_build,
+    # )
+
+    # print(f"Successfully converted '{filename}' to html")
+
+    if not skip_notebook and not notebook_executed:
+        print(
+            f"Warning: the html and json outputs for '{filename}'"
+            " may be incomplete."
+            "\nPlease re-run the script with"
+            " 'execute_notebooks=True' to ensure that the"
+            " notebook outputs are correct."
+        )
+
+    return (current_hash, loaded_notebook, notebook_executed, notebook_was_run)
+
+
+def _should_execute_notebook(
+    filename,
+    notebook_hashes,
+    current_hash,
+    execute_notebooks,
+    force_execute_all,
+    dev_build,
+    commit_check,
+    notebook_executed,
+    nb_version,
+):
+    """
+    Determine whether or not a notebook should be executed
+    """
+
+    # handle force_execute_all
+    if force_execute_all:
+        print(f"Executing {filename}")
+        return True
+
+    # 2) if the hash has not changed
+    # --------------------------------------------------
+    if (filename in notebook_hashes) and (notebook_hashes[filename] == current_hash):
+        if dev_build:
+            # check if the commit specified to use by the dev build
+            # matches the commit last used to run the notebook per the
+            # commit_check (returned by notebook_has_json_output)
+            #
+            # if the versions do not match, the notebook is flagged to
+            # be re-executed by setting "notebook_executed=False"
+            if dev_build != commit_check:
+                notebook_executed = False
+                print(f"Executing {filename} due to dev build commit mismatch.")
+                return True
+        else:
+            if Version(hnn_version) > Version(nb_version):
+                warnings.warn(
+                    "\n\n"
+                    "# -------------------------------------------------------"
+                    "\n"
+                    "# Warning: The notebook may have been executed on an"
+                    "\n"
+                    "# older version of hnn-core, as your installed version"
+                    "\n"
+                    "# is greater than version used to run the notebook"
+                    "\n"
+                    "# previously. Please consider re-executing this notebook"
+                    "\n#\n"
+                    "# Last version used to run notebook:"
+                    "\n"
+                    f"#    {nb_version}"
+                    "\n"
+                    "# Installed version:"
+                    "\n"
+                    f"#    {hnn_version}"
+                    "\n"
+                    "# -------------------------------------------------------"
+                    "\n\n"
+                )
+
+        if not notebook_executed:
+            print(
+                f"Warning: Notebook {filename} has not been"
+                " fully executed on the specified version"
+                " of hnn-core."
+            )
+            if execute_notebooks:
+                return True
+            else:
+                print(
+                    "Notebook execution skipped since"
+                    " execute_notebooks is False."
+                )
+                return False
+        else:
+            print(
+                f"Notebook {filename} is unchanged and already"
+                " fully executed"
+            )
+            return False
+
+    # 3) if notebook new or hash has changed
+    # --------------------------------------------------
+    else:
+        print(
+            f"Notebook {filename} is new or has been updated and"
+            " needs to be executed"
+        )
+        if execute_notebooks:
+            return True
+        else:
+            print(
+                "Skipping notebook execution since"
+                " execute_notebooks is False"
+            )
+            return False
+
+
+def _write_notebook_html(
+    loaded_notebook,
+    current_directory,
+    filename,
+    write_html=False,
+    dev_build=False,
+    use_base64=False,
+):
+    """
+    Extract HTML from notebook and optionally write to a standalone HTML file.
+    Returns the HTML content.
+    """
+
+    # extract and process the html from the notebook
+    html_content = extract_html_from_notebook(
+        loaded_notebook,
+        current_directory,
+        filename,
+        dev_build=dev_build,
+        use_base64=use_base64,
+    )
+
+    # optionally write the converted notebook to a
+    # standalone html file
+    if write_html:
+        if dev_build:
+            dev_dir = current_directory.replace(
+                "content",
+                "dev",
+            )
+            output_file = os.path.join(
+                dev_dir,
+                f"{os.path.splitext(filename)[0]}.html",
+            )
+            if not os.path.exists(dev_dir):
+                os.makedirs(dev_dir)
+        else:
+            output_file = os.path.join(
+                current_directory,
+                f"{os.path.splitext(filename)[0]}.html",
+            )
+
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write("<html><body>\n")
+            f.write(html_content)
+            f.write("\n</body></html>")
+
+    return html_content
+
+
+def _write_notebook_json(
+    html_content,
+    filename,
+    current_directory,
+    notebook_executed,
+    notebook_was_run,
+    dev_build=False,
+):
+    """
+    Generate structured json output for the notebook.
+    """
+
+    # ----------------------------------------
+    # generated structured json output
+    # ----------------------------------------
+    # Note: this section pertains to a planned enhancement
+    # to enable inserting sections of a notebook into an
+    # html file by specifing the headers to include; e.g.,
+    # including [[notebook][start header][end header]] in your
+    # .md file would inject only the .html for those header
+    # sections into your html output file
+
+    nb_html_json = html_to_json(
+        html_content,
+        filename,
+    )
+
+    if dev_build:
+        output_json = os.path.join(
+            current_directory.replace("content", "dev"),
+            f"{os.path.splitext(filename)[0]}.json",
+        )
+    else:
+        output_json = os.path.join(
+            current_directory,
+            f"{os.path.splitext(filename)[0]}.json",
+        )
+
+    if notebook_was_run:
+        # Add execution status directly to json output
+        # Track version used in notebook execution
+        nb_html_json = {
+            "full_executed": notebook_executed,
+            "hnn_version": hnn_version,
+            **nb_html_json,
+        }
+        if dev_build:
+            print("Dev version to use:", dev_build)
+            nb_html_json["commit"] = dev_build
+    else:
+        # get previously-used hnn version from json file
+        previous_version = "NA"
+        if os.path.exists(output_json):
+            with open(output_json, "r") as f:
+                nb_html_json = json.load(f)
+            # check for hnn_version key
+            if "hnn_version" in nb_html_json:
+                previous_version = nb_html_json["hnn_version"]
+        nb_html_json = {
+            "full_executed": notebook_executed,
+            "hnn_version": previous_version,
+            **nb_html_json,
+        }
+        if dev_build:
+            nb_html_json["commit"] = dev_build
+
+    with open(output_json, "w") as f:
+        json.dump(nb_html_json, f, indent=4)
+    # ----------------------------------------
+
+    return output_json
+
+
 # %%
 
-run_test = False
+run_test = True
 
 def test_nb_conversion(input_folder=None):
     convert_notebooks_to_html(
