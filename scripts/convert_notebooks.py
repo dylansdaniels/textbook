@@ -639,6 +639,8 @@ def convert_notebooks_to_html(
                 dev_build=dev_build,
             )
 
+            print(f"Successfully converted '{filename}' to html")
+
             updated_hashes[filename] = processed_hash
 
     # save updated hashes
@@ -660,8 +662,6 @@ def _process_notebook(
     execute_notebooks,
     force_execute_all,
     dev_build,
-    # use_base64,
-    # write_html,
 ):
     """
     Execute notebooks as needed, convert them to html and json,
@@ -723,26 +723,6 @@ def _process_notebook(
 
         print("Notebook has been executed")
 
-    # html_content = _write_notebook_html(
-    #     loaded_notebook,
-    #     current_directory,
-    #     filename,
-    #     write_html=write_html,
-    #     dev_build=dev_build,
-    #     use_base64=use_base64,
-    # )
-
-    # _write_notebook_json(
-    #     html_content,
-    #     filename,
-    #     current_directory,
-    #     notebook_executed,
-    #     notebook_was_run,
-    #     dev_build=dev_build,
-    # )
-
-    # print(f"Successfully converted '{filename}' to html")
-
     if not skip_notebook and not notebook_executed:
         print(
             f"Warning: the html and json outputs for '{filename}'"
@@ -767,7 +747,45 @@ def _should_execute_notebook(
     nb_version,
 ):
     """
-    Determine whether or not a notebook should be executed
+    Determine whether or not a notebook should be executed based on
+    various factors, including:
+        - Has the notebook been executed previously
+        - Is the notebook "new" (i.e., it is not associated with a json output)
+        - Is the user performing a 'dev' build
+        - Has the notebook hash changed since the last execution
+
+    A warning will be printed to the terminal if execute_notebooks is False
+    and the locally-installed version of hnn-core is greater than the version
+    last used to run the notebook
+
+    Inputs
+    ------
+    filename : str
+    notebook_hashes : dict
+        Mapping of notebook filenames to their previously-determined hash values,
+        loaded from notebook_hashes.json
+    current_hash : str
+        Newly-determined notebook hash based on the file's current state
+    execute_notebooks : bool
+        Flag indicating whether or not notebooks should be executed
+    force_execute_all : bool
+        Flag to force execution regardless of hash/version parity/differences
+    dev_build : str or bool
+        False if not running a dev build. Otherwise, this variable will be
+        a string containing the commit hash to be used for the build
+    commit_check : str
+        Contains the commit hash from the previous execution, loaded from the
+        notebook's corresponding json output file. Used for checking/validating
+        versions when doing a 'dev' build
+    notebook_executed : bool
+        Flag for whether or not the notebook is already executed per the
+        notebook's corresponding json output file
+    nb_version : str
+        The version of hnn-core that was last used to execute the notebook
+
+    Returns
+    -------
+        bool : a boolean indicating if the notebook should be executed
     """
 
     # handle force_execute_all
