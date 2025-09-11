@@ -18,7 +18,7 @@ from nbconvert.preprocessors import (
 from packaging.version import Version
 
 
-def save_plot_as_image(
+def _save_plot_as_image(
     img_data,
     img_filename,
     output_dir,
@@ -33,7 +33,7 @@ def save_plot_as_image(
     return
 
 
-def html_to_json(
+def _html_to_json(
     html: str,
     filename: str,
 ):
@@ -99,7 +99,7 @@ def html_to_json(
     return contents
 
 
-def structure_json(contents):
+def _structure_json(contents):
     """
     Determine the hierarchy of sections based on levels without adding content.
     Returns a list of sections in order of their hierarchy.
@@ -171,7 +171,7 @@ def structure_json(contents):
     return hierarchy
 
 
-def extract_html_from_notebook(
+def _extract_html_from_notebook(
     notebook,
     input_dir,
     filename,
@@ -300,7 +300,7 @@ def extract_html_from_notebook(
                         if not os.path.exists(output_dir):
                             os.makedirs(output_dir)
 
-                        save_plot_as_image(
+                        _save_plot_as_image(
                             img_data,
                             img_filename,
                             output_dir,
@@ -375,7 +375,7 @@ def extract_html_from_notebook(
     return html_output
 
 
-def hash_notebook(notebook_path):
+def _hash_notebook(notebook_path):
     """Generate a SHA256 hash of the notebook, ignoring outputs/metadata."""
 
     with open(notebook_path, "r", encoding="utf-8") as f:
@@ -413,7 +413,7 @@ def _load_notebook_hashes(hash_path):
     return {}
 
 
-def save_notebook_hashes(
+def _save_notebook_hashes(
     new_hashes,
     hash_path,
 ):
@@ -424,7 +424,7 @@ def save_notebook_hashes(
         json.dump(new_hashes, f, indent=4)
 
 
-def get_notebook(
+def _get_notebook(
     notebook_path,
     execute,
     timeout=600,
@@ -440,7 +440,7 @@ def get_notebook(
     return notebook
 
 
-def is_notebook_fully_executed(notebook):
+def _is_notebook_fully_executed(notebook):
     """
     Check if a notebook object has been fully executed.
     Returns True if all code cells have an associated execution_count.
@@ -451,7 +451,7 @@ def is_notebook_fully_executed(notebook):
     return True
 
 
-def notebook_has_json_output(
+def _notebook_has_json_output(
     root,
     cwd,
     filename,
@@ -543,113 +543,16 @@ def _load_notebooks_to_skip(dev_build):
     return notebooks_to_skip
 
 def _execute_notebook(nb_path):
-    loaded_notebook = get_notebook(
+    loaded_notebook = _get_notebook(
         nb_path,
         execute=True,
     )
     notebook_was_run = True
     print("Notebook has been executed")
-    notebook_executed = is_notebook_fully_executed(
+    notebook_executed = _is_notebook_fully_executed(
         loaded_notebook,
     )
     return loaded_notebook, notebook_was_run, notebook_executed
-
-def convert_notebooks_to_html(
-    input_folder=None,
-    use_base64=False,
-    write_html=False,
-    execute_notebooks=False,
-    force_execute_all=False,
-    dev_build=False,
-    hash_path="notebook_hashes.json",
-):
-    """
-    Executes and converts .ipynb files in the input folder to HTML.
-    """
-
-    # ==================== #
-    #        SETUP
-    # ==================== #
-
-    root, input_folder = _setup_root_and_input(input_folder)
-
-    # get notebook hashes from json
-    notebook_hashes = _load_notebook_hashes(hash_path)
-    updated_hashes = notebook_hashes.copy()
-
-    # get list of notebooks to skip
-    notebooks_to_skip = _load_notebooks_to_skip(dev_build)
-
-    # notify user of forced notebook re-execution
-    if force_execute_all:
-        print(
-            "The force_execute_all argument has been set to True. All "
-            "notebooks will be re-executed unless flagged to be skipped "
-            "in the notebooks_to_skip.json file."
-        )
-
-    # ==================== #
-    # Loop through notebooks
-    # ==================== #
-
-    # iterate through input directory and process notebooks
-    for current_directory, list_folders, list_files in os.walk(input_folder):
-        for filename in list_files:
-            if not filename.endswith(".ipynb"):
-                continue
-
-            print(f"\nProcessing notebook: {filename}")
-
-            # get the path to the notebook
-            nb_path = os.path.join(current_directory, filename)
-
-            # process notebook and update hash
-            processed_hash, \
-            loaded_notebook, \
-            notebook_executed, \
-            notebook_was_run = _process_notebook(
-                root=root,
-                nb_path=nb_path,
-                filename=filename,
-                current_directory=current_directory,
-                notebook_hashes=notebook_hashes,
-                notebooks_to_skip=notebooks_to_skip,
-                execute_notebooks=execute_notebooks,
-                force_execute_all=force_execute_all,
-                dev_build=dev_build,
-            )
-
-            # write notebook to html
-            html_content = _write_notebook_html(
-                loaded_notebook,
-                current_directory,
-                filename,
-                write_html=write_html,
-                dev_build=dev_build,
-                use_base64=use_base64,
-            )
-
-            # generate complete json output file
-            _write_notebook_json(
-                html_content,
-                filename,
-                current_directory,
-                notebook_executed,
-                notebook_was_run,
-                dev_build=dev_build,
-            )
-
-            print(f"Successfully converted '{filename}' to html")
-
-            updated_hashes[filename] = processed_hash
-
-    # save updated hashes
-    save_notebook_hashes(
-        updated_hashes,
-        hash_path,
-    )
-
-    return
 
 
 def _process_notebook(
@@ -669,7 +572,7 @@ def _process_notebook(
     """
 
     # get the notebook without executing it
-    loaded_notebook = get_notebook(
+    loaded_notebook = _get_notebook(
         nb_path,
         execute=False,
     )
@@ -678,7 +581,7 @@ def _process_notebook(
     # get the nb_version as well as the commit hash
     notebook_executed, \
     nb_version, \
-    commit_check = notebook_has_json_output(
+    commit_check = _notebook_has_json_output(
         root=root,
         cwd=current_directory,
         filename=filename,
@@ -686,7 +589,7 @@ def _process_notebook(
     )
 
     # hash the notebook in its current state
-    current_hash = hash_notebook(nb_path)
+    current_hash = _hash_notebook(nb_path)
 
     # flag for whether the notebook was run, initially
     # set to False
@@ -836,7 +739,7 @@ def _should_execute_notebook(
         if dev_build:
             # check if the commit specified to use by the dev build
             # matches the commit last used to run the notebook per the
-            # commit_check (returned by notebook_has_json_output)
+            # commit_check (returned by _notebook_has_json_output)
             #
             # if the versions do not match, the notebook is flagged to
             # be re-executed by setting "notebook_executed=False"
@@ -922,7 +825,7 @@ def _write_notebook_html(
     """
 
     # extract and process the html from the notebook
-    html_content = extract_html_from_notebook(
+    html_content = _extract_html_from_notebook(
         loaded_notebook,
         current_directory,
         filename,
@@ -980,7 +883,7 @@ def _write_notebook_json(
     # .md file would inject only the .html for those header
     # sections into your html output file
 
-    nb_html_json = html_to_json(
+    nb_html_json = _html_to_json(
         html_content,
         filename,
     )
@@ -1030,6 +933,103 @@ def _write_notebook_json(
 
     return output_json
 
+
+def convert_notebooks_to_html(
+    input_folder=None,
+    use_base64=False,
+    write_html=False,
+    execute_notebooks=False,
+    force_execute_all=False,
+    dev_build=False,
+    hash_path="notebook_hashes.json",
+):
+    """
+    Executes and converts .ipynb files in the input folder to HTML.
+    """
+
+    # ==================== #
+    #        SETUP
+    # ==================== #
+
+    root, input_folder = _setup_root_and_input(input_folder)
+
+    # get notebook hashes from json
+    notebook_hashes = _load_notebook_hashes(hash_path)
+    updated_hashes = notebook_hashes.copy()
+
+    # get list of notebooks to skip
+    notebooks_to_skip = _load_notebooks_to_skip(dev_build)
+
+    # notify user of forced notebook re-execution
+    if force_execute_all:
+        print(
+            "The force_execute_all argument has been set to True. All "
+            "notebooks will be re-executed unless flagged to be skipped "
+            "in the notebooks_to_skip.json file."
+        )
+
+    # ==================== #
+    # Loop through notebooks
+    # ==================== #
+
+    # iterate through input directory and process notebooks
+    for current_directory, list_folders, list_files in os.walk(input_folder):
+        for filename in list_files:
+            if not filename.endswith(".ipynb"):
+                continue
+
+            print(f"\nProcessing notebook: {filename}")
+
+            # get the path to the notebook
+            nb_path = os.path.join(current_directory, filename)
+
+            # process notebook and update hash
+            processed_hash, \
+            loaded_notebook, \
+            notebook_executed, \
+            notebook_was_run = _process_notebook(
+                root=root,
+                nb_path=nb_path,
+                filename=filename,
+                current_directory=current_directory,
+                notebook_hashes=notebook_hashes,
+                notebooks_to_skip=notebooks_to_skip,
+                execute_notebooks=execute_notebooks,
+                force_execute_all=force_execute_all,
+                dev_build=dev_build,
+            )
+
+            # write notebook to html
+            html_content = _write_notebook_html(
+                loaded_notebook,
+                current_directory,
+                filename,
+                write_html=write_html,
+                dev_build=dev_build,
+                use_base64=use_base64,
+            )
+
+            # generate complete json output file
+            _write_notebook_json(
+                html_content,
+                filename,
+                current_directory,
+                notebook_executed,
+                notebook_was_run,
+                dev_build=dev_build,
+            )
+
+            print(f"Successfully converted '{filename}' to html")
+
+            updated_hashes[filename] = processed_hash
+
+    # save updated hashes
+    _save_notebook_hashes(
+        updated_hashes,
+        hash_path,
+    )
+
+    return
 
 # %%
 
