@@ -674,7 +674,8 @@ def _process_notebook(
         execute=False,
     )
 
-    # check if the notebook has been fully executed
+    # check if the notebook has been fully executed, and
+    # get the nb_version as well as the commit hash
     notebook_executed, \
     nb_version, \
     commit_check = notebook_has_json_output(
@@ -684,12 +685,15 @@ def _process_notebook(
         dev_build=dev_build,
     )
 
-    # get current hash of the notebook
+    # hash the notebook in its current state
     current_hash = hash_notebook(nb_path)
 
-    # flag for whether the notebook was run
+    # flag for whether the notebook was run, initially
+    # set to False
     notebook_was_run = False
 
+    # identify if notebook should be skipped and, if
+    # so, return gracefully
     skip_notebook = filename in notebooks_to_skip
 
     if skip_notebook:
@@ -701,7 +705,6 @@ def _process_notebook(
         return (current_hash, loaded_notebook, notebook_executed, notebook_was_run)
 
     # determine if notebook should be executed
-    # --------------------------------------------------
     print(f"Checking status of {filename}")
 
     should_execute = _should_execute_notebook(
@@ -716,6 +719,7 @@ def _process_notebook(
         nb_version,
     )
 
+    # execute notebook as needed
     if should_execute:
         loaded_notebook, \
         notebook_was_run, \
@@ -723,13 +727,46 @@ def _process_notebook(
 
         print("Notebook has been executed")
 
-    if not skip_notebook and not notebook_executed:
-        print(
-            f"Warning: the html and json outputs for '{filename}'"
-            " may be incomplete."
-            "\nPlease re-run the script with"
-            " 'execute_notebooks=True' to ensure that the"
-            " notebook outputs are correct."
+    # warning for the case when a notebook was flagged to
+    # be skipped, but the notebook as it stands is not
+    # fully executed.
+    if (not skip_notebook) and (not should_execute) and (not notebook_executed):
+        warnings.warn(
+            "\n\n"
+            "# -------------------------------------------------------"
+            "\n"
+            f"# Warning: the html and json outputs for '{filename}'"
+            "\n"
+            "# may be incomplete."
+            "\n\n"
+            "# Please re-run the script with 'execute_notebooks=True'"
+            '\n'
+            "# to ensure that the notebook outputs are correct."
+            "\n"
+            "# -------------------------------------------------------"
+            "\n\n"
+
+        )
+
+    # warning for the case when notebook execution was attempted
+    # but the notebook was not fully executed for some reason
+    if (not skip_notebook) and (should_execute) and (not notebook_executed):
+        warnings.warn(
+            "\n\n"
+            "# -------------------------------------------------------"
+            "\n"
+            f"# Warning: the html and json outputs for '{filename}'"
+            "\n"
+            "# may be incomplete."
+            "\n\n"
+            "# Notebook execution was attempted but did not result in"
+            "\n"
+            "# a fully-executed notebook. Please investigate the notebook"
+            "\n"
+            "# to determine why execution was not successfully completed"
+            "\n"
+            "# -------------------------------------------------------"
+            "\n\n"
         )
 
     return (current_hash, loaded_notebook, notebook_executed, notebook_was_run)
