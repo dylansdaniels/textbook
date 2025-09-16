@@ -222,7 +222,7 @@ def _extract_html_from_notebook(
                 <!-- code cell -->
                 <div class='code-cell'>
                     <code class='language-python'>
-                        {cell['source']}
+                        {cell["source"]}
                     </code>
                 </div>
             """)
@@ -232,7 +232,6 @@ def _extract_html_from_notebook(
             # add code cell outputs
             # ==============================
             for output in cell.get("outputs", []):
-
                 # handle plain text outputs
                 # ------------------------------
                 if "text/plain" in output.get("data", {}):
@@ -504,6 +503,7 @@ def _notebook_has_json_output(
 
     return execution_check, version_check, commit_check
 
+
 def _setup_root_and_input(input_folder):
     """
     if the current directory doesn't end in 'textbook', recursively look
@@ -519,6 +519,7 @@ def _setup_root_and_input(input_folder):
         input_folder = os.path.join(root, "content")
 
     return root, input_folder
+
 
 def _load_notebooks_to_skip(dev_build):
     """
@@ -541,6 +542,7 @@ def _load_notebooks_to_skip(dev_build):
         notebooks_to_skip = notebooks_to_skip["skip_execution"]
 
     return notebooks_to_skip
+
 
 def _execute_notebook(nb_path):
     loaded_notebook = _get_notebook(
@@ -643,12 +645,11 @@ def _process_notebook(
             "# may be incomplete."
             "\n\n"
             "# Please re-run the script with 'execute_notebooks=True'"
-            '\n'
+            "\n"
             "# to ensure that the notebook outputs are correct."
             "\n"
             "# -------------------------------------------------------"
             "\n\n"
-
         )
 
     # warning for the case when notebook execution was attempted
@@ -672,7 +673,12 @@ def _process_notebook(
             "\n\n"
         )
 
-    return (current_hash, loaded_notebook, notebook_executed, notebook_was_run)
+    return (
+        current_hash,
+        loaded_notebook,
+        notebook_executed,
+        notebook_was_run,
+    )
 
 
 def _should_execute_notebook(
@@ -1031,9 +1037,11 @@ def convert_notebooks_to_html(
 
     return
 
+
 # %%
 
-run_test = True
+run_test = False
+
 
 def test_nb_conversion(input_folder=None):
     convert_notebooks_to_html(
@@ -1046,4 +1054,3 @@ def test_nb_conversion(input_folder=None):
 
 if run_test:
     test_nb_conversion("tests")
-
