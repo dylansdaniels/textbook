@@ -6,6 +6,7 @@ import json
 import os
 import re
 import textwrap
+import warnings
 
 import nbformat
 import pypandoc
@@ -656,8 +657,9 @@ def convert_notebooks_to_html(
                             if dev_build != commit_check:
                                 notebook_executed = False
                         else:
-                            if Version(hnn_version) > Version(nb_version):
-                                raise Warning(
+                            if Version(hnn_version) > Version(nb_version) or \
+                                nb_version == "NA":
+                                warnings.warn(
                                     "The notebook may have been executed on an "
                                     "older version of hnn-core, as your installed "
                                     "version is greater than version used to run "
