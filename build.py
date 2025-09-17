@@ -572,13 +572,6 @@ def main():
                     "\n   $ pip install --upgrade --force-reinstall --no-cache-dir "
                     f'"hnn-core[dev] @ git+https://github.com/{repo}/hnn-core.git@{commit}"'
                 )
-            else:
-                raise RuntimeError(
-                    "\nInvalid dev_version argument."
-                    "\nUse 'local' for the latest commit on your local dev version."
-                    "\nUse 'master' for the latest commit on the upstream master."
-                    "\nUse 'installed' for the latest commit on your installed hnn-core"
-                )
     else:
         commit_hash = False
 
