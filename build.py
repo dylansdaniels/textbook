@@ -153,8 +153,14 @@ def add_notebook_to_html(
             <a href='notebook_name' download>
                 <button class="notebook-download">
                     <svg xmlns="http://www.w3.org/2000/svg"
-                        width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="7 10 12 15 17 10"/>
                         <line x1="12" y1="15" x2="12" y2="3"/>
@@ -622,7 +628,7 @@ def main():
         write_html=True,
         execute_notebooks=args.execute_notebooks,
         force_execute_all=args.force_execute_all,
-        cloud_deploy=args.cloud_deploy,
+        # cloud_deploy=args.cloud_deploy,
         # dev_build=args.build_on_dev,
         dev_build=commit_hash,
     )
