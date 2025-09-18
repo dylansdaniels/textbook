@@ -258,29 +258,23 @@
     # Dylan Daniels
 -->
 
-		<div class="notebook-download-wrapper">
-		    <a href='plot_firing_pattern_notebook.ipynb' download>
-		        <button class="notebook-download">
-		            <svg xmlns="http://www.w3.org/2000/svg"
-		                width="20"
-		                height="20"
-		                viewBox="0 0 24 24"
-		                fill="none"
-		                stroke="currentColor"
-		                stroke-width="2"
-		                stroke-linecap="round"
-		                stroke-linejoin="round">
-		                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-		                <polyline points="7 10 12 15 17 10"/>
-		                <line x1="12" y1="15" x2="12" y2="3"/>
-		            </svg>
-		            <span style="width: 8px"></span>
-		            <span>Download Notebook</span>
-		        </button>
-		    </a>
-		</div>
+        <div class="notebook-download-wrapper">
+            <a href='plot_firing_pattern_notebook.ipynb' download>
+                <button class="notebook-download">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    <span style="width: 8px"></span>
+                    <span>Download Notebook</span>
+                </button>
+            </a>
+        </div>
 
-
+    
 <div class='markdown-cell'>
     <h1>7.1: Plot firing pattern</h1>
 <p>This example demonstrates how to inspect the firing pattern of cells
@@ -388,7 +382,7 @@ dpls = simulate_dipole(net, tstop=170., record_vsec='soma')
 </div>
     <div class='output-code'>
         Joblib will run 1 trial(s) in parallel by distributing trials over 1 jobs.
-Loading custom mechanism files from /opt/homebrew/Caskroom/miniconda/base/envs/textbook-env-mpi/lib/python3.12/site-packages/hnn_core/mod/arm64/.libs/libnrnmech.so
+Loading custom mechanism files from /usr/share/miniconda/envs/textbook-env-mpi/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
 Building the NEURON model
 
         [Done]
@@ -400,12 +394,13 @@ Trial 1: 30.0 ms...
 Trial 1: 40.0 ms...
 Trial 1: 50.0 ms...
 Trial 1: 60.0 ms...
-Trial 1: 70.0 ms...
-Trial 1: 80.0 ms...
 
-        Trial 1: 90.0 ms...
+        Trial 1: 70.0 ms...
+Trial 1: 80.0 ms...
+Trial 1: 90.0 ms...
 Trial 1: 100.0 ms...
-Trial 1: 110.0 ms...
+
+        Trial 1: 110.0 ms...
 Trial 1: 120.0 ms...
 Trial 1: 130.0 ms...
 Trial 1: 140.0 ms...
@@ -507,7 +502,7 @@ plt.show()
     Out:
 </div>
     <div class='output-code'>
-        Writing file /var/folders/j9/rnclgw5s2kn7l6wt55q4gv7c0000gp/T/tmpztut58lr/spk_0.txt
+        Writing file /tmp/tmpiros9d_h/spk_0.txt
 
         &lt;Figure size 640x480 with 1 Axes&gt;
     </div>

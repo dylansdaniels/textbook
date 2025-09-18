@@ -5,8 +5,6 @@ import html
 import json
 import os
 import re
-import textwrap
-import warnings
 
 import nbformat
 import pypandoc
@@ -15,7 +13,6 @@ from nbconvert.preprocessors import (
     ClearOutputPreprocessor,
     ExecutePreprocessor,
 )
-from packaging.version import Version
 
 
 def save_plot_as_image(
@@ -44,16 +41,13 @@ def html_to_json(
     contents = {filename: {}}
 
     # variable to track section content and metadata
-    current_html = list()
+    current_html = None
     current_title = None
     current_level = None
 
     # split html into lines while replacing tabs with spaces
     lines = [
-        line.replace(
-            "\t",
-            "    ",
-        )
+        line.replace("\t", "    ")
         for line in html.splitlines()
         # if line.strip()
     ]
@@ -175,7 +169,6 @@ def extract_html_from_notebook(
     notebook,
     input_dir,
     filename,
-    dev_build=False,
     use_base64=False,
 ):
     """Extracts HTML for cell contents and outputs,
@@ -186,116 +179,78 @@ def extract_html_from_notebook(
     delim = os.path.sep
     aggregated_output = ""
 
-    # helper for aggregating outputs
-    # -----------------------------
-    def _aggregate_outputs(
-        html_output,
-        accumulated_outputs,
-    ):
-        """
-        If there are accumulated outputs, append them to html_output and reset.
-        """
-        if accumulated_outputs:
-            cell_output_html = textwrap.dedent(f"""
-                <!-- code cell output -->
-                <div class='output-cell'>
-                    <div class='output-label'>
-                        Out:
-                    </div>
-                    <div class='output-code'>
-                        {accumulated_outputs}
-                    </div>
-                </div>
-            """)
-            html_output.append(cell_output_html)
-        return ""
-
     for cell in notebook["cells"]:
-        # ------------------------------
-        # process code cells
-        # ------------------------------
         if cell["cell_type"] == "code":
-            # ==============================
             # add code cell contents
-            # ==============================
-            code_cell_html = textwrap.dedent(f"""
-                <!-- code cell -->
-                <div class='code-cell'>
-                    <code class='language-python'>
-                        {cell['source']}
-                    </code>
-                </div>
-            """)
-            html_output.append(code_cell_html)
+            html_output.append(
+                "<div class='code-cell'>"
+                "\n\t<code class='language-python'>"
+                f"\n\t\t{cell['source']}"
+                "\n\t</code>"
+                "\n</div>"
+            )
 
-            # ==============================
             # add code cell outputs
-            # ==============================
             for output in cell.get("outputs", []):
-
-                # handle plain text outputs
-                # ------------------------------
+                # handle plain outputs (e.g., function returns)
                 if "text/plain" in output.get("data", {}):
                     text_output = output["data"]["text/plain"]
-                    # escape '<' and '>' characters which can be
+                    # escape the '<' and '>' characters which can be
                     # incorrectly interpreted as HTML tags
                     escaped_text_output = html.escape(text_output)
 
-                    # aggregate outputs
+                    # Aggregate plain text outputs
                     aggregated_output += f"\n\t\t{escaped_text_output}"
 
-                # handle stdout
-                # ------------------------------
-                # e.g., this includes outputs from print statements
+                # handle stdout (e.g., outputs from print statements)
                 if (
                     output.get("output_type") == "stream"
                     and output.get("name") == "stdout"
                 ):
                     stream_output = output.get("text", "")
-                    # escape '<' and '>' characters
+                    # escape < and > characters
                     escaped_stream_output = html.escape(stream_output)
 
-                    # aggregate outputs
                     aggregated_output += f"\n\t\t{escaped_stream_output}"
 
-                # handle image outputs (e.g., plots)
-                # ------------------------------
+                # handle image outputs (e.g., plots) using either Base64
+                # encoding or .png files
                 if "image/png" in output.get("data", {}):
-                    # before processing the image, append any already-accumulated
-                    # outputs to html_output and re-set aggregated_output to ""
-                    aggregated_output = _aggregate_outputs(
-                        html_output,
-                        aggregated_output,
-                    )
+                    # If there are accumulated outputs, output them first
+                    if aggregated_output:
+                        html_output.append(
+                            "<div class='output-cell'>"
+                            "<div class='output-label'>"
+                            "\n\tOut:"
+                            "\n</div>"
+                            "\n\t<div class='output-code'>"
+                            f"{aggregated_output}"
+                            "\n\t</div>"
+                            "\n</div>"
+                        )
+                        aggregated_output = ""
 
                     img_data = output["data"]["image/png"]
 
-                    # optional Base64 encoding for image embedding
-                    # ------------------------------
                     if use_base64:
-                        output_base64_html = textwrap.dedent(f"""
-                            <!-- code cell image -->
-                            <div class='output-cell'>
-                                <img src='data:image/png;base64,{img_data}'/>
-                            </div>
-                        """)
-                        html_output.append(output_base64_html)
-
-                    # standard image processing using saved .png file
-                    # ------------------------------
+                        # optional Base64 encoding for image embedding
+                        html_output.append(
+                            "<div class='output-cell'>"
+                            "\n\t<img src='data:image/png;base64,"
+                            f"{img_data}'/>"
+                            "\n</div>"
+                        )
                     else:
+                        # save the image as a file and reference it in HTML
                         fig_id += 1
-                        img_filename = f"fig_{fig_id:02d}.png"
+                        if fig_id <= 10:
+                            img_filename = f"fig_0{fig_id}.png"
+                        else:
+                            img_filename = f"fig_{fig_id}.png"
 
                         output_folder = "output_nb_" + f"{filename.split('.ipynb')[0]}"
-                        output_dir = f"{input_dir}{delim}{output_folder}"
 
-                        # if doing a dev build, switch the output directory
-                        if dev_build:
-                            output_dir = output_dir.replace(
-                                "content",
-                                "dev",
-                            )
+                        output_dir = f"{input_dir}{delim}{output_folder}"
 
                         if not os.path.exists(output_dir):
                             os.makedirs(output_dir)
@@ -305,50 +260,44 @@ def extract_html_from_notebook(
                             img_filename,
                             output_dir,
                         )
-
-                        output_img_html = textwrap.dedent(f"""
-                            <!-- code cell image -->
-                            <div class='output-cell'>
-                                <img src='{output_folder}{delim}{img_filename}'/>
-                            </div>
-                        """)
-                        html_output.append(output_img_html)
+                        html_output.append(
+                            "<div class='output-cell'>"
+                            f"\n\t<img src='{output_folder}{delim}"
+                            f"{img_filename}'/>"
+                            "\n</div>"
+                        )
 
                 # handle errors
-                # ------------------------------
                 if output.get("output_type") == "error":
-                    error_message = "\n".join(
-                        output.get(
-                            "traceback",
-                            [],
-                        ),
+                    error_message = "\n".join(output.get("traceback", []))
+                    html_output.append(
+                        "<div class='output-cell error'>"
+                        "\n\t<pre>"
+                        f"\n\t\t{error_message}"
+                        "\n\t</pre>"
+                        "\n</div>"
                     )
-                    output_error_html = textwrap.dedent(f"""
-                        <!-- code cell error -->
-                        <div class='output-cell error'>
-                            <pre>
-                                {error_message}
-                            </pre>
-                        </div>
-                    """)
-                    html_output.append(output_error_html)
 
-            # ==============================
-            # accumulate remaining cell outputs
-            # ==============================
-            # If there are accumulated outputs for the cell that have not
-            # yet been added to the html, append the outputs to html_output
-            aggregated_output = _aggregate_outputs(
-                html_output,
-                aggregated_output,
-            )
+            # If there are any accumulated outputs after processing all
+            # outputs for the cell
+            if aggregated_output:
+                html_output.append(
+                    "<div class='output-cell'>"
+                    "<div class='output-label'>"
+                    "\n\tOut:"
+                    "\n</div>"
+                    "\n\t<div class='output-code'>"
+                    f"{aggregated_output}"
+                    "\n\t</div>"
+                    "\n</div>"
+                )
+                aggregated_output = ""
 
-        # ------------------------------
-        # process "markdown" cells
-        # ------------------------------
         elif cell["cell_type"] == "markdown":
             # escape < and > characters
             markdown_content = html.escape(cell["source"])
+
+            # html_content = markdown.markdown(markdown_content)
 
             html_content = pypandoc.convert_text(
                 markdown_content,
@@ -362,13 +311,14 @@ def extract_html_from_notebook(
                     "markdown-auto_identifiers",
                 ],
             )
-            markdown_html_output = textwrap.dedent(f"""
-                <!-- markdown cell -->
-                <div class='markdown-cell'>
-                    {html_content}
-                </div>
-            """)
-            html_output.append(markdown_html_output)
+
+            # print(
+            #     "Markdown:", type(html_content), html_content[0:50],
+            #     '\n',
+            #     "Pandoc:", type(test), test[0:50]
+            # )
+
+            html_output.append(f"<div class='markdown-cell'>\n\t{html_content}\n</div>")
 
     html_output = "\n".join(html_output)
 
@@ -434,8 +384,14 @@ def get_notebook(
         notebook = nbformat.read(f, as_version=4)
 
     if execute:
-        ep = ExecutePreprocessor(timeout=timeout, kernel_name="python3")
-        ep.preprocess(notebook, {"metadata": {"path": os.path.dirname(notebook_path)}})
+        ep = ExecutePreprocessor(
+            timeout=timeout,
+            kernel_name="python3",
+        )
+        ep.preprocess(
+            notebook,
+            {"metadata": {"path": os.path.dirname(notebook_path)}},
+        )
 
     return notebook
 
@@ -453,50 +409,21 @@ def is_notebook_fully_executed(notebook):
 
 def notebook_has_json_output(
     root,
-    cwd,
     filename,
-    dev_build=False,
 ):
     """
     Check if the notebook has been fully executed by checking against the
     json output file.
     """
-    if dev_build:
-        wd = cwd.split("content")[-1].lstrip(os.sep)
-        json_path = os.path.join(
-            root,
-            "dev",
-            wd,
-            f"{os.path.splitext(filename)[0]}.json",
-        )
-
-    else:
-        json_path = os.path.join(
-            cwd,
-            f"{os.path.splitext(filename)[0]}.json",
-        )
-
+    json_path = os.path.join(root, f"{os.path.splitext(filename)[0]}.json")
     execution_check = False
-    version_check = False
-    commit_check = False
 
     if os.path.exists(json_path):
         with open(json_path, "r") as file:
             nb_outputs = json.load(file)
-            execution_check = nb_outputs.get(
-                "full_executed",
-                False,
-            )
-            version_check = nb_outputs.get(
-                "hnn_version",
-                False,
-            )
-            commit_check = nb_outputs.get(
-                "commit",
-                False,
-            )
+            execution_check = nb_outputs.get("full_executed", False)
 
-    return execution_check, version_check, commit_check
+    return execution_check
 
 
 def convert_notebooks_to_html(
@@ -505,53 +432,29 @@ def convert_notebooks_to_html(
     write_html=False,
     execute_notebooks=False,
     force_execute_all=False,
-    # cloud_deploy=False,
-    dev_build=False,
-    # dev_version=None,
     hash_path="notebook_hashes.json",
 ):
     """
     Executes and converts .ipynb files in the input folder to HTML.
     """
 
-    # ==================== #
-    #        SETUP
-    # ==================== #
-
-    # if wd doesn't end in 'textbook', look for 'textbook' in the path
-    root = os.getcwd()
-    while os.path.basename(root) != "textbook":
-        root = os.path.dirname(root)
-
-    # default input folder is the 'content' folder, which is
-    # the directory from which our site is published
     if not input_folder:
-        input_folder = os.path.join(
-            root,
-            "content",
-        )
+        input_folder = os.getcwd().split("scripts")[0]
+        input_folder += "content"
 
+    # load saved notebook hashes
     notebook_hashes = load_notebook_hashes(hash_path)
+    # create a copy of the hashes to update and save
     updated_hashes = notebook_hashes.copy()
 
     # get list of notebooks to skip
-    # -----------------------------
     with open(
-        os.path.join(
-            os.getcwd(),
-            "scripts",
-            "notebooks_to_skip.json",
-        ),
+        os.path.join(os.getcwd(), "scripts", "notebooks_to_skip.json"),
         "r",
     ) as f:
         notebooks_to_skip = json.load(f)
+    notebooks_to_skip = notebooks_to_skip["skip_execution"]
 
-    if dev_build:
-        notebooks_to_skip = notebooks_to_skip["dev"]
-    else:
-        notebooks_to_skip = notebooks_to_skip["skip_execution"]
-
-    # notify user of forced notebook re execution
     if force_execute_all:
         print(
             "The force_execute_all argument has been set to True. All "
@@ -559,18 +462,15 @@ def convert_notebooks_to_html(
             "in the notebooks_to_skip.json file."
         )
 
-    # ==================== #
-    # Loop through notebooks
-    # ==================== #
-
     # iterate through input directory and process notebooks
-    for current_directory, list_folders, list_files in os.walk(input_folder):
+    for root, list_folders, list_files in os.walk(input_folder):
         for filename in list_files:
             if filename.endswith(".ipynb"):
                 print(f"\nProcessing notebook: {filename}")
 
-                # get the path to the notebook
-                nb_path = os.path.join(current_directory, filename)
+                # get current hash of the notebook
+                nb_path = os.path.join(root, filename)
+                current_hash = hash_notebook(nb_path)
 
                 # get the notebook without executing it
                 loaded_notebook = get_notebook(
@@ -579,15 +479,10 @@ def convert_notebooks_to_html(
                 )
 
                 # check if the notebook has been fully executed
-                notebook_executed, nb_version, commit_check = notebook_has_json_output(
-                    root=root,
-                    cwd=current_directory,
-                    filename=filename,
-                    dev_build=dev_build,
+                notebook_executed = notebook_has_json_output(
+                    root,
+                    filename,
                 )
-
-                # get current hash of the notebook
-                current_hash = hash_notebook(nb_path)
 
                 # default value for skip_notebook, to be updated based
                 # on notebooks_to_skip.json per the main loop below
@@ -647,39 +542,11 @@ def convert_notebooks_to_html(
                     elif (filename in notebook_hashes) and (
                         notebook_hashes[filename] == current_hash
                     ):
-                        if dev_build:
-                            # check if the commit specified to use by the dev build
-                            # matches the commit last used to run the notebook per the
-                            # commit_check (returned by notebook_has_json_output)
-                            #
-                            # if the versions do not match, the notebook is flagged to
-                            # be re-executed by setting "notebook_executed=False"
-                            if dev_build != commit_check:
-                                notebook_executed = False
-                        if not execute_notebooks:
-                            if nb_version == "NA":
-                                warnings.warn(
-                                    "We were not able to find a previous execution "
-                                    "attempt for this notebook. Please consider re-"
-                                    "executing the notebook so that we can log the "
-                                    "execution metadata."
-                                )
-                            elif Version(hnn_version) > Version(nb_version):
-                                warnings.warn(
-                                    "The notebook may have been executed on an "
-                                    "older version of hnn-core, as your installed "
-                                    f"version ({hnn_version}) is greater than the "
-                                    "version used to run the notebook previously "
-                                    f"({nb_version}) Please consider re-executing "
-                                    "this notebook."
-                                )
-
                         # case when notebook is *not* fully executed
                         if not notebook_executed:
                             print(
                                 f"Warning: Notebook {filename} has not been"
-                                " fully executed on the specified version"
-                                " of hnn-core."
+                                " fully executed."
                             )
                             # execute the notebook if execute_notebooks is True
                             if execute_notebooks:
@@ -690,7 +557,7 @@ def convert_notebooks_to_html(
                                 notebook_was_run = True
                                 print("Notebook has been executed")
                                 notebook_executed = is_notebook_fully_executed(
-                                    loaded_notebook,
+                                    loaded_notebook
                                 )
                             # skip notebook if execute_notebooks is False
                             else:
@@ -704,7 +571,6 @@ def convert_notebooks_to_html(
                                 f"Notebook {filename} is unchanged and already"
                                 " fully executed"
                             )
-
                     # 3) if the file is new (un-hashed) or has been changed,
                     # conditionally execute the notebook and update the hash dict
                     # --------------------------------------------------
@@ -722,7 +588,7 @@ def convert_notebooks_to_html(
                             notebook_was_run = True
                             print("Notebook has been executed")
                             notebook_executed = is_notebook_fully_executed(
-                                loaded_notebook,
+                                loaded_notebook
                             )
                         # skip notebook if execute_notebooks is False
                         else:
@@ -737,32 +603,17 @@ def convert_notebooks_to_html(
                 # extract and process the html from the notebook
                 html_content = extract_html_from_notebook(
                     loaded_notebook,
-                    current_directory,
+                    root,
                     filename,
-                    dev_build=dev_build,
-                    use_base64=use_base64,
+                    use_base64,
                 )
 
                 # optionally write the converted notebook to a
                 # standalone html file
                 if write_html:
-                    if dev_build:
-                        dev_dir = current_directory.replace(
-                            "content",
-                            "dev",
-                        )
-                        output_file = os.path.join(
-                            dev_dir,
-                            f"{os.path.splitext(filename)[0]}.html",
-                        )
-                        if not os.path.exists(dev_dir):
-                            os.makedirs(dev_dir)
-                    else:
-                        output_file = os.path.join(
-                            current_directory,
-                            f"{os.path.splitext(filename)[0]}.html",
-                        )
-
+                    output_file = os.path.join(
+                        root, f"{os.path.splitext(filename)[0]}.html"
+                    )
                     with open(output_file, "w", encoding="utf-8") as f:
                         f.write("<html><body>\n")
                         f.write(html_content)
@@ -783,16 +634,10 @@ def convert_notebooks_to_html(
                     filename,
                 )
 
-                if dev_build:
-                    output_json = os.path.join(
-                        current_directory.replace("content", "dev"),
-                        f"{os.path.splitext(filename)[0]}.json",
-                    )
-                else:
-                    output_json = os.path.join(
-                        current_directory,
-                        f"{os.path.splitext(filename)[0]}.json",
-                    )
+                output_json = os.path.join(
+                    root,
+                    f"{os.path.splitext(filename)[0]}.json",
+                )
 
                 if notebook_was_run:
                     # Add execution status directly to json output
@@ -802,9 +647,6 @@ def convert_notebooks_to_html(
                         "hnn_version": hnn_version,
                         **nb_html_json,
                     }
-                    if dev_build:
-                        print("Dev version to use:", dev_build)
-                        nb_html_json["commit"] = dev_build
                 else:
                     # get previously-used hnn version from json file
                     previous_version = "NA"
@@ -819,14 +661,12 @@ def convert_notebooks_to_html(
                         "hnn_version": previous_version,
                         **nb_html_json,
                     }
-                    if dev_build:
-                        nb_html_json["commit"] = dev_build
 
                 with open(output_json, "w") as f:
                     json.dump(nb_html_json, f, indent=4)
                 # ----------------------------------------
 
-                print(f"Successfully converted '{filename}' to html")
+                print(f"Successfully converted '{filename}'to html")
 
                 if not skip_notebook and not notebook_executed:
                     print(
@@ -847,17 +687,12 @@ def convert_notebooks_to_html(
 
 
 # %%
-
-run_test = False
-
 def test_nb_conversion(input_folder=None):
     convert_notebooks_to_html(
         input_folder=input_folder,
         use_base64=False,
         write_html=True,
-        execute_notebooks=True,
     )
 
 
-if run_test:
-    test_nb_conversion("tests")
+# _ = test_nb_conversion()

@@ -6,12 +6,12 @@ import textwrap
 # %% ######################################################################
 
 
-def generate_navbar_html(dev_build=False):
+def generate_navbar_html():
     """Function to generate the navbar from the structure specified
-       in the index.json file"""
+    in the index.json file"""
 
-    base_indent = '\t'
-    indent = '\t\t'  # need to deprecate this but it's currently used later
+    base_indent = "\t"
+    indent = "\t\t"  # need to deprecate this but it's currently used later
 
     # create mySidebar
     # create the header "navbar header"
@@ -48,8 +48,10 @@ def generate_navbar_html(dev_build=False):
             </div>
     """)
 
-    html = textwrap.indent(html, base_indent)
-
+    html = textwrap.indent(
+        html,
+        base_indent,
+    )
 
     # workshop_link = \
     #     f'\n{indent}<a href="https://jonescompneurolab.github.io/textbook/tests/workshop.html">' + \
@@ -70,11 +72,17 @@ def generate_navbar_html(dev_build=False):
         """Get paths to all .md pages to be converted to html"""
         md_pages = {}
         if path is None:
-            path = os.path.join(os.getcwd(), "content")
+            path = os.path.join(
+                os.getcwd(),
+                "content",
+            )
 
         directories = os.listdir(path)
         for item in directories:
-            item_path = os.path.join(path, item)
+            item_path = os.path.join(
+                path,
+                item,
+            )
             if os.path.isdir(item_path):
                 # add items from new dict into md_pages
                 md_pages.update(get_absolute_paths(item_path))
@@ -90,16 +98,8 @@ def generate_navbar_html(dev_build=False):
                     md_pages[item] = "/textbook/" + location + page
         return md_pages
 
-    def create_page_link(
-        file,
-        label,
-        page_paths,
-        indent,
-        dev_build=dev_build,
-    ):
+    def create_page_link(file, label, page_paths, indent):
         file_path = page_paths[file]
-        if dev_build:
-            file_path = file_path.replace('content', 'dev')
         return f'\n{indent}<a href="{file_path}">{label}</a>'
 
     def create_toggle_section(toggle_label):
