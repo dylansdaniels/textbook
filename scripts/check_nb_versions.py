@@ -87,7 +87,12 @@ def check_version(enable_debug=True):
 
     # get filepaths for each filename in json_fnames
     json_fpaths = []
-    for root, dirs, files in os.walk(os.path.join(os.getcwd(), "content")):
+    for root, dirs, files in os.walk(
+        os.path.join(
+            os.getcwd(),
+            "content",
+        )
+    ):
         for file in files:
             if file in json_fnames:
                 json_fpaths.append(os.path.join(root, file))
@@ -123,7 +128,7 @@ def check_version(enable_debug=True):
 
     if latest_version_check:
         print(
-            f"All notebooks were executed with the latest hnn-core=={latest}"
+            f"All notebooks were executed with the latest hnn-core=={latest}",
         )
     else:
         print(
