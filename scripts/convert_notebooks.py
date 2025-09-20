@@ -222,7 +222,7 @@ def extract_html_from_notebook(
                 <!-- code cell -->
                 <div class='code-cell'>
                     <code class='language-python'>
-                        {cell['source']}
+                        {cell["source"]}
                     </code>
                 </div>
             """)
@@ -232,7 +232,6 @@ def extract_html_from_notebook(
             # add code cell outputs
             # ==============================
             for output in cell.get("outputs", []):
-
                 # handle plain text outputs
                 # ------------------------------
                 if "text/plain" in output.get("data", {}):
@@ -434,8 +433,14 @@ def get_notebook(
         notebook = nbformat.read(f, as_version=4)
 
     if execute:
-        ep = ExecutePreprocessor(timeout=timeout, kernel_name="python3")
-        ep.preprocess(notebook, {"metadata": {"path": os.path.dirname(notebook_path)}})
+        ep = ExecutePreprocessor(
+            timeout=timeout,
+            kernel_name="python3",
+        )
+        ep.preprocess(
+            notebook,
+            {"metadata": {"path": os.path.dirname(notebook_path)}},
+        )
 
     return notebook
 
@@ -505,9 +510,7 @@ def convert_notebooks_to_html(
     write_html=False,
     execute_notebooks=False,
     force_execute_all=False,
-    # cloud_deploy=False,
     dev_build=False,
-    # dev_version=None,
     hash_path="notebook_hashes.json",
 ):
     """
@@ -849,6 +852,7 @@ def convert_notebooks_to_html(
 # %%
 
 run_test = False
+
 
 def test_nb_conversion(input_folder=None):
     convert_notebooks_to_html(

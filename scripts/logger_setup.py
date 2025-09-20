@@ -1,7 +1,7 @@
 import logging
 
 
-def setup_logger(name):
+def setup_logger(name, enable_debug=False,):
     # set root logger to warning to stop external DEBUG logs
     logging.getLogger().setLevel(logging.WARNING)
 
@@ -12,7 +12,9 @@ def setup_logger(name):
     for handler in logger.handlers[:]:
         logger.removeHandler(handler)
 
-    logger.setLevel(logging.DEBUG)
+    if enable_debug:
+        logger.setLevel(logging.DEBUG)
+
     # disable propagation to root logger
     logger.propagate = False
 
