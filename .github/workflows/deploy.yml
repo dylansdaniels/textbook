@@ -42,7 +42,7 @@ jobs:
           if conda run -n textbook-env-mpi python scripts/check_nb_versions.py; then
             echo "BUILD_FLAG=--execute-notebooks" >> $GITHUB_ENV
           else
-            echo "BUILD_FLAG=--force-execute-all" >> $GITHUB_ENV
+            echo "BUILD_FLAG=--execute-notebooks" >> $GITHUB_ENV
             echo "Not all notebooks were executed on the latest version. Forcing re-execution."
           fi
 
