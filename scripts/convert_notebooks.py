@@ -433,8 +433,14 @@ def _get_notebook(
         notebook = nbformat.read(f, as_version=4)
 
     if execute:
-        ep = ExecutePreprocessor(timeout=timeout, kernel_name="python3")
-        ep.preprocess(notebook, {"metadata": {"path": os.path.dirname(notebook_path)}})
+        ep = ExecutePreprocessor(
+            timeout=timeout,
+            kernel_name="python3",
+        )
+        ep.preprocess(
+            notebook,
+            {"metadata": {"path": os.path.dirname(notebook_path)}},
+        )
 
     return notebook
 
@@ -581,9 +587,7 @@ def _process_notebook(
 
     # check if the notebook has been fully executed, and
     # get the nb_version as well as the commit hash
-    notebook_executed, \
-    nb_version, \
-    commit_check = _notebook_has_json_output(
+    notebook_executed, nb_version, commit_check = _notebook_has_json_output(
         root=root,
         cwd=current_directory,
         filename=filename,
@@ -626,9 +630,9 @@ def _process_notebook(
 
     # execute notebook as needed
     if should_execute:
-        loaded_notebook, \
-        notebook_was_run, \
-        notebook_executed = _execute_notebook(nb_path)
+        loaded_notebook, notebook_was_run, notebook_executed = _execute_notebook(
+            nb_path
+        )
 
         print("Notebook has been executed")
 
@@ -788,32 +792,22 @@ def _should_execute_notebook(
             if execute_notebooks:
                 return True
             else:
-                print(
-                    "Notebook execution skipped since"
-                    " execute_notebooks is False."
-                )
+                print("Notebook execution skipped since execute_notebooks is False.")
                 return False
         else:
-            print(
-                f"Notebook {filename} is unchanged and already"
-                " fully executed"
-            )
+            print(f"Notebook {filename} is unchanged and already fully executed")
             return False
 
     # 3) if notebook new or hash has changed
     # --------------------------------------------------
     else:
         print(
-            f"Notebook {filename} is new or has been updated and"
-            " needs to be executed"
+            f"Notebook {filename} is new or has been updated and needs to be executed"
         )
         if execute_notebooks:
             return True
         else:
-            print(
-                "Skipping notebook execution since"
-                " execute_notebooks is False"
-            )
+            print("Skipping notebook execution since execute_notebooks is False")
             return False
 
 
@@ -990,19 +984,18 @@ def convert_notebooks_to_html(
             nb_path = os.path.join(current_directory, filename)
 
             # process notebook and update hash
-            processed_hash, \
-            loaded_notebook, \
-            notebook_executed, \
-            notebook_was_run = _process_notebook(
-                root=root,
-                nb_path=nb_path,
-                filename=filename,
-                current_directory=current_directory,
-                notebook_hashes=notebook_hashes,
-                notebooks_to_skip=notebooks_to_skip,
-                execute_notebooks=execute_notebooks,
-                force_execute_all=force_execute_all,
-                dev_build=dev_build,
+            processed_hash, loaded_notebook, notebook_executed, notebook_was_run = (
+                _process_notebook(
+                    root=root,
+                    nb_path=nb_path,
+                    filename=filename,
+                    current_directory=current_directory,
+                    notebook_hashes=notebook_hashes,
+                    notebooks_to_skip=notebooks_to_skip,
+                    execute_notebooks=execute_notebooks,
+                    force_execute_all=force_execute_all,
+                    dev_build=dev_build,
+                )
             )
 
             # write notebook to html

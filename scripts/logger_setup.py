@@ -1,7 +1,10 @@
 import logging
 
 
-def setup_logger(name):
+def setup_logger(
+    name,
+    enable_debug,
+):
     # set root logger to warning to stop external DEBUG logs
     logging.getLogger().setLevel(logging.WARNING)
 
@@ -12,16 +15,22 @@ def setup_logger(name):
     for handler in logger.handlers[:]:
         logger.removeHandler(handler)
 
-    logger.setLevel(logging.DEBUG)
+    # set logger level
+    if enable_debug:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+
     # disable propagation to root logger
     logger.propagate = False
 
     handler = logging.StreamHandler()
     # set up formatted
     formatter = logging.Formatter(
-        '# DEBUG: %(name)s' +  # DEBUG: module.submodule
-        '\n# ' + '-' * 30 +    # -----------------------
-        '\n%(message)s\n'      # output message contents
+        "# DEBUG: %(name)s"  # DEBUG: module.submodule
+        + "\n# "
+        + "-" * 30  # -----------------------
+        + "\n%(message)s\n"  # output message contents
     )
     handler.setFormatter(formatter)
     logger.addHandler(handler)

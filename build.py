@@ -17,12 +17,23 @@ from scripts.create_page_index import update_page_index
 def compile_page_components(dev_build=False):
     """Compile base html components for building webpage"""
 
-    templates_folder = os.path.join(os.getcwd(), "templates")
-    templates = ["header", "topbar", "footer", "script"]
+    templates_folder = os.path.join(
+        os.getcwd(),
+        "templates",
+    )
+    templates = [
+        "header",
+        "topbar",
+        "footer",
+        "script",
+    ]
     html_parts = {}
 
     for template in templates:
-        templates_path = os.path.join(templates_folder, f"{template}.html")
+        templates_path = os.path.join(
+            templates_folder,
+            f"{template}.html",
+        )
         with open(templates_path, "r") as f:
             html_parts[template] = f.read()
 
@@ -90,6 +101,7 @@ def get_page_paths(path=None):
 
     return md_pages
 
+
 def get_html_from_json(
     nb_name,
     nb_path,
@@ -121,6 +133,7 @@ def get_html_from_json(
                 agg_html += content["html"]
     return agg_html
 
+
 def add_notebook_to_html(
     converted_html,
     path,
@@ -146,7 +159,7 @@ def add_notebook_to_html(
     # match the exact pattern ".ipynb][" as defined below
     nb_arguments_pattern = ".ipynb]["
 
-    nb_button_indent = '\t\t'
+    nb_button_indent = "\t\t"
 
     nb_button = textwrap.dedent("""
         <div class="notebook-download-wrapper">
@@ -311,7 +324,11 @@ def generate_page_html(
 
         # update 'footer' page_component with the correct links
         # ------------------------------------------------------------
-        footer_path = os.path.join(os.getcwd(), "templates", "ordered_page_links.json")
+        footer_path = os.path.join(
+            os.getcwd(),
+            "templates",
+            "ordered_page_links.json",
+        )
 
         with open(footer_path, "r") as f:
             ordered_page_links = json.load(f)
@@ -363,10 +380,12 @@ def generate_page_html(
         )
 
         page_components["footer"] = page_components["footer"].replace(
-            "<a>PreviousTitle</a>", f"<a>{prev_title}</a>"
+            "<a>PreviousTitle</a>",
+            f"<a>{prev_title}</a>",
         )
         page_components["footer"] = page_components["footer"].replace(
-            "<a>NextTitle</a>", f"<a>{next_title}</a>"
+            "<a>NextTitle</a>",
+            f"<a>{next_title}</a>",
         )
 
         # load markdown and add yaml metadata
@@ -472,19 +491,6 @@ def main():
         action="store_true",
         help="Force execute all notebooks regardless of their status",
     )
-
-    parser.add_argument(
-        "--cloud-deploy",
-        type=str,
-        help="To identify if the build is for cloud deployment",
-    )
-
-    # parser.add_argument(
-    #     "--build-on-dev",
-    #     action="store_true",
-    #     help="Indicator to build notebooks from the current master"
-    # )
-
     parser.add_argument(
         "--build-on-dev",
         type=str,
@@ -494,8 +500,15 @@ def main():
     # add all above arguments to the parser
     args = parser.parse_args()
 
-    content_path = os.path.join(os.getcwd(), "content")
-    hash_path = os.path.join(os.getcwd(), "scripts", "notebook_hashes.json")
+    content_path = os.path.join(
+        os.getcwd(),
+        "content",
+    )
+    hash_path = os.path.join(
+        os.getcwd(),
+        "scripts",
+        "notebook_hashes.json",
+    )
 
     # get the version of hnn installed in the environment
     # this is needed for the checks below
@@ -572,13 +585,6 @@ def main():
                     "\n   $ pip install --upgrade --force-reinstall --no-cache-dir "
                     f'"hnn-core[dev] @ git+https://github.com/{repo}/hnn-core.git@{commit}"'
                 )
-            else:
-                raise RuntimeError(
-                    "\nInvalid dev_version argument."
-                    "\nUse 'local' for the latest commit on your local dev version."
-                    "\nUse 'master' for the latest commit on the upstream master."
-                    "\nUse 'installed' for the latest commit on your installed hnn-core"
-                )
     else:
         commit_hash = False
 
@@ -613,23 +619,12 @@ def main():
                 "the version of hnn-core that should be used."
             )
 
-    ##################################################
-    # left off here
-    # not sure if having dev_version installed makes sense
-    # but i can at least use this for testing i guess
-    # next up: track the versions run in dev in the dev_hashes file
-    # might want to check against version run in /content? or maybe not?
-    # start simple and add complexity?
-    ##################################################
-
     convert_notebooks_to_html(
         input_folder=content_path,
         hash_path=hash_path,
         write_html=True,
         execute_notebooks=args.execute_notebooks,
         force_execute_all=args.force_execute_all,
-        # cloud_deploy=args.cloud_deploy,
-        # dev_build=args.build_on_dev,
         dev_build=commit_hash,
     )
 
