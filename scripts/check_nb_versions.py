@@ -37,10 +37,13 @@ def check_version(enable_debug=True):
         version of hnn-core, else False
     """
 
-    logger = setup_logger(__name__, enable_debug=enable_debug)
+    logger = setup_logger(
+        __name__,
+        enable_debug=enable_debug,
+    )
 
     logger.debug(
-        'DEV',
+        "Debugging check_nb_versions.check_version",
     )
     import json
     import os
@@ -68,8 +71,8 @@ def check_version(enable_debug=True):
     # get names of notebooks to skip
     notebooks_to_skip = notebooks_to_skip["skip_execution"]
     logger.debug(
-        '\n',
-        'Notebooks to skip:\n',
+        "\n",
+        "Notebooks to skip:\n",
         notebooks_to_skip,
     )
 
@@ -80,8 +83,8 @@ def check_version(enable_debug=True):
         if notebook not in notebooks_to_skip
     ]
     logger.debug(
-        '\n',
-        'Notebooks to run:\n',
+        "\n",
+        "Notebooks to run:\n",
         json_fnames,
     )
 
@@ -108,11 +111,11 @@ def check_version(enable_debug=True):
             contents = json.load(f)
             if "hnn_version" in contents:
                 notebook_versions.append(contents["hnn_version"])
-                execution_statuses[file_key]['hnn_version'] = contents["hnn_version"]
+                execution_statuses[file_key]["hnn_version"] = contents["hnn_version"]
             else:
                 print(f"Version key not found in {file}")
             # if "master_commit" in contents:
-                # execution_statuses[file]['master_commit'] =
+            # execution_statuses[file]['master_commit'] =
 
     # unique versions for executed notebooks
     notebook_versions = list(set(notebook_versions))
@@ -127,9 +130,7 @@ def check_version(enable_debug=True):
         latest_version_check = notebook_versions[0] == latest
 
     if latest_version_check:
-        print(
-            f"All notebooks were executed with the latest hnn-core=={latest}",
-        )
+        print(f"All notebooks were executed with the latest hnn-core=={latest}")
     else:
         print(
             f"\nLatest version of hnn-core: {latest}",
@@ -138,14 +139,12 @@ def check_version(enable_debug=True):
         )
 
     logger.debug(
-        '\nExecution statuses:',
-        '\n',
-        execution_statuses
+        "\nExecution statuses:",
+        "\n",
+        execution_statuses,
     )
 
-    print(
-        '\nReturn:'
-    )
+    print("\nReturn:")
     return latest_version_check
 
 

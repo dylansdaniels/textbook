@@ -10,12 +10,21 @@ import requests
 from hnn_core import __version__ as installed_hnn_version
 
 from scripts.convert_notebooks import convert_notebooks_to_html
-from scripts.create_navbar import generate_navbar_html
-from scripts.create_page_index import update_page_index
+from scripts.create_navbar import generate_sidebar_html
 
 
 def compile_page_components(dev_build=False):
-    """Compile base html components for building webpage"""
+    """
+    Compile shared html components for building webpage from the template files in the
+    templates directory
+
+    Inputs
+    ------
+    dev_build : str or bool
+        False if not running a dev build. Otherwise, this variable will be
+        string containing the repo and commit hash to be used for the build
+
+    """
 
     templates_folder = os.path.join(
         os.getcwd(),
@@ -37,8 +46,8 @@ def compile_page_components(dev_build=False):
         with open(templates_path, "r") as f:
             html_parts[template] = f.read()
 
-    update_page_index()
-    navbar_html, ordered_links = generate_navbar_html(dev_build=dev_build)
+    navbar_html, ordered_links = generate_sidebar_html()
+
     html_parts["navbar"] = navbar_html
 
     return html_parts, ordered_links
@@ -241,8 +250,9 @@ def generate_page_html(
         A dictionary mapping markdown page paths relative to the "content" directory
         to their absolute paths in the form: { relative_path: absolute_path, ...}
 
-    dev_build  : bool
-        An indicator for doing a "development" build of the website
+    dev_build : str or bool
+        False if not running a dev build. Otherwise, this variable will be
+        a string containing the repo and commit hash to be used for the build
 
     Returns
     -------
@@ -442,10 +452,14 @@ def generate_page_html(
                 out_directory,
             )
 
-            rel_path = rel_path + dev_path.replace("dev", "content")
+            rel_path = rel_path + dev_path.replace(
+                "dev",
+                "content",
+            )
 
             converted_html = converted_html.replace(
-                'img src="images', f'img src="{rel_path}images'
+                'img src="images',
+                f'img src="{rel_path}images',
             )
 
         combined_html = add_notebook_to_html(
@@ -491,8 +505,6 @@ def main():
         action="store_true",
         help="Force execute all notebooks regardless of their status",
     )
-
-
     parser.add_argument(
         "--build-on-dev",
         type=str,
@@ -624,7 +636,7 @@ def main():
     convert_notebooks_to_html(
         input_folder=content_path,
         hash_path=hash_path,
-        write_html=True,
+        write_standalone_html=True,
         execute_notebooks=args.execute_notebooks,
         force_execute_all=args.force_execute_all,
         dev_build=commit_hash,
