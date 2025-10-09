@@ -1,7 +1,7 @@
 
 .PHONY: all build clean create-textbook-stable-build create-textbook-dev-build
 
-HNN_VERSION := 0.4.2
+HNN_VERSION := 0.4.3
 OS := $(shell uname -s)
 
 all: build
