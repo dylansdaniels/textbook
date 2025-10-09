@@ -1,5 +1,5 @@
 
-.PHONY: all build clean create-conda-env create-conda-env-mpi
+.PHONY: all build clean create-textbook-stable-build create-textbook-dev-build
 
 HNN_VERSION := 0.5.0
 OS := $(shell uname -s)
@@ -19,10 +19,10 @@ clean:
 	rm -rf content/*.html
 	rm -rf content/*/*.html
 
-create-conda-env-mpi:
-	conda env create --yes --file environment.yml --name textbook-env-mpi
-	conda install -y -n textbook-env-mpi conda-forge::openmpi conda-forge::mpi4py
-	@CONDA_ENV_PATH=$$(conda run -n textbook-env-mpi python -c "import os; print(os.environ['CONDA_PREFIX'])"); \
+create-textbook-stable-build:
+	conda env create --yes --file environment.yml --name textbook-stable-build
+	conda install -y -n textbook-stable-build "openmpi>5" mpi4py -c conda-forge
+	@CONDA_ENV_PATH=$$(conda run -n textbook-stable-build python -c "import os; print(os.environ['CONDA_PREFIX'])"); \
 	mkdir -p $$CONDA_ENV_PATH/etc/conda/activate.d ; \
 	mkdir -p $$CONDA_ENV_PATH/etc/conda/deactivate.d ; \
 	if [ "$(OS)" = "Darwin" ]; then \
@@ -36,8 +36,8 @@ create-conda-env-mpi:
 		echo "export LD_LIBRARY_PATH=\$$OLD_LD_LIBRARY_PATH" >> "$$CONDA_ENV_PATH/etc/conda/deactivate.d/env_vars.sh"; \
 		echo "unset OLD_LD_LIBRARY_PATH" >> "$$CONDA_ENV_PATH/etc/conda/deactivate.d/env_vars.sh"; \
 	fi; \
-	conda run -n textbook-env-mpi pip install 'hnn_core[dev]==$(HNN_VERSION)'; \
-	echo "Conda environment 'textbook-env-mpi' successfully created."
+	conda run -n textbook-stable-build pip install 'hnn_core[dev]==$(HNN_VERSION)'; \
+	echo "Conda environment 'textbook-stable-build' successfully created."
 
 create-textbook-dev-build:
 	@# Check if textbook-dev-build is active and, if so, deactivate it
@@ -59,7 +59,7 @@ create-textbook-dev-build:
 	conda env create --yes --file environment.yml --name textbook-dev-build
 
 	@# Install additional packages into the environment
-	conda install -y -n textbook-dev-build conda-forge::openmpi conda-forge::mpi4py
+	conda install -y -n textbook-dev-build  "openmpi>5" mpi4py -c conda-forge
 
 	@# Get the path to the newly created conda environment and
 	@# create directories for environment activation/deactivation scripts
