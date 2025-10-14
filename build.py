@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from scripts.convert_notebooks import execute_and_convert_notebooks_to_json
+from scripts.execute_and_convert_notebooks import execute_and_convert_notebooks_to_json
 from scripts.generate_page_html import generate_page_html
 from scripts.get_commit_hash import get_commit_hash
 
@@ -69,6 +69,14 @@ def main():
     Main function to generate html pages for deployment
     """
 
+
+    # AES TODO
+    # replace the `dev_build` arg (which acts as both a flag and content) with 3 values. But what? not "version" since overloaded. Maybe just two? stable vs anything else? "variant". Actually build_type
+    # - 4508128151
+    # - stable
+
+    # commit hash diff from master vs hash
+
     # accept command line arguments
     parser = argparse.ArgumentParser(description="Generate html pages for deployment")
     parser.add_argument(
@@ -101,9 +109,8 @@ def main():
         "notebook_hashes.json",
     )
 
-    commit_hash = get_commit_hash(
-        build_on_dev_arg = args.build_on_dev,
-    )
+    # AES ref output to "build_type"
+    commit_hash = get_commit_hash(build_on_dev_arg=args.build_on_dev)
 
     # write_standalone_html=True,
     execute_and_convert_notebooks_to_json(
@@ -118,10 +125,10 @@ def main():
     # AES TODO merge into generate_path_html or provide input like convert
     md_paths = get_page_paths()
 
-    # generate_page_html(
-    #     md_paths,
-    #     dev_build=args.build_on_dev,
-    # )
+    generate_page_html(
+        md_paths,
+        dev_build=args.build_on_dev,
+    )
 
 
 if __name__ == "__main__":

@@ -423,25 +423,10 @@ def _save_notebook_hashes(
         json.dump(new_hashes, f, indent=4)
 
 
-def _get_notebook(
-    notebook_path,
-    execute,
-    timeout=600,
-):
+def _load_notebook(nb_path):
     """Get a jupyter notebook object and optionally execute it"""
-    with open(notebook_path, "r", encoding="utf-8") as f:
+    with open(nb_path, "r", encoding="utf-8") as f:
         notebook = nbformat.read(f, as_version=4)
-
-    if execute:
-        ep = ExecutePreprocessor(
-            timeout=timeout,
-            kernel_name="python3",
-        )
-        ep.preprocess(
-            notebook,
-            {"metadata": {"path": os.path.dirname(notebook_path)}},
-        )
-
     return notebook
 
 
@@ -543,18 +528,28 @@ def _load_notebooks_to_skip(dev_build):
         notebooks_to_skip = json.load(f)
 
     if dev_build:
-        notebooks_to_skip = notebooks_to_skip["dev"]
+        # AES appears to be "skip if dev"
+        # AES maybe most are in the "skip if dev" for debugging? not sure why
+        notebooks_to_skip = notebooks_to_skip["skip_if_dev"]
     else:
-        notebooks_to_skip = notebooks_to_skip["skip_execution"]
+        # AES appears to be "skip if stable"
+        notebooks_to_skip = notebooks_to_skip["skip_if_stable"]
 
     return notebooks_to_skip
 
 
-def _execute_notebook(nb_path):
-    loaded_notebook = _get_notebook(
-        nb_path,
-        execute=True,
+def _execute_notebook(nb_path, timeout=600):
+    loaded_notebook = _load_notebook(nb_path)
+
+    ep = ExecutePreprocessor(
+        timeout=timeout,
+        kernel_name="python3",
     )
+    ep.preprocess(
+        loaded_notebook,
+        {"metadata": {"path": os.path.dirname(nb_path)}},
+    )
+
     notebook_was_run = True
     print("Notebook has been executed")
     notebook_executed = _is_notebook_fully_executed(
@@ -580,10 +575,7 @@ def _process_notebook(
     """
 
     # get the notebook without executing it
-    loaded_notebook = _get_notebook(
-        nb_path,
-        execute=False,
-    )
+    loaded_notebook = _load_notebook(nb_path)
 
     # check if the notebook has been fully executed, and
     # get the nb_version as well as the commit hash
@@ -898,9 +890,12 @@ def _write_notebook_json(
             f"{os.path.splitext(filename)[0]}.json",
         )
 
+    # AES why not just use notebook_exec?
     if notebook_was_run:
         # Add execution status directly to json output
         # Track version used in notebook execution
+        # AES if nb was started, but failed, then full_executed would be false here
+        # AES maybe the point is "this is the last version they were successfully executed with"
         nb_html_json = {
             "full_executed": notebook_executed,
             "hnn_version": hnn_version,
@@ -971,7 +966,7 @@ def execute_and_convert_notebooks_to_json(
     # ==================== #
 
     # iterate through input directory and process notebooks
-    for current_directory, list_folders, list_files in os.walk(input_folder):
+    for current_directory, _, list_files in os.walk(input_folder):
         for filename in list_files:
             if not filename.endswith(".ipynb"):
                 continue
