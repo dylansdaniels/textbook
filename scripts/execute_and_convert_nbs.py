@@ -604,8 +604,7 @@ def _process_nb(
     # set to False
     current_execution_initiated = False
 
-    # identify if nb should be skipped and, if
-    # so, return gracefully
+    # identify if nb should be skipped
     skip_nb = filename in nbs_to_skip
 
     if skip_nb:
@@ -617,7 +616,7 @@ def _process_nb(
         execution_flag = prior_execution_if_any
     else:
         # determine if nb should be executed
-        print(f"Checking status of {filename}")
+        print(f"Checking whether '{filename}' should be newly re-executed.")
         should_execute = _should_execute_nb(
             filename,
             nb_hashes,
@@ -668,7 +667,6 @@ def _process_nb(
                     "# -------------------------------------------------------"
                     "\n\n"
                 )
-                breakpoint()  # AES debug
             else:
                 print(
                     f"Notebook '{filename}' has been initiated and executed successfully"
@@ -706,9 +704,9 @@ def _should_execute_nb(
     execute_nbs,
     force_execute_all,
     dev_build,
-    commit_check,
-    execution_successful,
-    nb_version,
+    prior_commit_if_any,
+    prior_execution_if_any,
+    prior_version_if_any,
 ):
     """
     Determine whether or not a notebook should be executed based on
@@ -737,20 +735,28 @@ def _should_execute_nb(
     dev_build : str or bool
         False if not running a dev build. Otherwise, this variable will be
         a string containing the repo and commit hash to be used for the build
-    commit_check : str
+    prior_commit_if_any : str
         Contains the commit hash from the previous execution, loaded from the
         notebook's corresponding json output file. Used for checking/validating
         versions when doing a 'dev' build
-    execution_successful : bool
+    prior_execution_if_any : bool
         Flag for whether or not the notebook is already executed per the
         notebook's corresponding json output file
-    nb_version : str
+    prior_version_if_any : str
         The version of hnn-core that was last used to execute the notebook
 
     Returns
     -------
         bool : a boolean indicating if the notebook should be executed
     """
+
+    # AES TODO add an "_arg" suffix to arg options here. Or maybe "execution_type":
+    # - no_execution
+    # - execute_only_updated_or_new_notebooks
+    # - execute_all_unskipped_notebooks
+    # - execute_absolutely_all_notebooks
+
+    # AES TODO move skip logic in here too
 
     # 1) handle force_execute_all
     if force_execute_all:
@@ -763,16 +769,16 @@ def _should_execute_nb(
         if dev_build:
             # check if the commit specified to use by the dev build
             # matches the commit last used to run the nb per the
-            # commit_check (returned by _nb_has_json_output)
+            # prior_commit_if_any (returned by _nb_has_json_output)
             #
             # if the versions do not match, the nb is flagged to
-            # be re-executed by setting "execution_successful=False"
-            if dev_build != commit_check:
-                execution_successful = False
+            # be re-executed by setting "prior_execution_if_any=False"
+            if dev_build != prior_commit_if_any:
+                prior_execution_if_any = False
                 print(f"Executing {filename} due to dev build commit mismatch.")
                 return True
         if not execute_nbs:
-            if nb_version == "NA":
+            if prior_version_if_any == "NA":
                 warnings.warn(
                     "\n\n"
                     "# -------------------------------------------------------\n"
@@ -782,7 +788,7 @@ def _should_execute_nb(
                     "# -------------------------------------------------------"
                     "\n\n"
                 )
-            elif Version(hnn_version) > Version(nb_version):
+            elif Version(hnn_version) > Version(prior_version_if_any):
                 warnings.warn(
                     "\n\n"
                     "# -------------------------------------------------------\n"
@@ -792,14 +798,14 @@ def _should_execute_nb(
                     "# previously. Please consider re-executing this notebook"
                     "\n#\n"
                     "# Last version used to run notebook:\n"
-                    f"#    {nb_version}\n"
+                    f"#    {prior_version_if_any}\n"
                     "# Installed version:\n"
                     f"#    {hnn_version}\n"
                     "# -------------------------------------------------------"
                     "\n\n"
                 )
 
-        if not execution_successful:
+        if not prior_execution_if_any:
             print(
                 f"Warning: Notebook {filename} has not been"
                 " fully executed on the specified version"
@@ -883,8 +889,8 @@ def _write_nb_json(
     html_content,
     filename,
     current_directory,
-    execution_successful,
     execution_initiated,
+    execution_successful,
     dev_build=False,
 ):
     """
@@ -975,6 +981,8 @@ def execute_and_convert_nbs_to_json(
     #        SETUP
     # ==================== #
 
+    # AES TODO simplify all this with pathlib.Path
+
     root, input_folder = _setup_root_and_input(input_folder)
 
     # get nb hashes from json
@@ -1036,8 +1044,8 @@ def execute_and_convert_nbs_to_json(
                 html_content,
                 filename,
                 current_directory,
-                execution_successful,
                 execution_initiated,
+                execution_successful,
                 dev_build=dev_build,
             )
 
