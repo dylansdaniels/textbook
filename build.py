@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from scripts.convert_notebooks import convert_notebooks_to_html
+from scripts.convert_notebooks import execute_and_convert_notebooks_to_json
 from scripts.generate_page_html import generate_page_html
 from scripts.get_commit_hash import get_commit_hash
 
@@ -95,7 +95,7 @@ def main():
         os.getcwd(),
         "content",
     )
-    hash_path = os.path.join(
+    nb_hash_path = os.path.join(
         os.getcwd(),
         "scripts",
         "notebook_hashes.json",
@@ -105,22 +105,23 @@ def main():
         build_on_dev_arg = args.build_on_dev,
     )
 
-    convert_notebooks_to_html(
+    # write_standalone_html=True,
+    execute_and_convert_notebooks_to_json(
         input_folder=content_path,
-        hash_path=hash_path,
-        write_standalone_html=True,
+        write_standalone_html=False,
         execute_notebooks=args.execute_notebooks,
         force_execute_all=args.force_execute_all,
         dev_build=commit_hash,
+        nb_hash_path=nb_hash_path,
     )
 
     # AES TODO merge into generate_path_html or provide input like convert
     md_paths = get_page_paths()
 
-    generate_page_html(
-        md_paths,
-        dev_build=args.build_on_dev,
-    )
+    # generate_page_html(
+    #     md_paths,
+    #     dev_build=args.build_on_dev,
+    # )
 
 
 if __name__ == "__main__":
