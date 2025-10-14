@@ -433,10 +433,16 @@ def _load_nb(nb_path):
 def _is_nb_fully_executed(nb):
     """
     Check if a notebook object has been fully executed.
-    Returns True if all code cells have an associated execution_count.
+
+    Returns True if all code cells have an associated execution_count, except for those
+    with no source code.
     """
     for cell in nb.get("cells", []):
-        if cell.get("cell_type") == "code" and cell.get("execution_count") is None:
+        if (
+            (cell.get("cell_type") == "code")
+            and (cell.get("execution_count") is None)
+            and (cell.get("source") != "")
+        ):
             return False
     return True
 
