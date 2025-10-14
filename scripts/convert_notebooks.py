@@ -888,6 +888,10 @@ def _write_notebook_json(
             current_directory.replace("content", "dev"),
             f"{os.path.splitext(filename)[0]}.json",
         )
+        os.makedirs(
+            current_directory.replace("content", "dev"),
+            exist_ok=True,
+        )
     else:
         output_json = os.path.join(
             current_directory,
