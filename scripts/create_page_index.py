@@ -6,6 +6,7 @@ import os
 # THIS FILE WILL BE DEPRECATED
 ##########################################
 
+
 def get_title(file_path):
     file = open(file_path, "r")
     title = "NA"
