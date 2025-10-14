@@ -171,8 +171,8 @@ def _structure_json(contents):
     return hierarchy
 
 
-def _extract_html_from_notebook(
-    notebook,
+def _extract_html_from_nb(
+    nb,
     input_dir,
     filename,
     dev_build=False,
@@ -210,7 +210,7 @@ def _extract_html_from_notebook(
             html_output.append(cell_output_html)
         return ""
 
-    for cell in notebook["cells"]:
+    for cell in nb["cells"]:
         # ------------------------------
         # process code cells
         # ------------------------------
@@ -374,10 +374,10 @@ def _extract_html_from_notebook(
     return html_output
 
 
-def _hash_notebook(notebook_path):
+def _hash_nb(nb_path):
     """Generate a SHA256 hash of the notebook, ignoring outputs/metadata."""
 
-    with open(notebook_path, "r", encoding="utf-8") as f:
+    with open(nb_path, "r", encoding="utf-8") as f:
         nb = nbformat.read(f, as_version=4)
 
     # clear all cell outputs
@@ -391,20 +391,20 @@ def _hash_notebook(notebook_path):
         if "metadata" in cell:
             cell["metadata"] = {}
 
-    # remove notebook metadata
+    # remove nb metadata
     nb.metadata = {}
 
-    # serialize cleaned notebook
-    notebook_json = nbformat.writes(nb, version=4).encode("utf-8")
+    # serialize cleaned nb
+    nb_json = nbformat.writes(nb, version=4).encode("utf-8")
 
     # generate hash
     hasher = hashlib.sha256()
-    hasher.update(notebook_json)
+    hasher.update(nb_json)
 
     return hasher.hexdigest()
 
 
-def _load_notebook_hashes(nb_hash_path):
+def _load_nb_hashes(nb_hash_path):
     """Load previously-recorded hashes notebook hashes"""
     if os.path.exists(nb_hash_path):
         with open(nb_hash_path, "r") as f:
@@ -412,7 +412,7 @@ def _load_notebook_hashes(nb_hash_path):
     return {}
 
 
-def _save_notebook_hashes(
+def _save_nb_hashes(
     new_hashes,
     nb_hash_path,
 ):
@@ -423,25 +423,25 @@ def _save_notebook_hashes(
         json.dump(new_hashes, f, indent=4)
 
 
-def _load_notebook(nb_path):
+def _load_nb(nb_path):
     """Get a jupyter notebook object and optionally execute it"""
     with open(nb_path, "r", encoding="utf-8") as f:
-        notebook = nbformat.read(f, as_version=4)
-    return notebook
+        nb = nbformat.read(f, as_version=4)
+    return nb
 
 
-def _is_notebook_fully_executed(notebook):
+def _is_nb_fully_executed(nb):
     """
     Check if a notebook object has been fully executed.
     Returns True if all code cells have an associated execution_count.
     """
-    for cell in notebook.get("cells", []):
+    for cell in nb.get("cells", []):
         if cell.get("cell_type") == "code" and cell.get("execution_count") is None:
             return False
     return True
 
 
-def _notebook_has_json_output(
+def _nb_has_json_output(
     root,
     cwd,
     filename,
@@ -475,7 +475,7 @@ def _notebook_has_json_output(
     commit_check = False
 
     # if the json output exists, get the execution status, base version,
-    # and latest commit used to execute the notebook
+    # and latest commit used to execute the nb
     if os.path.exists(json_path):
         with open(json_path, "r") as file:
             nb_outputs = json.load(file)
@@ -512,60 +512,60 @@ def _setup_root_and_input(input_folder):
     return root, input_folder
 
 
-def _load_notebooks_to_skip(dev_build):
+def _load_nbs_to_skip(dev_build):
     """
-    Get the list of notebooks to skip from the 'notebooks_to_skip.json'
+    Get the list of notebooks to skip from the 'nbs_to_skip.json'
     The "dev_build" flag determines which list is extracted from the json
     """
     with open(
         os.path.join(
             os.getcwd(),
             "scripts",
-            "notebooks_to_skip.json",
+            "nbs_to_skip.json",
         ),
         "r",
     ) as f:
-        notebooks_to_skip = json.load(f)
+        nbs_to_skip = json.load(f)
 
     if dev_build:
         # AES appears to be "skip if dev"
         # AES maybe most are in the "skip if dev" for debugging? not sure why
-        notebooks_to_skip = notebooks_to_skip["skip_if_dev"]
+        nbs_to_skip = nbs_to_skip["skip_if_dev"]
     else:
         # AES appears to be "skip if stable"
-        notebooks_to_skip = notebooks_to_skip["skip_if_stable"]
+        nbs_to_skip = nbs_to_skip["skip_if_stable"]
 
-    return notebooks_to_skip
+    return nbs_to_skip
 
 
-def _execute_notebook(nb_path, timeout=600):
-    loaded_notebook = _load_notebook(nb_path)
+def _execute_nb(nb_path, timeout=600):
+    loaded_nb = _load_nb(nb_path)
 
     ep = ExecutePreprocessor(
         timeout=timeout,
         kernel_name="python3",
     )
     ep.preprocess(
-        loaded_notebook,
+        loaded_nb,
         {"metadata": {"path": os.path.dirname(nb_path)}},
     )
 
-    notebook_was_run = True
+    nb_was_run = True
     print("Notebook has been executed")
-    notebook_executed = _is_notebook_fully_executed(
-        loaded_notebook,
+    nb_executed = _is_nb_fully_executed(
+        loaded_nb,
     )
-    return loaded_notebook, notebook_was_run, notebook_executed
+    return loaded_nb, nb_was_run, nb_executed
 
 
-def _process_notebook(
+def _process_nb(
     root,
     nb_path,
     filename,
     current_directory,
-    notebook_hashes,
-    notebooks_to_skip,
-    execute_notebooks,
+    nb_hashes,
+    nbs_to_skip,
+    execute_nbs,
     force_execute_all,
     dev_build,
 ):
@@ -574,64 +574,64 @@ def _process_notebook(
     and return the updated hash.
     """
 
-    # get the notebook without executing it
-    loaded_notebook = _load_notebook(nb_path)
+    # get the nb without executing it
+    loaded_nb = _load_nb(nb_path)
 
-    # check if the notebook has been fully executed, and
+    # check if the nb has been fully executed, and
     # get the nb_version as well as the commit hash
-    notebook_executed, nb_version, commit_check = _notebook_has_json_output(
+    nb_executed, nb_version, commit_check = _nb_has_json_output(
         root=root,
         cwd=current_directory,
         filename=filename,
         dev_build=dev_build,
     )
 
-    # hash the notebook in its current state
-    current_hash = _hash_notebook(nb_path)
+    # hash the nb in its current state
+    current_hash = _hash_nb(nb_path)
 
-    # flag for whether the notebook was run, initially
+    # flag for whether the nb was run, initially
     # set to False
-    notebook_was_run = False
+    nb_was_run = False
 
-    # identify if notebook should be skipped and, if
+    # identify if nb should be skipped and, if
     # so, return gracefully
-    skip_notebook = filename in notebooks_to_skip
+    skip_nb = filename in nbs_to_skip
 
-    if skip_notebook:
+    if skip_nb:
         print(
             f"Notebook '{filename}' has been flagged to be"
             " skipped. Execution will not be attempted for"
             " this notebook."
         )
-        return (current_hash, loaded_notebook, notebook_executed, notebook_was_run)
+        return (current_hash, loaded_nb, nb_executed, nb_was_run)
 
-    # determine if notebook should be executed
+    # determine if nb should be executed
     print(f"Checking status of {filename}")
 
-    should_execute = _should_execute_notebook(
+    should_execute = _should_execute_nb(
         filename,
-        notebook_hashes,
+        nb_hashes,
         current_hash,
-        execute_notebooks,
+        execute_nbs,
         force_execute_all,
         dev_build,
         commit_check,
-        notebook_executed,
+        nb_executed,
         nb_version,
     )
 
-    # execute notebook as needed
+    # execute nb as needed
     if should_execute:
-        loaded_notebook, notebook_was_run, notebook_executed = _execute_notebook(
+        loaded_nb, nb_was_run, nb_executed = _execute_nb(
             nb_path
         )
 
         print("Notebook has been executed")
 
-    # warning for the case when a notebook was flagged to
-    # be skipped, but the notebook as it stands is not
+    # warning for the case when a nb was flagged to
+    # be skipped, but the nb as it stands is not
     # fully executed.
-    if (not skip_notebook) and (not should_execute) and (not notebook_executed):
+    if (not skip_nb) and (not should_execute) and (not nb_executed):
         warnings.warn(
             "\n\n"
             "# -------------------------------------------------------\n"
@@ -644,9 +644,9 @@ def _process_notebook(
             "\n\n"
         )
 
-    # warning for the case when notebook execution was attempted
-    # but the notebook was not fully executed for some reason
-    if (not skip_notebook) and (should_execute) and (not notebook_executed):
+    # warning for the case when nb execution was attempted
+    # but the nb was not fully executed for some reason
+    if (not skip_nb) and (should_execute) and (not nb_executed):
         warnings.warn(
             "\n\n"
             "# -------------------------------------------------------\n"
@@ -662,21 +662,21 @@ def _process_notebook(
 
     return (
         current_hash,
-        loaded_notebook,
-        notebook_executed,
-        notebook_was_run,
+        loaded_nb,
+        nb_executed,
+        nb_was_run,
     )
 
 
-def _should_execute_notebook(
+def _should_execute_nb(
     filename,
-    notebook_hashes,
+    nb_hashes,
     current_hash,
-    execute_notebooks,
+    execute_nbs,
     force_execute_all,
     dev_build,
     commit_check,
-    notebook_executed,
+    nb_executed,
     nb_version,
 ):
     """
@@ -694,12 +694,12 @@ def _should_execute_notebook(
     Inputs
     ------
     filename : str
-    notebook_hashes : dict
+    nb_hashes : dict
         Mapping of notebook filenames to their previously-determined hash values,
         loaded from notebook_hashes.json
     current_hash : str
         Newly-determined notebook hash based on the file's current state
-    execute_notebooks : bool
+    execute_nbs : bool
         Flag indicating whether or not notebooks should be executed
     force_execute_all : bool
         Flag to force execution regardless of hash/version parity/differences
@@ -710,7 +710,7 @@ def _should_execute_notebook(
         Contains the commit hash from the previous execution, loaded from the
         notebook's corresponding json output file. Used for checking/validating
         versions when doing a 'dev' build
-    notebook_executed : bool
+    nb_executed : bool
         Flag for whether or not the notebook is already executed per the
         notebook's corresponding json output file
     nb_version : str
@@ -728,19 +728,19 @@ def _should_execute_notebook(
 
     # 2) if the hash has not changed
     # --------------------------------------------------
-    if (filename in notebook_hashes) and (notebook_hashes[filename] == current_hash):
+    if (filename in nb_hashes) and (nb_hashes[filename] == current_hash):
         if dev_build:
             # check if the commit specified to use by the dev build
-            # matches the commit last used to run the notebook per the
-            # commit_check (returned by _notebook_has_json_output)
+            # matches the commit last used to run the nb per the
+            # commit_check (returned by _nb_has_json_output)
             #
-            # if the versions do not match, the notebook is flagged to
-            # be re-executed by setting "notebook_executed=False"
+            # if the versions do not match, the nb is flagged to
+            # be re-executed by setting "nb_executed=False"
             if dev_build != commit_check:
-                notebook_executed = False
+                nb_executed = False
                 print(f"Executing {filename} due to dev build commit mismatch.")
                 return True
-        if not execute_notebooks:
+        if not execute_nbs:
             if nb_version == "NA":
                 warnings.warn(
                     "\n\n"
@@ -768,13 +768,13 @@ def _should_execute_notebook(
                     "\n\n"
                 )
 
-        if not notebook_executed:
+        if not nb_executed:
             print(
                 f"Warning: Notebook {filename} has not been"
                 " fully executed on the specified version"
                 " of hnn-core."
             )
-            if execute_notebooks:
+            if execute_nbs:
                 return True
             else:
                 print("Notebook execution skipped since execute_notebooks is False.")
@@ -783,20 +783,20 @@ def _should_execute_notebook(
             print(f"Notebook {filename} is unchanged and already fully executed")
             return False
 
-    # 3) if notebook new or hash has changed
+    # 3) if nb new or hash has changed
     # --------------------------------------------------
     else:
         print(
             f"Notebook {filename} is new or has been updated and needs to be executed"
         )
-        if execute_notebooks:
+        if execute_nbs:
             return True
         else:
             print("Skipping notebook execution since execute_notebooks is False")
             return False
 
 
-def _write_standalone_notebook_to_html(
+def _write_standalone_nb_to_html(
     html_content,
     current_directory,
     filename,
@@ -848,12 +848,12 @@ def _write_standalone_notebook_to_html(
     return
 
 
-def _write_notebook_json(
+def _write_nb_json(
     html_content,
     filename,
     current_directory,
-    notebook_executed,
-    notebook_was_run,
+    nb_executed,
+    nb_was_run,
     dev_build=False,
 ):
     """
@@ -864,7 +864,7 @@ def _write_notebook_json(
     # generated structured json output
     # ----------------------------------------
     # Note: this section pertains to a planned enhancement
-    # to enable inserting sections of a notebook into an
+    # to enable inserting sections of a nb into an
     # html file by specifing the headers to include; e.g.,
     # including [[notebook][start header][end header]] in your
     # .md file would inject only the .html for those header
@@ -890,14 +890,14 @@ def _write_notebook_json(
             f"{os.path.splitext(filename)[0]}.json",
         )
 
-    # AES why not just use notebook_exec?
-    if notebook_was_run:
+    # AES why not just use nb_exec?
+    if nb_was_run:
         # Add execution status directly to json output
-        # Track version used in notebook execution
+        # Track version used in nb execution
         # AES if nb was started, but failed, then full_executed would be false here
         # AES maybe the point is "this is the last version they were successfully executed with"
         nb_html_json = {
-            "full_executed": notebook_executed,
+            "full_executed": nb_executed,
             "hnn_version": hnn_version,
             **nb_html_json,
         }
@@ -914,7 +914,7 @@ def _write_notebook_json(
             if "hnn_version" in nb_html_json:
                 previous_version = nb_html_json["hnn_version"]
         nb_html_json = {
-            "full_executed": notebook_executed,
+            "full_executed": nb_executed,
             "hnn_version": previous_version,
             **nb_html_json,
         }
@@ -927,14 +927,14 @@ def _write_notebook_json(
     return output_json
 
 
-def execute_and_convert_notebooks_to_json(
+def execute_and_convert_nbs_to_json(
     input_folder=None,
     use_base64=False,
     write_standalone_html=False,
-    execute_notebooks=False,
+    execute_nbs=False,
     force_execute_all=False,
     dev_build=False,
-    nb_hash_path="notebook_hashes.json",
+    nb_hash_path="nb_hashes.json",
 ):
     """
     Executes and converts .ipynb files in the input folder to JSON (and optionally HTML).
@@ -946,19 +946,19 @@ def execute_and_convert_notebooks_to_json(
 
     root, input_folder = _setup_root_and_input(input_folder)
 
-    # get notebook hashes from json
-    notebook_hashes = _load_notebook_hashes(nb_hash_path)
-    updated_hashes = notebook_hashes.copy()
+    # get nb hashes from json
+    nb_hashes = _load_nb_hashes(nb_hash_path)
+    updated_hashes = nb_hashes.copy()
 
-    # get list of notebooks to skip
-    notebooks_to_skip = _load_notebooks_to_skip(dev_build)
+    # get list of nbs to skip
+    nbs_to_skip = _load_nbs_to_skip(dev_build)
 
-    # notify user of forced notebook re-execution
+    # notify user of forced nb re-execution
     if force_execute_all:
         print(
             "The force_execute_all argument has been set to True. All "
             "notebooks will be re-executed unless flagged to be skipped "
-            "in the notebooks_to_skip.json file."
+            "in the nbs_to_skip.json file."
         )
 
     # ==================== #
@@ -973,27 +973,27 @@ def execute_and_convert_notebooks_to_json(
 
             print(f"\nProcessing notebook: {filename}")
 
-            # get the path to the notebook
+            # get the path to the nb
             nb_path = os.path.join(current_directory, filename)
 
-            # process notebook and update hash
-            processed_hash, loaded_notebook, notebook_executed, notebook_was_run = (
-                _process_notebook(
+            # process nb and update hash
+            processed_hash, loaded_nb, nb_executed, nb_was_run = (
+                _process_nb(
                     root=root,
                     nb_path=nb_path,
                     filename=filename,
                     current_directory=current_directory,
-                    notebook_hashes=notebook_hashes,
-                    notebooks_to_skip=notebooks_to_skip,
-                    execute_notebooks=execute_notebooks,
+                    nb_hashes=nb_hashes,
+                    nbs_to_skip=nbs_to_skip,
+                    execute_nbs=execute_nbs,
                     force_execute_all=force_execute_all,
                     dev_build=dev_build,
                 )
             )
 
-            # extract and process the html from the notebook
-            html_content = _extract_html_from_notebook(
-                loaded_notebook,
+            # extract and process the html from the nb
+            html_content = _extract_html_from_nb(
+                loaded_nb,
                 current_directory,
                 filename,
                 dev_build=dev_build,
@@ -1001,21 +1001,21 @@ def execute_and_convert_notebooks_to_json(
             )
 
             # generate complete json output file
-            _write_notebook_json(
+            _write_nb_json(
                 html_content,
                 filename,
                 current_directory,
-                notebook_executed,
-                notebook_was_run,
+                nb_executed,
+                nb_was_run,
                 dev_build=dev_build,
             )
 
-            # optionally write standalone notebook to an html file
-            # note: standalone notebooks are NOT part of the website build; rather,
-            #   they offer a "snapshot" view of how the notebook will look when
-            #   rendered in html. This is useful when creating/testing new notebooks
+            # optionally write standalone nb to an html file
+            # note: standalone nbs are NOT part of the website build; rather,
+            #   they offer a "snapshot" view of how the nb will look when
+            #   rendered in html. This is useful when creating/testing new nbs
             if write_standalone_html:
-                html_content = _write_standalone_notebook_to_html(
+                html_content = _write_standalone_nb_to_html(
                     html_content,
                     current_directory,
                     filename,
@@ -1027,7 +1027,7 @@ def execute_and_convert_notebooks_to_json(
             updated_hashes[filename] = processed_hash
 
     # save updated hashes
-    _save_notebook_hashes(
+    _save_nb_hashes(
         updated_hashes,
         nb_hash_path,
     )
@@ -1041,11 +1041,11 @@ run_test = False
 
 
 def test_nb_conversion(input_folder=None):
-    execute_and_convert_notebooks_to_json(
+    execute_and_convert_nbs_to_json(
         input_folder=input_folder,
         use_base64=False,
         write_standalone_html=True,
-        execute_notebooks=True,
+        execute_nbs=True,
     )
 
 

@@ -79,7 +79,7 @@ def _get_html_from_json(
     return agg_html
 
 
-def add_notebook_to_html(
+def add_nb_to_html(
     converted_html,
     path,
     md_page,
@@ -142,27 +142,27 @@ def add_notebook_to_html(
         args = nb_arguments_pattern in line
 
         if match and args:
-            notebook_name = match.group(1)
-            nb_path = path.split(md_page)[0] + notebook_name
+            nb_name = match.group(1)
+            nb_path = path.split(md_page)[0] + nb_name
             print(f"nb with args found: {line}")
             print("Argument handling will be added in a future update")
             output_lines.append(line)
         elif match:
-            notebook_name = match.group(1)
-            nb_path = path.split(md_page)[0] + notebook_name
+            nb_name = match.group(1)
+            nb_path = path.split(md_page)[0] + nb_name
 
-            # specify notebook button with correct file reference
+            # specify nb button with correct file reference
             nb_button = nb_button.replace(
                 "notebook_name",
-                notebook_name,
+                nb_name,
             )
             output_lines.append(
                 nb_button,
             )
 
-            # generate and append the notebook html output
-            notebook_html = _get_html_from_json(notebook_name, nb_path)
-            output_lines.append(notebook_html)
+            # generate and append the nb html output
+            nb_html = _get_html_from_json(nb_name, nb_path)
+            output_lines.append(nb_html)
         else:
             output_lines.append(line)
 
@@ -398,7 +398,7 @@ def generate_page_html(
                 f'img src="{rel_path}images',
             )
 
-        combined_html = add_notebook_to_html(
+        combined_html = add_nb_to_html(
             converted_html,
             path,
             md_page,
