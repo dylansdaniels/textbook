@@ -69,7 +69,8 @@ def check_version(enable_debug=True):
         notebooks_to_skip = json.load(f)
 
     # get names of notebooks to skip
-    notebooks_to_skip = notebooks_to_skip["skip_execution"]
+    # AES TODO BUG, this was not upgraded, maybe by accident. Also it should be loading the checker from the main convert module.
+    notebooks_to_skip = notebooks_to_skip["skip_if_stable"]
     logger.debug(
         "\n",
         "Notebooks to skip:\n",
