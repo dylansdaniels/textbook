@@ -7,7 +7,7 @@ import pypandoc
 
 from .create_navbar import generate_sidebar_html
 
-def compile_page_components(dev_build=False):
+def _compile_page_components(dev_build=False):
     """
     Compile shared html components for building webpage from the template files in the
     templates directory
@@ -47,7 +47,7 @@ def compile_page_components(dev_build=False):
     return html_parts, ordered_links
 
 
-def get_html_from_json(
+def _get_html_from_json(
     nb_name,
     nb_path,
 ):
@@ -161,7 +161,7 @@ def add_notebook_to_html(
             )
 
             # generate and append the notebook html output
-            notebook_html = get_html_from_json(notebook_name, nb_path)
+            notebook_html = _get_html_from_json(notebook_name, nb_path)
             output_lines.append(notebook_html)
         else:
             output_lines.append(line)
@@ -196,7 +196,7 @@ def generate_page_html(
     """
 
     # get the .html templates for building pages
-    html_parts, ordered_links = compile_page_components(dev_build=dev_build)
+    html_parts, ordered_links = _compile_page_components(dev_build=dev_build)
 
     # specify the order of components for assembling pages
     order = [

@@ -404,22 +404,22 @@ def _hash_notebook(notebook_path):
     return hasher.hexdigest()
 
 
-def _load_notebook_hashes(hash_path):
+def _load_notebook_hashes(nb_hash_path):
     """Load previously-recorded hashes notebook hashes"""
-    if os.path.exists(hash_path):
-        with open(hash_path, "r") as f:
+    if os.path.exists(nb_hash_path):
+        with open(nb_hash_path, "r") as f:
             return json.load(f)
     return {}
 
 
 def _save_notebook_hashes(
     new_hashes,
-    hash_path,
+    nb_hash_path,
 ):
     """Save updated notebook hashes"""
 
-    # print(f'Saving hashes to {hash_path}')
-    with open(hash_path, "w") as f:
+    # print(f'Saving hashes to {nb_hash_path}')
+    with open(nb_hash_path, "w") as f:
         json.dump(new_hashes, f, indent=4)
 
 
@@ -932,17 +932,17 @@ def _write_notebook_json(
     return output_json
 
 
-def convert_notebooks_to_html(
+def execute_and_convert_notebooks_to_json(
     input_folder=None,
     use_base64=False,
     write_standalone_html=False,
     execute_notebooks=False,
     force_execute_all=False,
     dev_build=False,
-    hash_path="notebook_hashes.json",
+    nb_hash_path="notebook_hashes.json",
 ):
     """
-    Executes and converts .ipynb files in the input folder to HTML.
+    Executes and converts .ipynb files in the input folder to JSON (and optionally HTML).
     """
 
     # ==================== #
@@ -952,7 +952,7 @@ def convert_notebooks_to_html(
     root, input_folder = _setup_root_and_input(input_folder)
 
     # get notebook hashes from json
-    notebook_hashes = _load_notebook_hashes(hash_path)
+    notebook_hashes = _load_notebook_hashes(nb_hash_path)
     updated_hashes = notebook_hashes.copy()
 
     # get list of notebooks to skip
@@ -1034,7 +1034,7 @@ def convert_notebooks_to_html(
     # save updated hashes
     _save_notebook_hashes(
         updated_hashes,
-        hash_path,
+        nb_hash_path,
     )
 
     return
@@ -1046,7 +1046,7 @@ run_test = False
 
 
 def test_nb_conversion(input_folder=None):
-    convert_notebooks_to_html(
+    execute_and_convert_notebooks_to_json(
         input_folder=input_folder,
         use_base64=False,
         write_standalone_html=True,
