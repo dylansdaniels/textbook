@@ -69,7 +69,6 @@ def main():
     Main function to generate html pages for deployment
     """
 
-
     # AES TODO
     # replace the `dev_build` arg (which acts as both a flag and content) with 3 values. But what? not "version" since overloaded. Maybe just two? stable vs anything else? "variant". Actually build_type
     # - 4508128151

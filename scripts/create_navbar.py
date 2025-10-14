@@ -7,6 +7,7 @@ import textwrap
 # functions for updating page index
 # ########################################
 
+
 def _get_title(file_path):
     file = open(file_path, "r")
     title = "NA"
@@ -50,10 +51,12 @@ def update_page_index():
     with open("index.json", "w", encoding="utf-8") as f:
         json.dump(indexed_pages, f, ensure_ascii=False, indent=4)
 
+
 # %% #####################################
 # functions to generate html for the
 # dynamic components of the sidebar
 # ########################################
+
 
 def get_absolute_paths(path=None):
     """
@@ -173,6 +176,7 @@ def build_navbar(json_page_index):
             )
 
     return dynamic_links_html, ordered_links
+
 
 # %% #####################################
 # build the complete sidebar html
@@ -300,10 +304,7 @@ def generate_sidebar_html(
             <div style='height: 30px;'></div>
         </div>
     """)
-    close_sidebar = textwrap.indent(
-        close_sidebar,
-        "\t"
-    )
+    close_sidebar = textwrap.indent(close_sidebar, "\t")
 
     # add page navigation to sidebar html
     # ----------------------------------

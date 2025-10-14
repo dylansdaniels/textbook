@@ -7,6 +7,7 @@ import pypandoc
 
 from .create_navbar import generate_sidebar_html
 
+
 def _compile_page_components(dev_build=False):
     """
     Compile shared html components for building webpage from the template files in the
