@@ -434,7 +434,7 @@ def _is_nb_fully_executed(nb):
     """
     Check if a notebook object has been fully executed.
 
-    Returns True if all code cells have an associated execution_count, except for those
+    Returns True if all code cells have an associated execution_count, excluding those
     with no source code.
     """
     for cell in nb.get("cells", []):
@@ -444,6 +444,7 @@ def _is_nb_fully_executed(nb):
             and (cell.get("source") != "")
         ):
             return False
+
     return True
 
 
@@ -456,6 +457,8 @@ def _nb_has_json_output(
     """
     Check if the notebook has been fully executed by checking against the
     json output file.
+
+    AES TODO write out the return types since they're heterogeneous
     """
 
     # update the filepath when doing a dev build
@@ -498,7 +501,7 @@ def _nb_has_json_output(
                 False,
             )
 
-    return execution_check, version_check, commit_check
+    return commit_check, execution_check, version_check
 
 
 def _setup_root_and_input(input_folder):
@@ -556,12 +559,12 @@ def _execute_nb(nb_path, timeout=600):
         {"metadata": {"path": os.path.dirname(nb_path)}},
     )
 
-    nb_was_run = True
+    execution_initiated = True
     print("Notebook has been executed")
-    nb_executed = _is_nb_fully_executed(
+    execution_successful = _is_nb_fully_executed(
         loaded_nb,
     )
-    return loaded_nb, nb_was_run, nb_executed
+    return loaded_nb, execution_initiated, execution_successful
 
 
 def _process_nb(
@@ -585,11 +588,13 @@ def _process_nb(
 
     # check if the nb has been fully executed, and
     # get the nb_version as well as the commit hash
-    nb_executed, nb_version, commit_check = _nb_has_json_output(
-        root=root,
-        cwd=current_directory,
-        filename=filename,
-        dev_build=dev_build,
+    prior_commit_if_any, prior_execution_if_any, prior_version_if_any = (
+        _nb_has_json_output(
+            root=root,
+            cwd=current_directory,
+            filename=filename,
+            dev_build=dev_build,
+        )
     )
 
     # hash the nb in its current state
@@ -597,7 +602,7 @@ def _process_nb(
 
     # flag for whether the nb was run, initially
     # set to False
-    nb_was_run = False
+    current_execution_initiated = False
 
     # identify if nb should be skipped and, if
     # so, return gracefully
@@ -609,69 +614,89 @@ def _process_nb(
             " skipped. Execution will not be attempted for"
             " this notebook."
         )
-        return (current_hash, loaded_nb, nb_executed, nb_was_run)
-
-    # determine if nb should be executed
-    print(f"Checking status of {filename}")
-
-    should_execute = _should_execute_nb(
-        filename,
-        nb_hashes,
-        current_hash,
-        execute_nbs,
-        force_execute_all,
-        dev_build,
-        commit_check,
-        nb_executed,
-        nb_version,
-    )
-
-    # execute nb as needed
-    if should_execute:
-        loaded_nb, nb_was_run, nb_executed = _execute_nb(
-            nb_path
+        execution_flag = prior_execution_if_any
+    else:
+        # determine if nb should be executed
+        print(f"Checking status of {filename}")
+        should_execute = _should_execute_nb(
+            filename,
+            nb_hashes,
+            current_hash,
+            execute_nbs,
+            force_execute_all,
+            dev_build,
+            prior_commit_if_any,
+            prior_execution_if_any,
+            prior_version_if_any,
         )
+        # execute nb as needed
+        if should_execute:
+            loaded_nb, current_execution_initiated, current_execution_successful = (
+                _execute_nb(nb_path)
+            )
+            execution_flag = current_execution_successful
 
-        print("Notebook has been executed")
+            # AES: The detection logic of this warning and the other one was unclear, since both
+            # of them should never happen in the "skip" case, due to the "return" above under
+            # "if skip_nb". I've tried to reorganize them. Original comment follows:
+            # --------------------------------
+            # warning for the case when nb execution was attempted
+            # but the nb was not fully executed for some reason
+            if not current_execution_initiated:
+                warnings.warn(
+                    "\n\n"
+                    "# -------------------------------------------------------\n"
+                    f"# Warning: the html and json outputs for '{filename}'\n"
+                    "# may be incomplete."
+                    "\n#\n"
+                    "# Notebook execution could not be initiated.\n"
+                    "# Please investigate the notebook\n"
+                    "# to determine why execution was not successfully completed\n"
+                    "# -------------------------------------------------------"
+                    "\n\n"
+                )
+            elif (current_execution_initiated) and (not current_execution_successful):
+                warnings.warn(
+                    "\n\n"
+                    "# -------------------------------------------------------\n"
+                    f"# Warning: the html and json outputs for '{filename}'\n"
+                    "# may be incomplete."
+                    "\n#\n"
+                    "# Notebook execution was initiated but did not complete\n"
+                    "# successfully. Please investigate the notebook\n"
+                    "# to determine why execution was not successfully completed\n"
+                    "# -------------------------------------------------------"
+                    "\n\n"
+                )
+                breakpoint()  # AES debug
+            else:
+                print(
+                    f"Notebook '{filename}' has been initiated and executed successfully"
+                )
 
-    # warning for the case when a nb was flagged to
-    # be skipped, but the nb as it stands is not
-    # fully executed.
-    if (not skip_nb) and (not should_execute) and (not nb_executed):
-        warnings.warn(
-            "\n\n"
-            "# -------------------------------------------------------\n"
-            f"# Warning: the html and json outputs for '{filename}'\n"
-            "# may be incomplete."
-            "\n#\n"
-            "# Please re-run the script with 'execute_notebooks=True'\n"
-            "# to ensure that the notebook outputs are correct.\n"
-            "# -------------------------------------------------------"
-            "\n\n"
-        )
-
-    # warning for the case when nb execution was attempted
-    # but the nb was not fully executed for some reason
-    if (not skip_nb) and (should_execute) and (not nb_executed):
-        warnings.warn(
-            "\n\n"
-            "# -------------------------------------------------------\n"
-            f"# Warning: the html and json outputs for '{filename}'\n"
-            "# may be incomplete."
-            "\n#\n"
-            "# Notebook execution was attempted but did not result in\n"
-            "# a fully-executed notebook. Please investigate the notebook\n"
-            "# to determine why execution was not successfully completed\n"
-            "# -------------------------------------------------------"
-            "\n\n"
-        )
-
-    return (
-        current_hash,
-        loaded_nb,
-        nb_executed,
-        nb_was_run,
-    )
+        else:
+            # AES: The detection logic of this warning and the other one was unclear, since both
+            # of them should never happen in the "skip" case, due to the "return" above under
+            # "if skip_nb". I've tried to reorganize them. Original comment follows:
+            # --------------------------------
+            # warning for the case when a nb was flagged to be skipped [AES: maybe you meant to
+            # write "flagged to be *executed*" here?], but the nb as it stands is not fully
+            # executed.
+            execution_flag = prior_execution_if_any
+            if not prior_execution_if_any:
+                warnings.warn(
+                    "\n\n"
+                    "# -------------------------------------------------------\n"
+                    f"# Warning: '{filename}' does not appear to have been successfully\n"
+                    "# executed the last time it was run.\n"
+                    "# The html and json output may be incomplete."
+                    "\n#\n"
+                    "# Please re-run the script with 'execute_notebooks=True'\n"
+                    "# to ensure that the notebook outputs are correct.\n"
+                    "# -------------------------------------------------------"
+                    "\n\n"
+                )
+    return current_hash, loaded_nb, current_execution_initiated, execution_flag
 
 
 def _should_execute_nb(
@@ -682,7 +707,7 @@ def _should_execute_nb(
     force_execute_all,
     dev_build,
     commit_check,
-    nb_executed,
+    execution_successful,
     nb_version,
 ):
     """
@@ -716,7 +741,7 @@ def _should_execute_nb(
         Contains the commit hash from the previous execution, loaded from the
         notebook's corresponding json output file. Used for checking/validating
         versions when doing a 'dev' build
-    nb_executed : bool
+    execution_successful : bool
         Flag for whether or not the notebook is already executed per the
         notebook's corresponding json output file
     nb_version : str
@@ -741,9 +766,9 @@ def _should_execute_nb(
             # commit_check (returned by _nb_has_json_output)
             #
             # if the versions do not match, the nb is flagged to
-            # be re-executed by setting "nb_executed=False"
+            # be re-executed by setting "execution_successful=False"
             if dev_build != commit_check:
-                nb_executed = False
+                execution_successful = False
                 print(f"Executing {filename} due to dev build commit mismatch.")
                 return True
         if not execute_nbs:
@@ -774,7 +799,7 @@ def _should_execute_nb(
                     "\n\n"
                 )
 
-        if not nb_executed:
+        if not execution_successful:
             print(
                 f"Warning: Notebook {filename} has not been"
                 " fully executed on the specified version"
@@ -858,8 +883,8 @@ def _write_nb_json(
     html_content,
     filename,
     current_directory,
-    nb_executed,
-    nb_was_run,
+    execution_successful,
+    execution_initiated,
     dev_build=False,
 ):
     """
@@ -897,13 +922,13 @@ def _write_nb_json(
         )
 
     # AES why not just use nb_exec?
-    if nb_was_run:
+    if execution_initiated:
         # Add execution status directly to json output
         # Track version used in nb execution
         # AES if nb was started, but failed, then full_executed would be false here
         # AES maybe the point is "this is the last version they were successfully executed with"
         nb_html_json = {
-            "full_executed": nb_executed,
+            "full_executed": execution_successful,
             "hnn_version": hnn_version,
             **nb_html_json,
         }
@@ -920,7 +945,7 @@ def _write_nb_json(
             if "hnn_version" in nb_html_json:
                 previous_version = nb_html_json["hnn_version"]
         nb_html_json = {
-            "full_executed": nb_executed,
+            "full_executed": execution_successful,
             "hnn_version": previous_version,
             **nb_html_json,
         }
@@ -983,7 +1008,7 @@ def execute_and_convert_nbs_to_json(
             nb_path = os.path.join(current_directory, filename)
 
             # process nb and update hash
-            processed_hash, loaded_nb, nb_executed, nb_was_run = (
+            processed_hash, loaded_nb, execution_initiated, execution_successful = (
                 _process_nb(
                     root=root,
                     nb_path=nb_path,
@@ -1011,8 +1036,8 @@ def execute_and_convert_nbs_to_json(
                 html_content,
                 filename,
                 current_directory,
-                nb_executed,
-                nb_was_run,
+                execution_successful,
+                execution_initiated,
                 dev_build=dev_build,
             )
 
