@@ -9,7 +9,7 @@ def check_version(enable_debug=True):
     else False
 
     This function performs the following steps:
-    1. Get notebooks to skip from 'notebooks_to_skip.json'.
+    1. Get notebooks to skip from 'nbs_to_skip.json'.
     2. Get the json output files for notebooks and extract the version used
        to run the notebook
     3. Get the latest version of hnn-core from pypi
@@ -53,35 +53,35 @@ def check_version(enable_debug=True):
     with open(
         os.path.join(
             "scripts",
-            "notebook_hashes.json",
+            "nb_hashes.json",
         ),
         "r",
     ) as f:
-        notebook_hashes = json.load(f)
+        nb_hashes = json.load(f)
 
     with open(
         os.path.join(
             "scripts",
-            "notebooks_to_skip.json",
+            "nbs_to_skip.json",
         ),
         "r",
     ) as f:
-        notebooks_to_skip = json.load(f)
+        nbs_to_skip = json.load(f)
 
-    # get names of notebooks to skip
+    # get names of nbs to skip
     # AES TODO BUG, this was not upgraded, maybe by accident. Also it should be loading the checker from the main convert module.
-    notebooks_to_skip = notebooks_to_skip["skip_if_stable"]
+    nbs_to_skip = nbs_to_skip["skip_if_stable"]
     logger.debug(
         "\n",
         "Notebooks to skip:\n",
-        notebooks_to_skip,
+        nbs_to_skip,
     )
 
-    # get json filenames for executed notebooks only
+    # get json filenames for executed nbs only
     json_fnames = [
-        notebook.replace(".ipynb", ".json")
-        for notebook in notebook_hashes.keys()
-        if notebook not in notebooks_to_skip
+        nb.replace(".ipynb", ".json")
+        for nb in nb_hashes.keys()
+        if nb not in nbs_to_skip
     ]
     logger.debug(
         "\n",
@@ -102,7 +102,7 @@ def check_version(enable_debug=True):
                 json_fpaths.append(os.path.join(root, file))
 
     # get the value of the "hnn_version" key from each json
-    notebook_versions = []
+    nb_versions = []
     execution_statuses = dict()
     for file in json_fpaths:
         file_key = file.split(os.sep)[-1]
@@ -111,31 +111,31 @@ def check_version(enable_debug=True):
         with open(file, "r") as f:
             contents = json.load(f)
             if "hnn_version" in contents:
-                notebook_versions.append(contents["hnn_version"])
+                nb_versions.append(contents["hnn_version"])
                 execution_statuses[file_key]["hnn_version"] = contents["hnn_version"]
             else:
                 print(f"Version key not found in {file}")
             # if "master_commit" in contents:
             # execution_statuses[file]['master_commit'] =
 
-    # unique versions for executed notebooks
-    notebook_versions = list(set(notebook_versions))
+    # unique versions for executed nbs
+    nb_versions = list(set(nb_versions))
 
     resp = requests.get("https://pypi.org/pypi/hnn-core/json")
     latest = resp.json()["info"]["version"]
 
-    if len(notebook_versions) != 1:
+    if len(nb_versions) != 1:
         latest_version_check = False
 
     else:
-        latest_version_check = notebook_versions[0] == latest
+        latest_version_check = nb_versions[0] == latest
 
     if latest_version_check:
         print(f"All notebooks were executed with the latest hnn-core=={latest}")
     else:
         print(
             f"\nLatest version of hnn-core: {latest}",
-            f"\nVersions of hnn-core used in executed notebooks: {notebook_versions}",
+            f"\nVersions of hnn-core used in executed notebooks: {nb_versions}",
             "Notebooks should be re-executed using the latest version",
         )
 

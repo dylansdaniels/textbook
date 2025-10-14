@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from scripts.execute_and_convert_notebooks import execute_and_convert_notebooks_to_json
+from scripts.execute_and_convert_nbs import execute_and_convert_nbs_to_json
 from scripts.generate_page_html import generate_page_html
 from scripts.get_commit_hash import get_commit_hash
 
@@ -106,17 +106,17 @@ def main():
     nb_hash_path = os.path.join(
         os.getcwd(),
         "scripts",
-        "notebook_hashes.json",
+        "nb_hashes.json",
     )
 
     # AES ref output to "build_type"
     commit_hash = get_commit_hash(build_on_dev_arg=args.build_on_dev)
 
     # write_standalone_html=True,
-    execute_and_convert_notebooks_to_json(
+    execute_and_convert_nbs_to_json(
         input_folder=content_path,
         write_standalone_html=False,
-        execute_notebooks=args.execute_notebooks,
+        execute_nbs=args.execute_notebooks,
         force_execute_all=args.force_execute_all,
         dev_build=commit_hash,
         nb_hash_path=nb_hash_path,
