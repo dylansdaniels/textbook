@@ -166,8 +166,45 @@ def _extract_html_from_nb(
     dev_build=False,
     use_base64=False,
 ):
-    """Extracts HTML for cell contents and outputs,
-    including code and markdown."""
+    """
+    Extract and convert notebook cells to HTML, including code, outputs, and markdown.
+
+    This function processes all cells in a Jupyter notebook and converts them to
+    formatted HTML. Code cells are rendered with their source and outputs (text,
+    images, errors). Markdown cells are converted to HTML using PyPandoc. Images from
+    notebook outputs are either embedded as Base64 strings or saved as PNG files.
+
+    The function handles:
+    - Code cell source formatting
+    - Multiple output types (text/plain, stdout, images, errors)
+    - Image output processing (Base64 embedding or file saving)
+    - Markdown cell conversion with MathML support
+    - Proper HTML structure with CSS classes for styling
+
+    Parameters
+    ----------
+    nb : nbformat.notebooknode.NotebookNode
+        The notebook object containing cells to convert
+    nb_path : pathlib.Path
+        Path to the Jupyter notebook file (.ipynb). Used to determine output file naming
+        and location
+    nb_json_output_dir : pathlib.Path
+        Directory where the notebook's JSON output file is located. This will become the
+        parent of the new directory where any images will be stored.
+    dev_build : str or bool
+        False if not running a dev build. Otherwise, a string containing the repo and
+        commit hash to be used for the build.
+    use_base64 : bool, optional
+        If True, embed images as Base64-encoded strings in the HTML.
+        If False, save images as separate PNG files and link to them.
+        Default is False
+
+    Returns
+    -------
+    str
+        Complete HTML string containing all converted notebook cells with
+        appropriate formatting and styling divs
+    """
 
     html_output = []
     fig_id = 0
@@ -1145,7 +1182,7 @@ def execute_and_convert_nbs_to_json(
                 )
             )
 
-            # extract and process the html from the nb
+            # extract the html from the nb, including saving any images if needed
             html_content = _extract_html_from_nb(
                 loaded_nb,
                 nb_path,
