@@ -528,6 +528,9 @@ def _load_nbs_to_skip(nb_skip_path, dev_build):
 
 
 def _execute_nb(nb_path, timeout=600):
+    execution_initiated = True
+    print(f"Execution: Notebook {nb_path.name} execution has been initiated.")
+
     loaded_nb = _load_nb(nb_path)
 
     ep = ExecutePreprocessor(
@@ -539,8 +542,6 @@ def _execute_nb(nb_path, timeout=600):
         {"metadata": {"path": os.path.dirname(nb_path)}},
     )
 
-    execution_initiated = True
-    print(f"Execution: Notebook {nb_path.name} execution has been initiated.")
     execution_successful = _is_nb_fully_executed(
         loaded_nb,
     )
@@ -557,10 +558,9 @@ def _process_nb(
     current_directory,
     nb_hashes,
     nbs_to_skip,
-    execute_nbs,
-    force_execute_all,
     dev_build,
     output_dir,
+    execution_filter,
 ):
     """
     Execute notebooks as needed and return the updated hash and execution contents.
@@ -593,14 +593,13 @@ def _process_nb(
     should_execute = _determine_should_execute_nb(
         nb_hashes,
         current_hash,
-        execute_nbs,
-        force_execute_all,
         dev_build,
         prior_commit_if_any,
         prior_execution_if_any,
         prior_version_if_any,
         nbs_to_skip=nbs_to_skip,
         nb_path=nb_path,
+        execution_filter=execution_filter,
     )
     # execute nb as needed
     if should_execute:
@@ -650,17 +649,16 @@ def _process_nb(
 def _determine_should_execute_nb(
     nb_hashes,
     current_hash,
-    execute_nbs,
-    force_execute_all,
     dev_build,
     prior_commit_if_any,
     prior_execution_if_any,
     prior_version_if_any,
     nbs_to_skip,
     nb_path,
+    execution_filter,
 ):
     """
-    Determine whether or not a notebook should be executed based on
+    TODO Determine whether or not a notebook should be executed based on
     various factors, including:
         - Has the notebook been executed previously
         - Is the notebook "new" (i.e., it is not associated with a json output)
@@ -679,10 +677,6 @@ def _determine_should_execute_nb(
         loaded from notebook_hashes.json
     current_hash : str
         Newly-determined notebook hash based on the file's current state
-    execute_nbs : bool
-        Flag indicating whether or not notebooks should be executed
-    force_execute_all : bool
-        Flag to force execution regardless of hash/version parity/differences
     dev_build : str or bool
         False if not running a dev build. Otherwise, this variable will be
         a string containing the repo and commit hash to be used for the build
@@ -702,55 +696,50 @@ def _determine_should_execute_nb(
     """
 
     filename = nb_path.name
-    # AES TODO add an "_arg" suffix to arg options here. Or maybe "execution_type":
-    # - no_execution [default]
-    # - execute_only_updated_or_new_notebooks
-    # - execute_all_unskipped_notebooks
-    # - execute_absolutely_all_notebooks
 
-    # AES TODO
-    # 1) handle (future option) super omega execute all
-    future_super_omega_option = False
-    if future_super_omega_option:
+    # 1) handle super omega execute all notebooks, including skipped
+    #     - This is a brand-new option.
+    if execution_filter == "execute-absolutely-all-notebooks":
         print(
-            "Execution set to all notebooks, including skipped! Charge proton torpedos!"
+            "Execution set to all notebooks, including skipped! CHARGE PROTON TORPEDOS!"
         )
         return True
 
-    # 2) handle (future option) absolute no execution
-    future_no_exec = False
-    if future_no_exec:
-        print("Execution set to NONE")
+    # 2) handle no execution of any notebooks
+    #     - This was formerly the "silent default" behavior of "python build.py" with no
+    #     args.
+    if execution_filter == "no-execution":
         # 2.1) if nb new
         if filename not in nb_hashes:
             print(
                 f"Notebook {filename} appears to be new and needs to be executed."
-                "Not performing notebook execution since no_execution is True."
+                f"Not performing execution since execution_filter is set to '{execution_filter}'.\n"
             )
         # 2.2) if nb hash has changed
         elif nb_hashes[filename] != current_hash:
             print(
                 f"Notebook {filename} appears to have been updated and needs to be executed."
-                "Not performing notebook execution since no_execution is True."
+                f"Not performing execution since execution_filter is set to '{execution_filter}'.\n"
             )
         # 2.3) warning if version out of date
-        elif Version(hnn_version) > Version(prior_version_if_any):
-            warnings.warn(
-                "\n\n"
-                "# -------------------------------------------------------\n"
-                f"# WARNING: Notebook {filename} may have been executed on an\n"
-                "# older version of hnn-core, as your installed version\n"
-                "# is greater than version used to run the notebook\n"
-                "# previously. Please consider re-executing this notebook."
-                "\n#\n"
-                "# Last version used to run notebook:\n"
-                f"#    {prior_version_if_any}\n"
-                "# Installed version:\n"
-                f"#    {hnn_version}\n\n"
-                "# Not performing notebook execution since no_execution is True.\n"
-                "# -------------------------------------------------------"
-                "\n\n"
-            )
+        elif prior_version_if_any != "NA":
+            if Version(hnn_version) > Version(prior_version_if_any):
+                warnings.warn(
+                    "\n\n"
+                    "# -------------------------------------------------------\n"
+                    f"# WARNING: Notebook {filename} may have been executed on an\n"
+                    "# older version of hnn-core, as your installed version\n"
+                    "# is greater than version used to run the notebook\n"
+                    "# previously. Please consider re-executing this notebook."
+                    "\n#\n"
+                    "# Last version used to run notebook:\n"
+                    f"#    {prior_version_if_any}\n"
+                    "# Installed version:\n"
+                    f"#    {hnn_version}\n\n"
+                    f"# Not performing execution since execution_filter is set to '{execution_filter}'.\n"
+                    "# -------------------------------------------------------"
+                    "\n\n"
+                )
         # 2.4) warning if prior execution not successful
         elif not prior_execution_if_any:
             warnings.warn(
@@ -759,14 +748,15 @@ def _determine_should_execute_nb(
                 f"# WARNING: Notebook '{filename}' does not\n"
                 "# appear to have been successfully\n"
                 "# executed the last time it was run.\n"
-                "# The html and json output may be incomplete."
+                "# The html and json output may be incomplete.\n"
+                f"# Not performing execution since execution_filter is set to '{execution_filter}'.\n"
                 "# -------------------------------------------------------"
                 "\n\n"
             )
 
         return False
 
-    # 3) In all other cases, skip first if possible
+    # 3) In all other cases (see below), skip first if possible
     skip_nb = filename in nbs_to_skip
     if skip_nb:
         print(
@@ -781,9 +771,11 @@ def _determine_should_execute_nb(
                 f"# WARNING: '{filename}' is flagged to be skipped, but does not\n"
                 "# appear to have been successfully\n"
                 "# executed the last time it was run.\n"
-                "# The html and json output may be incomplete."
+                "# The html and json output may be incomplete.\n"
                 "\n#\n"
-                "# Please re-run the script with 'execute_notebooks=True'\n"
+                "# Please either remove the notebook from the skipped list JSON file,\n"
+                "# or re-run the script with\n"
+                "# '--execution-filter=execute-absolutely-all-notebooks'\n"
                 "# to ensure that the notebook outputs are correct.\n"
                 "# -------------------------------------------------------"
                 "\n\n"
@@ -795,7 +787,9 @@ def _determine_should_execute_nb(
                 f"# WARNING: '{filename}' is flagged to be skipped, but does not\n"
                 "# appear to have been previously executed ever.\n"
                 "\n#\n"
-                "# Please run the script with 'execute_notebooks=True'\n"
+                "# Please either remove the notebook from the skipped list JSON file,\n"
+                "# or re-run the script with\n"
+                "# '--execution-filter=execute-absolutely-all-notebooks'\n"
                 "# to ensure that the notebook outputs are correct.\n"
                 "# -------------------------------------------------------"
                 "\n\n"
@@ -803,13 +797,16 @@ def _determine_should_execute_nb(
 
         return False
 
-    # 4) handle force_execute_all, since skippable nbs have already been skipped above
-    if force_execute_all:
+    # 4) Handle executing everything except skipped, since skippable nbs have already
+    # been skipped above.
+    #     - This was formerly called via the "--force-execute-all" CLI arg.
+    if execution_filter == "execute-all-unskipped-notebooks":
         print(f"Executing {filename}")
         return True
 
     # 5) handle "regular" execute
-    if execute_nbs:
+    #     - This was formerly called via the "--execute-notebooks" CLI arg.
+    if execution_filter == "execute-updated-unskipped-notebooks":
         # --------------------------------------------------
         # 4.1) if the hash has not changed
         if (filename in nb_hashes) and (nb_hashes[filename] == current_hash):
@@ -828,7 +825,9 @@ def _determine_should_execute_nb(
                 print(f"Executing {filename} due to previous failure of execution.")
                 return True
             else:
-                print(f"Not executing: Notebook {filename} is unchanged and already fully executed.")
+                print(
+                    f"Not executing: Notebook {filename} is unchanged and already fully executed."
+                )
                 return False
         else:
             print(f"Executing {filename} due to notebook being either new or changed.")
@@ -971,11 +970,10 @@ def execute_and_convert_nbs_to_json(
     input_folder=None,
     use_base64=False,
     write_standalone_html=False,
-    execute_nbs=False,
-    force_execute_all=False,
     dev_build=False,
     nb_hash_path=Path(textbook_root_path / "scripts" / "nb_hashes.json"),
     nb_skip_path=Path(textbook_root_path / "scripts" / "nbs_to_skip.json"),
+    execution_filter=None,
 ):
     """
     Executes and converts .ipynb files in the input folder to JSON (and optionally HTML).
@@ -992,14 +990,6 @@ def execute_and_convert_nbs_to_json(
 
     # get list of nbs to skip
     nbs_to_skip = _load_nbs_to_skip(nb_skip_path, dev_build)
-
-    # notify user of forced nb re-execution
-    if force_execute_all:
-        print(
-            "The force_execute_all argument has been set to True. All "
-            "notebooks will be re-executed unless flagged to be skipped "
-            "in the nbs_to_skip.json file."
-        )
 
     # ==================== #
     # Loop through notebooks
@@ -1036,10 +1026,9 @@ def execute_and_convert_nbs_to_json(
                     current_directory=current_directory,
                     nb_hashes=nb_hashes,
                     nbs_to_skip=nbs_to_skip,
-                    execute_nbs=execute_nbs,
-                    force_execute_all=force_execute_all,
                     dev_build=dev_build,
                     output_dir=output_dir,
+                    execution_filter=execution_filter,
                 )
             )
 
@@ -1087,19 +1076,20 @@ def execute_and_convert_nbs_to_json(
     return
 
 
-# %%
+# # AES TODO
+# # %%
 
-run_test = False
-
-
-def test_nb_conversion(input_folder=None):
-    execute_and_convert_nbs_to_json(
-        input_folder=input_folder,
-        use_base64=False,
-        write_standalone_html=True,
-        execute_nbs=True,
-    )
+# run_test = False
 
 
-if run_test:
-    test_nb_conversion("tests")
+# def test_nb_conversion(input_folder=None):
+#     execute_and_convert_nbs_to_json(
+#         input_folder=input_folder,
+#         use_base64=False,
+#         write_standalone_html=True,
+#         execute_nbs=True,
+#     )
+
+
+# if run_test:
+#     test_nb_conversion("tests")
