@@ -21,21 +21,6 @@ from packaging.version import Version
 textbook_root_path = Path(__file__).parents[1]
 
 
-def _save_plot_as_image(
-    img_data,
-    img_filename,
-    output_dir,
-):
-    """Saves the plot image to the specified directory."""
-    img_path = os.path.join(
-        output_dir,
-        img_filename,
-    )
-    with open(img_path, "wb") as img_file:
-        img_file.write(base64.b64decode(img_data))
-    return
-
-
 def _html_to_json(
     html: str,
     filename: str,
@@ -177,20 +162,20 @@ def _structure_json(contents):
 def _extract_html_from_nb(
     nb,
     nb_path,
-    input_dir,
+    nb_json_output_dir,
     dev_build=False,
     use_base64=False,
 ):
     """Extracts HTML for cell contents and outputs,
     including code and markdown."""
 
-    # AES
-    filename = nb_path.name
-
     html_output = []
     fig_id = 0
-    delim = os.path.sep
     aggregated_output = ""
+
+    # AES TODO eventually this should be the same dir as the JSON output one
+    img_output_dir = nb_json_output_dir / f"output_nb_{nb_path.stem}"
+    img_output_dir.mkdir(parents=True, exist_ok=True)
 
     # helper for aggregating outputs
     # -----------------------------
@@ -290,31 +275,15 @@ def _extract_html_from_nb(
                     # ------------------------------
                     else:
                         fig_id += 1
-                        img_filename = f"fig_{fig_id:02d}.png"
+                        img_path = img_output_dir / f"fig_{fig_id:02d}.png"
+                        with open(img_path, "wb") as img_file:
+                            img_file.write(base64.b64decode(img_data))
 
-                        output_folder = "output_nb_" + f"{filename.split('.ipynb')[0]}"
-                        output_dir = f"{input_dir}{delim}{output_folder}"
-
-                        # if doing a dev build, switch the output directory
-                        if dev_build:
-                            output_dir = output_dir.replace(
-                                "content",
-                                "dev",
-                            )
-
-                        if not os.path.exists(output_dir):
-                            os.makedirs(output_dir)
-
-                        _save_plot_as_image(
-                            img_data,
-                            img_filename,
-                            output_dir,
-                        )
-
+                        relative_img_path = img_path.relative_to(img_path.parents[1])
                         output_img_html = textwrap.dedent(f"""
                             <!-- code cell image -->
                             <div class='output-cell'>
-                                <img src='{output_folder}{delim}{img_filename}'/>
+                                <img src='{relative_img_path}'/>
                             </div>
                         """)
                         html_output.append(output_img_html)
@@ -1180,7 +1149,7 @@ def execute_and_convert_nbs_to_json(
             html_content = _extract_html_from_nb(
                 loaded_nb,
                 nb_path,
-                current_directory,
+                nb_json_output_dir,
                 dev_build=dev_build,
                 use_base64=use_base64,
             )
