@@ -20,6 +20,7 @@ from packaging.version import Version
 
 textbook_root_path = Path(__file__).parents[1]
 
+
 def _save_plot_as_image(
     img_data,
     img_filename,
@@ -377,7 +378,32 @@ def _extract_html_from_nb(
 
 
 def _hash_nb(nb_path):
-    """Generate a SHA256 hash of the notebook, ignoring outputs/metadata."""
+    """
+    Generate a content-based SHA256 hash of a notebook.
+
+    This function creates a deterministic hash of the notebook's source code
+    by removing execution outputs, metadata, and execution counts before hashing.
+    This ensures that the hash only changes when the actual notebook content
+    (code and markdown) changes, not when it is simply re-executed with the
+    same code.
+
+    The cleaning process includes:
+    - Clearing all cell outputs
+    - Removing execution counts from code cells
+    - Removing all cell-level metadata
+    - Removing all notebook-level metadata
+
+    Parameters
+    ----------
+    nb_path : str or pathlib.Path
+        Path to the Jupyter notebook file (.ipynb) to hash
+
+    Returns
+    -------
+    str
+        A 64-character hexadecimal string representing the SHA256 hash
+        of the cleaned notebook content
+    """
 
     with open(nb_path, "r", encoding="utf-8") as f:
         nb = nbformat.read(f, as_version=4)
@@ -428,7 +454,19 @@ def _save_nb_hashes(
 
 
 def _load_nb(nb_path):
-    """Get a jupyter notebook object and optionally execute it"""
+    """
+    Load a Jupyter notebook object from a path to a file.
+
+    Parameters
+    ----------
+    nb_path : str or pathlib.Path
+        Path to the Jupyter notebook file (.ipynb) to load
+
+    Returns
+    -------
+    nbformat.notebooknode.NotebookNode
+        The loaded notebook object
+    """
     with open(nb_path, "r", encoding="utf-8") as f:
         nb = nbformat.read(f, as_version=4)
     return nb
@@ -438,8 +476,16 @@ def _is_nb_fully_executed(nb):
     """
     Check if a notebook object has been fully executed.
 
-    Returns True if all code cells have an associated execution_count, excluding those
-    with no source code.
+    Parameters
+    ----------
+    nb : nbformat.notebooknode.NotebookNode
+        The notebook object to check for complete execution
+
+    Returns
+    -------
+    bool
+        True if all *non-empty* code cells have been executed (have an execution_count),
+        False otherwise.
     """
     for cell in nb.get("cells", []):
         if (
@@ -452,15 +498,37 @@ def _is_nb_fully_executed(nb):
     return True
 
 
-def _nb_has_json_output(
+def _read_nb_json_output_metadata(
     nb_path,
     output_dir,
 ):
     """
-    Check if the notebook has been fully executed by checking against the
-    json output file.
+    Retrieve prior execution metadata from a notebook's JSON output file.
 
-    AES TODO write out the return types since they're heterogeneous
+    This function checks for the existence of a notebook's corresponding JSON
+    output file and extracts metadata about its previous execution, including
+    the commit hash used (for dev builds), execution status, and hnn-core version.
+
+    Parameters
+    ----------
+    nb_path : pathlib.Path
+        Path to the Jupyter notebook file (.ipynb)
+    output_dir : pathlib.Path
+        Directory where the notebook's JSON output file is located
+
+    Returns
+    -------
+    commit_check : str or bool
+        The commit hash from the previous execution if available and the notebook
+        was executed. False if the JSON file doesn't exist or doesn't contain
+        commit information
+    execution_check : bool
+        True if the notebook was fully executed in a prior run (all non-empty
+        code cells completed execution). False if the JSON file doesn't exist
+        or if the prior execution was incomplete
+    version_check : str or bool
+        The version string of hnn-core used in the previous execution (e.g., "0.4.2").
+        False if the JSON file doesn't exist or doesn't contain version information
     """
 
     json_path = output_dir / f"{nb_path.stem}.json"
@@ -528,9 +596,29 @@ def _load_nbs_to_skip(nb_skip_path, dev_build):
 
 
 def _execute_nb(nb_path, timeout=600):
+    """
+    Execute a Jupyter notebook using nbconvert's ExecutePreprocessor.
+
+    Parameters
+    ----------
+    nb_path : str or pathlib.Path
+        Path to the Jupyter notebook file (.ipynb) to execute
+    timeout : int, optional
+        Maximum time in seconds to wait for each cell to execute.
+        Default is 600 seconds (10 minutes)
+
+    Returns
+    -------
+    loaded_nb : nbformat.notebooknode.NotebookNode
+        The executed notebook object with outputs
+    execution_initiated : bool
+        Always True, indicating that execution was initiated
+    execution_successful : bool
+        True if all non-empty code cells were successfully executed,
+        False otherwise
+    """
     execution_initiated = True
     print(f"Execution: Notebook {nb_path.name} execution has been initiated.")
-
     loaded_nb = _load_nb(nb_path)
 
     ep = ExecutePreprocessor(
@@ -539,7 +627,7 @@ def _execute_nb(nb_path, timeout=600):
     )
     ep.preprocess(
         loaded_nb,
-        {"metadata": {"path": os.path.dirname(nb_path)}},
+        {"metadata": {"path": nb_path.parents[0]}},
     )
 
     execution_successful = _is_nb_fully_executed(
@@ -552,28 +640,68 @@ def _execute_nb(nb_path, timeout=600):
 
 
 def _process_nb(
-    root,
     nb_path,
-    filename,
-    current_directory,
     nb_hashes,
     nbs_to_skip,
     dev_build,
-    output_dir,
     execution_filter,
+    output_dir,
 ):
     """
-    Execute notebooks as needed and return the updated hash and execution contents.
+    Process a notebook by determining if execution is needed and executing if appropriate.
 
-    AES: this docstring also included "convert [nbs] to html and json", but as far as I
-    can tell, this function no longer does that, so I have removed it.
+    This function orchestrates the notebook processing workflow by:
+    1. Computing the current hash of the notebook
+    2. Loading the notebook without executing it
+    3. Checking prior execution status from JSON output files
+    4. Determining if the notebook should be executed based on various criteria
+    5. Executing the notebook if needed
+    6. Issuing warnings for execution failures
+
+    Parameters
+    ----------
+    nb_path : pathlib.Path
+        Path to the Jupyter notebook file (.ipynb) to process
+    nb_hashes : dict
+        Mapping of notebook filenames to their previously-determined hash values,
+        loaded from notebook_hashes.json
+    nbs_to_skip : list
+        List of notebook filenames that should be skipped during execution
+    dev_build : str or bool
+        False if not running a dev build. Otherwise, a string containing
+        the repo and commit hash to be used for the build
+    execution_filter : str
+        Execution mode that determines which notebooks to execute. See the 'help'
+        description of 'build.py's CLI for what these different values mean. Valid
+        values:
+        - 'no-execution'
+        - 'execute-only-updated-or-new-notebooks'
+        - 'execute-all-unskipped-notebooks'
+        - 'execute-absolutely-all-notebooks'
+    output_dir : pathlib.Path
+        Directory where the notebook's JSON output file is located
+
+    Returns
+    -------
+    current_hash : str
+        The SHA256 hash of the notebook in its current state
+    loaded_nb : nbformat.notebooknode.NotebookNode
+        The notebook object, either freshly loaded or executed with outputs
+    current_execution_initiated : bool
+        True if execution was attempted for this notebook, False otherwise
+    execution_successful : bool
+        True if the notebook was fully executed successfully (all non-empty
+        code cells have execution_count), False otherwise. For non-executed
+        notebooks, this reflects the prior execution status
     """
-
-    # get the nb without executing it
-    loaded_nb = _load_nb(nb_path)
+    # Don't need to show the whole path in logging and warning messages
+    filename = nb_path.name
 
     # hash the nb in its current state
     current_hash = _hash_nb(nb_path)
+
+    # get the nb without executing it
+    loaded_nb = _load_nb(nb_path)
 
     # flag for whether the nb was run, initialized as false
     current_execution_initiated = False
@@ -582,7 +710,7 @@ def _process_nb(
     # commit hash. We will use this in a warning in the skipped case, or actually use
     # this data in other cases.
     prior_commit_if_any, prior_execution_if_any, prior_version_if_any = (
-        _nb_has_json_output(
+        _read_nb_json_output_metadata(
             nb_path=nb_path,
             output_dir=output_dir,
         )
@@ -591,15 +719,15 @@ def _process_nb(
     # determine if nb should be executed
     print(f"Configuration: Checking whether '{filename}' should be newly re-executed.")
     should_execute = _determine_should_execute_nb(
+        filename,
         nb_hashes,
         current_hash,
+        nbs_to_skip,
         dev_build,
+        execution_filter,
         prior_commit_if_any,
         prior_execution_if_any,
         prior_version_if_any,
-        nbs_to_skip=nbs_to_skip,
-        nb_path=nb_path,
-        execution_filter=execution_filter,
     )
     # execute nb as needed
     if should_execute:
@@ -647,56 +775,68 @@ def _process_nb(
 
 
 def _determine_should_execute_nb(
+    filename,
     nb_hashes,
     current_hash,
+    nbs_to_skip,
     dev_build,
+    execution_filter,
     prior_commit_if_any,
     prior_execution_if_any,
     prior_version_if_any,
-    nbs_to_skip,
-    nb_path,
-    execution_filter,
 ):
     """
-    TODO Determine whether or not a notebook should be executed based on
-    various factors, including:
-        - Has the notebook been executed previously
-        - Is the notebook "new" (i.e., it is not associated with a json output)
-        - Is the user performing a 'dev' build
-        - Has the notebook hash changed since the last execution
+    Determine whether a notebook should be executed based on various factors.
 
-    A warning will be printed to the terminal if execute_notebooks is False
-    and the locally-installed version of hnn-core is greater than the version
-    last used to run the notebook
+    This function evaluates multiple conditions including:
+    - Whether the notebook has been executed previously
+    - Whether the notebook is flagged for skipping
+    - Whether the notebook is "new" (not associated with a json output)
+    - Whether the user is performing a 'dev' build
+    - Whether the notebook hash has changed since last execution
+    - The execution filter mode specified by the user
 
-    Inputs
-    ------
+    Warnings are printed if the notebook appears outdated or if execution
+    is needed but skipped based on the execution filter.
+
+    Parameters
+    ----------
     filename : str
+        The filename of the notebook (e.g., "example.ipynb")
     nb_hashes : dict
         Mapping of notebook filenames to their previously-determined hash values,
         loaded from notebook_hashes.json
     current_hash : str
-        Newly-determined notebook hash based on the file's current state
+        Newly-determined SHA256 hash of the notebook based on its current state
+    nbs_to_skip : list
+        List of notebook filenames that should be skipped during execution
     dev_build : str or bool
-        False if not running a dev build. Otherwise, this variable will be
-        a string containing the repo and commit hash to be used for the build
-    prior_commit_if_any : str
-        Contains the commit hash from the previous execution, loaded from the
-        notebook's corresponding json output file. Used for checking/validating
-        versions when doing a 'dev' build
+        False if not running a dev build. Otherwise, a string containing
+        the repo and commit hash to be used for the build
+    execution_filter : str
+        Execution mode that determines which notebooks to execute. See the 'help'
+        description of 'build.py's CLI for what these different values mean. Valid
+        values:
+        - 'no-execution'
+        - 'execute-only-updated-or-new-notebooks'
+        - 'execute-all-unskipped-notebooks'
+        - 'execute-absolutely-all-notebooks'
+    prior_commit_if_any : str or bool
+        Commit hash from the previous execution, loaded from the notebook's
+        corresponding json output file. False if not found. Used for
+        checking/validating versions when doing a 'dev' build
     prior_execution_if_any : bool
-        Flag for whether or not the notebook is already executed per the
-        notebook's corresponding json output file
-    prior_version_if_any : str
-        The version of hnn-core that was last used to execute the notebook
+        True if the notebook was fully executed previously (per the
+        notebook's corresponding json output file), False otherwise
+    prior_version_if_any : str or bool
+        The version of hnn-core that was last used to execute the notebook.
+        False if not found, "NA" if never executed
 
     Returns
     -------
-        bool : a boolean indicating if the notebook should be executed
+    bool
+        True if the notebook should be executed, False otherwise
     """
-
-    filename = nb_path.name
-
     # 1) handle super omega execute all notebooks, including skipped
     #     - This is a brand-new option.
     if execution_filter == "execute-absolutely-all-notebooks":
@@ -813,7 +953,7 @@ def _determine_should_execute_nb(
             if dev_build:
                 # check if the commit specified to use by the dev build
                 # matches the commit last used to run the nb per the
-                # prior_commit_if_any (returned by _nb_has_json_output)
+                # prior_commit_if_any (returned by _read_nb_json_output_metadata)
                 #
                 # if the versions do not match, the nb is flagged to
                 # be re-executed by setting "prior_execution_if_any=False"
@@ -1006,7 +1146,6 @@ def execute_and_convert_nbs_to_json(
             # get the path to the nb
             nb_path = os.path.join(current_directory, filename)
 
-
             # AES TODO as refactor with pathlib, expand Path usage
             nb_path = Path(nb_path)
             if dev_build:
@@ -1020,15 +1159,12 @@ def execute_and_convert_nbs_to_json(
             # process nb and update hash
             processed_hash, loaded_nb, execution_initiated, execution_successful = (
                 _process_nb(
-                    root=root,
                     nb_path=nb_path,
-                    filename=filename,
-                    current_directory=current_directory,
                     nb_hashes=nb_hashes,
                     nbs_to_skip=nbs_to_skip,
                     dev_build=dev_build,
-                    output_dir=output_dir,
                     execution_filter=execution_filter,
+                    output_dir=output_dir,
                 )
             )
 
