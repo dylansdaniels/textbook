@@ -1,5 +1,4 @@
 import argparse
-import os
 from pathlib import Path
 
 from scripts.execute_and_convert_nbs import execute_and_convert_nbs_to_json
@@ -81,23 +80,29 @@ def main():
         type=str,
         help="Optionally provide the commit from upstream/master",
     )
+    # AES Not sure we want to support this, but leaving it as an option since I assume
+    # this case was the reason why `os.getcwd()` is used so much in the scripts instead
+    # of absolute paths.
+    parser.add_argument(
+        "--custom-root-path",
+        type=str,
+        help="Optionally provide a different 'root' location for your textbook files",
+    )
 
     # add all above arguments to the parser
     args = parser.parse_args()
 
-    content_path = os.path.join(
-        os.getcwd(),
-        "content",
-    )
-    nb_hash_path = os.path.join(
-        os.getcwd(),
-        "scripts",
-        "nb_hashes.json",
-    )
+    if args.custom_root_path:
+        content_path = Path(args.custom_root_path / "content")
+        nb_hash_path = Path(args.custom_root_path / "scripts" / "nb_hashes.json")
+    else:
+        content_path = Path(textbook_root_path / "content")
+        nb_hash_path = Path(textbook_root_path / "scripts" / "nb_hashes.json")
 
     # AES ref output to "build_type"
     commit_hash = get_commit_hash(build_on_dev_arg=args.build_on_dev)
 
+    # AES commented out standalone
     # write_standalone_html=True,
     execute_and_convert_nbs_to_json(
         input_folder=content_path,
@@ -108,7 +113,7 @@ def main():
         nb_hash_path=nb_hash_path,
     )
 
-    # AES TODO move into generate_page_html
+    # AES TODO move into generate_page_html since it only needs the content path input like the convert function above
     md_paths = get_markdown_paths()
 
     generate_page_html(
