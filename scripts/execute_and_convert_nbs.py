@@ -745,29 +745,25 @@ def _process_nb(
         # but the nb was not fully executed for some reason
         if not current_execution_initiated:
             # AES This is a new warning.
-            warnings.warn(
-                "\n\n"
-                "# -------------------------------------------------------\n"
-                f"# ERROR: Execution of notebook '{filename}'"
-                "# could not be initiated\n"
-                "# successfully. Please investigate the notebook\n"
-                "# to determine why execution was not successfully initiated.\n"
-                "# The html and json outputs may be incomplete."
-                "# -------------------------------------------------------"
-                "\n\n"
-            )
+            warnings.warn(textwrap.dedent(f"""
+                # ----------------------------------------------------------------------
+                # ERROR: Execution of notebook
+                # '{filename}'
+                # could not be initiated successfully. Please investigate the notebook
+                # to determine why execution was not successfully initiated. The html
+                # and json outputs may be incomplete.
+                # ----------------------------------------------------------------------
+            """))
         elif (current_execution_initiated) and (not current_execution_successful):
-            warnings.warn(
-                "\n\n"
-                "# -------------------------------------------------------\n"
-                f"# ERROR: Execution of notebook '{filename}'"
-                "# was initiated but did not complete\n"
-                "# successfully. Please investigate the notebook\n"
-                "# to determine why execution was not successfully completed.\n"
-                "# The html and json outputs may be incomplete."
-                "# -------------------------------------------------------"
-                "\n\n"
-            )
+            warnings.warn(textwrap.dedent(f"""
+                # ----------------------------------------------------------------------
+                # ERROR: Execution of notebook
+                # '{filename}'
+                # was initiated but did not complete successfully. Please investigate
+                # the notebook to determine why execution was not successfully
+                # completed. The html and json outputs may be incomplete.
+                # ----------------------------------------------------------------------
+            """))
     else:
         execution_successful = prior_execution_if_any
 
@@ -851,89 +847,97 @@ def _determine_should_execute_nb(
     if execution_filter == "no-execution":
         # 2.1) if nb new
         if filename not in nb_hashes:
-            print(
-                f"Notebook {filename} appears to be new and needs to be executed."
-                f"Not performing execution since execution_filter is set to '{execution_filter}'.\n"
-            )
+            print(textwrap.dedent(f"""
+                # ----------------------------------------------------------------------
+                # Notebook
+                # '{filename}'
+                # appears to be new and needs to be executed. Not performing execution
+                # since execution_filter is set to '{execution_filter}'.
+                # ----------------------------------------------------------------------
+            """))
         # 2.2) if nb hash has changed
         elif nb_hashes[filename] != current_hash:
-            print(
-                f"Notebook {filename} appears to have been updated and needs to be executed."
-                f"Not performing execution since execution_filter is set to '{execution_filter}'.\n"
-            )
+            print(textwrap.dedent(f"""
+                # ----------------------------------------------------------------------
+                # Notebook
+                # '{filename}'
+                # appears to have been updated and needs to be executed. Not performing
+                # execution since execution_filter is set to '{execution_filter}'.
+                # ----------------------------------------------------------------------
+            """))
         # 2.3) warning if version out of date
         elif prior_version_if_any != "NA":
             if Version(hnn_version) > Version(prior_version_if_any):
-                warnings.warn(
-                    "\n\n"
-                    "# -------------------------------------------------------\n"
-                    f"# WARNING: Notebook {filename} may have been executed on an\n"
-                    "# older version of hnn-core, as your installed version\n"
-                    "# is greater than version used to run the notebook\n"
-                    "# previously. Please consider re-executing this notebook."
-                    "\n#\n"
-                    "# Last version used to run notebook:\n"
-                    f"#    {prior_version_if_any}\n"
-                    "# Installed version:\n"
-                    f"#    {hnn_version}\n\n"
-                    f"# Not performing execution since execution_filter is set to '{execution_filter}'.\n"
-                    "# -------------------------------------------------------"
-                    "\n\n"
-                )
+                warnings.warn(textwrap.dedent(f"""
+                    # ------------------------------------------------------------------
+                    # WARNING: Notebook
+                    # '{filename}'
+                    # may have been executed on an older version of hnn-core, as your
+                    # installed version is greater than version used to run the notebook
+                    # previously. Please consider re-executing this notebook.
+                    #
+                    # Last version used to run notebook:
+                    #    {prior_version_if_any}
+                    # Installed version:
+                    #    {hnn_version}
+                    #
+                    # Not performing execution since execution_filter is set to
+                    # '{execution_filter}'.
+                    # ------------------------------------------------------------------
+                """))
         # 2.4) warning if prior execution not successful
         elif not prior_execution_if_any:
-            warnings.warn(
-                "\n\n"
-                "# -------------------------------------------------------\n"
-                f"# WARNING: Notebook '{filename}' does not\n"
-                "# appear to have been successfully\n"
-                "# executed the last time it was run.\n"
-                "# The html and json output may be incomplete.\n"
-                f"# Not performing execution since execution_filter is set to '{execution_filter}'.\n"
-                "# -------------------------------------------------------"
-                "\n\n"
-            )
+            warnings.warn(textwrap.dedent(f"""
+                # ----------------------------------------------------------------------
+                # WARNING: Notebook
+                # '{filename}'
+                # does not appear to have been successfully executed the last time it
+                # was run. The html and json output may be incomplete. Please consider
+                # re-executing this notebook.
+                #
+                # Not performing execution since execution_filter is set to
+                # '{execution_filter}'.
+                # ----------------------------------------------------------------------
+            """))
 
         return False
 
     # 3) In all other cases (see below), skip first if possible
     skip_nb = filename in nbs_to_skip
     if skip_nb:
-        print(
-            f"Notebook '{filename}' has been flagged to be"
-            " skipped. Execution will not be attempted for"
-            " this notebook."
-        )
+        print(textwrap.dedent(f"""
+            Notebook '{filename}' has been flagged to be skipped. Execution will not be
+            attempted for this notebook.
+        """))
         if not prior_execution_if_any:
-            warnings.warn(
-                "\n\n"
-                "# -------------------------------------------------------\n"
-                f"# WARNING: '{filename}' is flagged to be skipped, but does not\n"
-                "# appear to have been successfully\n"
-                "# executed the last time it was run.\n"
-                "# The html and json output may be incomplete.\n"
-                "\n#\n"
-                "# Please either remove the notebook from the skipped list JSON file,\n"
-                "# or re-run the script with\n"
-                "# '--execution-filter=execute-absolutely-all-notebooks'\n"
-                "# to ensure that the notebook outputs are correct.\n"
-                "# -------------------------------------------------------"
-                "\n\n"
-            )
+            warnings.warn(textwrap.dedent(f"""
+                # ----------------------------------------------------------------------
+                # WARNING: Notebook
+                # '{filename}'
+                # is flagged to be skipped, but does not appear to have been
+                # successfully executed the last time it was run. The html and json
+                # output may be incomplete.
+                #
+                # Please either remove the notebook from the skipped list JSON file, or
+                # re-run the script with
+                # '--execution-filter=execute-absolutely-all-notebooks'
+                # to ensure that the notebook outputs are correct.
+                # ----------------------------------------------------------------------
+            """))
         elif prior_version_if_any == "NA":
-            warnings.warn(
-                "\n\n"
-                "# -------------------------------------------------------\n"
-                f"# WARNING: '{filename}' is flagged to be skipped, but does not\n"
-                "# appear to have been previously executed ever.\n"
-                "\n#\n"
-                "# Please either remove the notebook from the skipped list JSON file,\n"
-                "# or re-run the script with\n"
-                "# '--execution-filter=execute-absolutely-all-notebooks'\n"
-                "# to ensure that the notebook outputs are correct.\n"
-                "# -------------------------------------------------------"
-                "\n\n"
-            )
+            warnings.warn(textwrap.dedent(f"""
+                # ----------------------------------------------------------------------
+                # WARNING: Notebook
+                # '{filename}'
+                # is flagged to be skipped, but does not appear to have been previously
+                # executed ever.
+                #
+                # Please either remove the notebook from the skipped list JSON file, or
+                # re-run the script with
+                # '--execution-filter=execute-absolutely-all-notebooks'
+                # to ensure that the notebook outputs are correct.
+                # ----------------------------------------------------------------------
+            """))
 
         return False
 
@@ -941,14 +945,13 @@ def _determine_should_execute_nb(
     # been skipped above.
     #     - This was formerly called via the "--force-execute-all" CLI arg.
     if execution_filter == "execute-all-unskipped-notebooks":
-        print(f"Executing {filename}")
+        print(f"Executing '{filename}'")
         return True
 
     # 5) handle "regular" execute
     #     - This was formerly called via the "--execute-notebooks" CLI arg.
     if execution_filter == "execute-updated-unskipped-notebooks":
-        # --------------------------------------------------
-        # 4.1) if the hash has not changed
+        # 5.1) if the hash has not changed
         if (filename in nb_hashes) and (nb_hashes[filename] == current_hash):
             if dev_build:
                 # check if the commit specified to use by the dev build
@@ -959,18 +962,18 @@ def _determine_should_execute_nb(
                 # be re-executed by setting "prior_execution_if_any=False"
                 if dev_build != prior_commit_if_any:
                     prior_execution_if_any = False
-                    print(f"Executing {filename} due to dev build commit mismatch.")
+                    print(f"Executing '{filename}' due to dev build commit mismatch.")
                     return True
             elif not prior_execution_if_any:
-                print(f"Executing {filename} due to previous failure of execution.")
+                print(f"Executing '{filename}' due to previous failure of execution.")
                 return True
             else:
                 print(
-                    f"Not executing: Notebook {filename} is unchanged and already fully executed."
+                    f"Not executing: Notebook '{filename}' is unchanged and already fully executed."
                 )
                 return False
         else:
-            print(f"Executing {filename} due to notebook being either new or changed.")
+            print(f"Executing '{filename}' due to notebook being either new or changed.")
             return True
 
 
@@ -1141,7 +1144,7 @@ def execute_and_convert_nbs_to_json(
             if not filename.endswith(".ipynb"):
                 continue
 
-            print(f"\nProcessing notebook: {filename}")
+            print(f"\nProcessing notebook: '{filename}'")
 
             # get the path to the nb
             nb_path = os.path.join(current_directory, filename)
