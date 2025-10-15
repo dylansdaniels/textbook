@@ -453,10 +453,8 @@ def _is_nb_fully_executed(nb):
 
 
 def _nb_has_json_output(
-    root,
-    cwd,
-    filename,
-    dev_build=False,
+    nb_path,
+    output_dir,
 ):
     """
     Check if the notebook has been fully executed by checking against the
@@ -465,23 +463,7 @@ def _nb_has_json_output(
     AES TODO write out the return types since they're heterogeneous
     """
 
-    # update the filepath when doing a dev build
-    if dev_build:
-        # get filepath after "content"
-        # strip the os separator in a safe way with lstrip
-        wd = cwd.split("content")[-1].lstrip(os.sep)
-        json_path = os.path.join(
-            root,
-            "dev",
-            wd,
-            f"{os.path.splitext(filename)[0]}.json",
-        )
-
-    else:
-        json_path = os.path.join(
-            cwd,
-            f"{os.path.splitext(filename)[0]}.json",
-        )
+    json_path = output_dir / f"{nb_path.stem}.json"
 
     execution_check = False
     version_check = False
@@ -489,7 +471,7 @@ def _nb_has_json_output(
 
     # if the json output exists, get the execution status, base version,
     # and latest commit used to execute the nb
-    if os.path.exists(json_path):
+    if json_path.exists():
         with open(json_path, "r") as file:
             nb_outputs = json.load(file)
             execution_check = nb_outputs.get(
@@ -575,6 +557,7 @@ def _process_nb(
     execute_nbs,
     force_execute_all,
     dev_build,
+    output_dir,
 ):
     """
     Execute notebooks as needed and return the updated hash and execution contents.
@@ -586,23 +569,22 @@ def _process_nb(
     # get the nb without executing it
     loaded_nb = _load_nb(nb_path)
 
-    # check if the nb has been fully executed, and
-    # get the nb_version as well as the commit hash
-    prior_commit_if_any, prior_execution_if_any, prior_version_if_any = (
-        _nb_has_json_output(
-            root=root,
-            cwd=current_directory,
-            filename=filename,
-            dev_build=dev_build,
-        )
-    )
-
     # hash the nb in its current state
     current_hash = _hash_nb(nb_path)
 
     # flag for whether the nb was run, initially
     # set to False
     current_execution_initiated = False
+
+
+    # check if the nb has been fully executed, and
+    # get the nb_version as well as the commit hash
+    prior_commit_if_any, prior_execution_if_any, prior_version_if_any = (
+        _nb_has_json_output(
+            nb_path=nb_path,
+            output_dir=output_dir,
+        )
+    )
 
     # identify if nb should be skipped
     skip_nb = filename in nbs_to_skip
@@ -1019,6 +1001,17 @@ def execute_and_convert_nbs_to_json(
             # get the path to the nb
             nb_path = os.path.join(current_directory, filename)
 
+
+            # AES TODO as refactor with pathlib, expand Path usage
+            nb_path = Path(nb_path)
+            if dev_build:
+                # Replace "content" parent directory with "dev" one
+                output_dir = Path(str(nb_path).replace("content", "dev"))
+                output_dir = output_dir.parents[0]
+                output_dir.mkdir(parents=True, exist_ok=True)
+            else:
+                output_dir = nb_path.parents[0]
+
             # process nb and update hash
             processed_hash, loaded_nb, execution_initiated, execution_successful = (
                 _process_nb(
@@ -1031,6 +1024,7 @@ def execute_and_convert_nbs_to_json(
                     execute_nbs=execute_nbs,
                     force_execute_all=force_execute_all,
                     dev_build=dev_build,
+                    output_dir=output_dir,
                 )
             )
 
