@@ -408,6 +408,8 @@ def _hash_nb(nb_path):
 
 def _load_nb_hashes(nb_hash_path):
     """Load previously-recorded hashes notebook hashes"""
+    # AES if we want to support optional or fresh hash building, we should do it at the
+    # CLI in main, not here, but leaving this as-is for now.
     if os.path.exists(nb_hash_path):
         with open(nb_hash_path, "r") as f:
             return json.load(f)
@@ -967,6 +969,7 @@ def _write_nb_json(
     return output_json
 
 
+# AES I think most of these arguments should be required, not optional
 def execute_and_convert_nbs_to_json(
     input_folder=None,
     use_base64=False,
@@ -974,7 +977,7 @@ def execute_and_convert_nbs_to_json(
     execute_nbs=False,
     force_execute_all=False,
     dev_build=False,
-    nb_hash_path="nb_hashes.json",
+    nb_hash_path=Path(textbook_root_path / "scripts" / "nb_hashes.json"),
     nb_skip_path=Path(textbook_root_path / "scripts" / "nbs_to_skip.json"),
 ):
     """
