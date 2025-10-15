@@ -540,10 +540,13 @@ def _execute_nb(nb_path, timeout=600):
     )
 
     execution_initiated = True
-    print("Notebook execution has been initiated")
+    print(f"Execution: Notebook {nb_path.name} execution has been initiated.")
     execution_successful = _is_nb_fully_executed(
         loaded_nb,
     )
+    if execution_successful:
+        print(f"Execution: Notebook {nb_path.name} execution has been successful.")
+
     return loaded_nb, execution_initiated, execution_successful
 
 
@@ -572,13 +575,12 @@ def _process_nb(
     # hash the nb in its current state
     current_hash = _hash_nb(nb_path)
 
-    # flag for whether the nb was run, initially
-    # set to False
+    # flag for whether the nb was run, initialized as false
     current_execution_initiated = False
 
-
-    # check if the nb has been fully executed, and
-    # get the nb_version as well as the commit hash
+    # Check if the nb has been fully executed, and get the nb_version as well as the
+    # commit hash. We will use this in a warning in the skipped case, or actually use
+    # this data in other cases.
     prior_commit_if_any, prior_execution_if_any, prior_version_if_any = (
         _nb_has_json_output(
             nb_path=nb_path,
@@ -586,106 +588,66 @@ def _process_nb(
         )
     )
 
-    # identify if nb should be skipped
-    skip_nb = filename in nbs_to_skip
-
-    if skip_nb:
-        print(
-            f"Notebook '{filename}' has been flagged to be"
-            " skipped. Execution will not be attempted for"
-            " this notebook."
+    # determine if nb should be executed
+    print(f"Configuration: Checking whether '{filename}' should be newly re-executed.")
+    should_execute = _determine_should_execute_nb(
+        nb_hashes,
+        current_hash,
+        execute_nbs,
+        force_execute_all,
+        dev_build,
+        prior_commit_if_any,
+        prior_execution_if_any,
+        prior_version_if_any,
+        nbs_to_skip=nbs_to_skip,
+        nb_path=nb_path,
+    )
+    # execute nb as needed
+    if should_execute:
+        loaded_nb, current_execution_initiated, current_execution_successful = (
+            _execute_nb(nb_path)
         )
-        execution_flag = prior_execution_if_any
+        execution_successful = current_execution_successful
 
-
-        ### AES really all of the above should go in should_exec
-    else:
-        # determine if nb should be executed
-        print(f"Checking whether '{filename}' should be newly re-executed.")
-        should_execute = _should_execute_nb(
-            filename,
-            nb_hashes,
-            current_hash,
-            execute_nbs,
-            force_execute_all,
-            dev_build,
-            prior_commit_if_any,
-            prior_execution_if_any,
-            prior_version_if_any,
-        )
-        # execute nb as needed
-        if should_execute:
-            loaded_nb, current_execution_initiated, current_execution_successful = (
-                _execute_nb(nb_path)
+        # AES: I've tried to reorganize the warnings. The warnings here are now only for
+        # issues with a current execution attempt. All warnings related to prior
+        # execution attempts or skipping are inside
+        # _determine_should_execute_nb. Original comment follows:
+        # --------------------------------
+        # warning for the case when nb execution was attempted
+        # but the nb was not fully executed for some reason
+        if not current_execution_initiated:
+            # AES This is a new warning.
+            warnings.warn(
+                "\n\n"
+                "# -------------------------------------------------------\n"
+                f"# ERROR: Execution of notebook '{filename}'"
+                "# could not be initiated\n"
+                "# successfully. Please investigate the notebook\n"
+                "# to determine why execution was not successfully initiated.\n"
+                "# The html and json outputs may be incomplete."
+                "# -------------------------------------------------------"
+                "\n\n"
             )
-            execution_flag = current_execution_successful
+        elif (current_execution_initiated) and (not current_execution_successful):
+            warnings.warn(
+                "\n\n"
+                "# -------------------------------------------------------\n"
+                f"# ERROR: Execution of notebook '{filename}'"
+                "# was initiated but did not complete\n"
+                "# successfully. Please investigate the notebook\n"
+                "# to determine why execution was not successfully completed.\n"
+                "# The html and json outputs may be incomplete."
+                "# -------------------------------------------------------"
+                "\n\n"
+            )
+    else:
+        execution_successful = prior_execution_if_any
 
-            # AES: The detection logic of this warning and the other one was unclear, since both
-            # of them should never happen in the "skip" case, due to the "return" above under
-            # "if skip_nb". I've tried to reorganize them. Original comment follows:
-            # --------------------------------
-            # warning for the case when nb execution was attempted
-            # but the nb was not fully executed for some reason
-            if not current_execution_initiated:
-                # AES This is a new warning.
-                warnings.warn(
-                    "\n\n"
-                    "# -------------------------------------------------------\n"
-                    f"# Warning: the html and json outputs for '{filename}'\n"
-                    "# may be incomplete."
-                    "\n#\n"
-                    "# Notebook execution could not be initiated.\n"
-                    "# Please investigate the notebook\n"
-                    "# to determine why execution was not successfully completed\n"
-                    "# -------------------------------------------------------"
-                    "\n\n"
-                )
-            elif (current_execution_initiated) and (not current_execution_successful):
-                warnings.warn(
-                    "\n\n"
-                    "# -------------------------------------------------------\n"
-                    f"# Warning: the html and json outputs for '{filename}'\n"
-                    "# may be incomplete."
-                    "\n#\n"
-                    "# Notebook execution was initiated but did not complete\n"
-                    "# successfully. Please investigate the notebook\n"
-                    "# to determine why execution was not successfully completed\n"
-                    "# -------------------------------------------------------"
-                    "\n\n"
-                )
-            else:
-                print(
-                    f"Success: Notebook '{filename}' has been initiated and executed successfully"
-                )
-
-        else:
-            # AES: The detection logic of this warning and the other one was unclear,
-            # since both of them should never happen in the "skip" case, due to the
-            # "return" that was above under "if skip_nb" (now deleted). I've tried to
-            # reorganize them. Original comment follows:
-            # --------------------------------
-            # warning for the case when a nb was flagged to be skipped [AES: maybe you meant to
-            # write "flagged to be *executed*" here?], but the nb as it stands is not fully
-            # executed.
-            execution_flag = prior_execution_if_any
-            if not prior_execution_if_any:
-                warnings.warn(
-                    "\n\n"
-                    "# -------------------------------------------------------\n"
-                    f"# Warning: '{filename}' does not appear to have been successfully\n"
-                    "# executed the last time it was run.\n"
-                    "# The html and json output may be incomplete."
-                    "\n#\n"
-                    "# Please re-run the script with 'execute_notebooks=True'\n"
-                    "# to ensure that the notebook outputs are correct.\n"
-                    "# -------------------------------------------------------"
-                    "\n\n"
-                )
-    return current_hash, loaded_nb, current_execution_initiated, execution_flag
+    return current_hash, loaded_nb, current_execution_initiated, execution_successful
 
 
-def _should_execute_nb(
-    filename,
+def _determine_should_execute_nb(
     nb_hashes,
     current_hash,
     execute_nbs,
@@ -694,6 +656,8 @@ def _should_execute_nb(
     prior_commit_if_any,
     prior_execution_if_any,
     prior_version_if_any,
+    nbs_to_skip,
+    nb_path,
 ):
     """
     Determine whether or not a notebook should be executed based on
@@ -737,87 +701,138 @@ def _should_execute_nb(
         bool : a boolean indicating if the notebook should be executed
     """
 
+    filename = nb_path.name
     # AES TODO add an "_arg" suffix to arg options here. Or maybe "execution_type":
-    # - no_execution
+    # - no_execution [default]
     # - execute_only_updated_or_new_notebooks
     # - execute_all_unskipped_notebooks
     # - execute_absolutely_all_notebooks
 
-    # AES TODO move skip logic in here too
+    # AES TODO
+    # 1) handle (future option) super omega execute all
+    future_super_omega_option = False
+    if future_super_omega_option:
+        print(
+            "Execution set to all notebooks, including skipped! Charge proton torpedos!"
+        )
+        return True
 
-    # 1) handle force_execute_all
+    # 2) handle (future option) absolute no execution
+    future_no_exec = False
+    if future_no_exec:
+        print("Execution set to NONE")
+        # 2.1) if nb new
+        if filename not in nb_hashes:
+            print(
+                f"Notebook {filename} appears to be new and needs to be executed."
+                "Not performing notebook execution since no_execution is True."
+            )
+        # 2.2) if nb hash has changed
+        elif nb_hashes[filename] != current_hash:
+            print(
+                f"Notebook {filename} appears to have been updated and needs to be executed."
+                "Not performing notebook execution since no_execution is True."
+            )
+        # 2.3) warning if version out of date
+        elif Version(hnn_version) > Version(prior_version_if_any):
+            warnings.warn(
+                "\n\n"
+                "# -------------------------------------------------------\n"
+                f"# WARNING: Notebook {filename} may have been executed on an\n"
+                "# older version of hnn-core, as your installed version\n"
+                "# is greater than version used to run the notebook\n"
+                "# previously. Please consider re-executing this notebook."
+                "\n#\n"
+                "# Last version used to run notebook:\n"
+                f"#    {prior_version_if_any}\n"
+                "# Installed version:\n"
+                f"#    {hnn_version}\n\n"
+                "# Not performing notebook execution since no_execution is True.\n"
+                "# -------------------------------------------------------"
+                "\n\n"
+            )
+        # 2.4) warning if prior execution not successful
+        elif not prior_execution_if_any:
+            warnings.warn(
+                "\n\n"
+                "# -------------------------------------------------------\n"
+                f"# WARNING: Notebook '{filename}' does not\n"
+                "# appear to have been successfully\n"
+                "# executed the last time it was run.\n"
+                "# The html and json output may be incomplete."
+                "# -------------------------------------------------------"
+                "\n\n"
+            )
+
+        return False
+
+    # 3) In all other cases, skip first if possible
+    skip_nb = filename in nbs_to_skip
+    if skip_nb:
+        print(
+            f"Notebook '{filename}' has been flagged to be"
+            " skipped. Execution will not be attempted for"
+            " this notebook."
+        )
+        if not prior_execution_if_any:
+            warnings.warn(
+                "\n\n"
+                "# -------------------------------------------------------\n"
+                f"# WARNING: '{filename}' is flagged to be skipped, but does not\n"
+                "# appear to have been successfully\n"
+                "# executed the last time it was run.\n"
+                "# The html and json output may be incomplete."
+                "\n#\n"
+                "# Please re-run the script with 'execute_notebooks=True'\n"
+                "# to ensure that the notebook outputs are correct.\n"
+                "# -------------------------------------------------------"
+                "\n\n"
+            )
+        elif prior_version_if_any == "NA":
+            warnings.warn(
+                "\n\n"
+                "# -------------------------------------------------------\n"
+                f"# WARNING: '{filename}' is flagged to be skipped, but does not\n"
+                "# appear to have been previously executed ever.\n"
+                "\n#\n"
+                "# Please run the script with 'execute_notebooks=True'\n"
+                "# to ensure that the notebook outputs are correct.\n"
+                "# -------------------------------------------------------"
+                "\n\n"
+            )
+
+        return False
+
+    # 4) handle force_execute_all, since skippable nbs have already been skipped above
     if force_execute_all:
         print(f"Executing {filename}")
         return True
 
-    # 2) if the hash has not changed
-    # --------------------------------------------------
-    if (filename in nb_hashes) and (nb_hashes[filename] == current_hash):
-        if dev_build:
-            # check if the commit specified to use by the dev build
-            # matches the commit last used to run the nb per the
-            # prior_commit_if_any (returned by _nb_has_json_output)
-            #
-            # if the versions do not match, the nb is flagged to
-            # be re-executed by setting "prior_execution_if_any=False"
-            if dev_build != prior_commit_if_any:
-                prior_execution_if_any = False
-                print(f"Executing {filename} due to dev build commit mismatch.")
-                return True
-        if not execute_nbs:
-            if prior_version_if_any == "NA":
-                warnings.warn(
-                    "\n\n"
-                    "# -------------------------------------------------------\n"
-                    "# We were not able to find a previous execution attempt \n"
-                    "# for this notebook. Please consider re-executing the \n"
-                    "# notebook so that we can log the execution metadata.\n"
-                    "# -------------------------------------------------------"
-                    "\n\n"
-                )
-            elif Version(hnn_version) > Version(prior_version_if_any):
-                warnings.warn(
-                    "\n\n"
-                    "# -------------------------------------------------------\n"
-                    "# Warning: The notebook may have been executed on an\n"
-                    "# older version of hnn-core, as your installed version\n"
-                    "# is greater than version used to run the notebook\n"
-                    "# previously. Please consider re-executing this notebook"
-                    "\n#\n"
-                    "# Last version used to run notebook:\n"
-                    f"#    {prior_version_if_any}\n"
-                    "# Installed version:\n"
-                    f"#    {hnn_version}\n"
-                    "# -------------------------------------------------------"
-                    "\n\n"
-                )
-
-        if not prior_execution_if_any:
-            print(
-                f"Warning: Notebook {filename} has not been"
-                " fully executed on the specified version"
-                " of hnn-core."
-            )
-            if execute_nbs:
+    # 5) handle "regular" execute
+    if execute_nbs:
+        # --------------------------------------------------
+        # 4.1) if the hash has not changed
+        if (filename in nb_hashes) and (nb_hashes[filename] == current_hash):
+            if dev_build:
+                # check if the commit specified to use by the dev build
+                # matches the commit last used to run the nb per the
+                # prior_commit_if_any (returned by _nb_has_json_output)
+                #
+                # if the versions do not match, the nb is flagged to
+                # be re-executed by setting "prior_execution_if_any=False"
+                if dev_build != prior_commit_if_any:
+                    prior_execution_if_any = False
+                    print(f"Executing {filename} due to dev build commit mismatch.")
+                    return True
+            elif not prior_execution_if_any:
+                print(f"Executing {filename} due to previous failure of execution.")
                 return True
             else:
-                print("Notebook execution skipped since execute_notebooks is False.")
+                print(f"Not executing: Notebook {filename} is unchanged and already fully executed.")
                 return False
         else:
-            print(f"Notebook {filename} is unchanged and already fully executed")
-            return False
-
-    # 3) if nb new or hash has changed
-    # --------------------------------------------------
-    else:
-        print(
-            f"Notebook {filename} is new or has been updated and needs to be executed"
-        )
-        if execute_nbs:
+            print(f"Executing {filename} due to notebook being either new or changed.")
             return True
-        else:
-            print("Skipping notebook execution since execute_notebooks is False")
-            return False
 
 
 def _write_standalone_nb_to_html(
