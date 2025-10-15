@@ -1,6 +1,12 @@
 import sys
+from pathlib import Path
 
-from scripts.logger_setup import setup_logger
+sys.path.insert(
+    0,
+    str(Path(__file__).parent),
+)
+
+from logger_setup import setup_logger
 
 
 def check_version(enable_debug=True):
@@ -152,6 +158,10 @@ def check_version(enable_debug=True):
 if __name__ == "__main__":
     # return 0 to indicate success if True
     # return 1 to indicate failure if False
-    sys.exit(
-        0 if check_version() else 1,
-    )
+    status = check_version()
+    if status == 0:
+        print("Success!")
+    elif status == 1:
+        print("ERROR: 'check_nb_versions.py' Failed, please investigate")
+
+    sys.exit(status)
