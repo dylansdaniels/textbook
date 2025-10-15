@@ -176,13 +176,16 @@ def _structure_json(contents):
 
 def _extract_html_from_nb(
     nb,
+    nb_path,
     input_dir,
-    filename,
     dev_build=False,
     use_base64=False,
 ):
     """Extracts HTML for cell contents and outputs,
     including code and markdown."""
+
+    # AES
+    filename = nb_path.name
 
     html_output = []
     fig_id = 0
@@ -246,7 +249,7 @@ def _extract_html_from_nb(
                     # aggregate outputs
                     aggregated_output += f"\n\t\t{escaped_text_output}"
 
-                # handle stdout
+                # handle stdout (exclude stderr)
                 # ------------------------------
                 # e.g., this includes outputs from print statements
                 if (
@@ -500,7 +503,7 @@ def _is_nb_fully_executed(nb):
 
 def _read_nb_json_output_metadata(
     nb_path,
-    output_dir,
+    nb_json_output_dir,
 ):
     """
     Retrieve prior execution metadata from a notebook's JSON output file.
@@ -513,7 +516,7 @@ def _read_nb_json_output_metadata(
     ----------
     nb_path : pathlib.Path
         Path to the Jupyter notebook file (.ipynb)
-    output_dir : pathlib.Path
+    nb_json_output_dir : pathlib.Path
         Directory where the notebook's JSON output file is located
 
     Returns
@@ -531,7 +534,7 @@ def _read_nb_json_output_metadata(
         False if the JSON file doesn't exist or doesn't contain version information
     """
 
-    json_path = output_dir / f"{nb_path.stem}.json"
+    json_path = nb_json_output_dir / f"{nb_path.stem}.json"
 
     execution_check = False
     version_check = False
@@ -643,9 +646,9 @@ def _process_nb(
     nb_path,
     nb_hashes,
     nbs_to_skip,
+    nb_json_output_dir,
     dev_build,
     execution_filter,
-    output_dir,
 ):
     """
     Process a notebook by determining if execution is needed and executing if appropriate.
@@ -667,6 +670,8 @@ def _process_nb(
         loaded from notebook_hashes.json
     nbs_to_skip : list
         List of notebook filenames that should be skipped during execution
+    nb_json_output_dir : pathlib.Path
+        Directory where the notebook's JSON output file is located
     dev_build : str or bool
         False if not running a dev build. Otherwise, a string containing
         the repo and commit hash to be used for the build
@@ -678,8 +683,6 @@ def _process_nb(
         - 'execute-only-updated-or-new-notebooks'
         - 'execute-all-unskipped-notebooks'
         - 'execute-absolutely-all-notebooks'
-    output_dir : pathlib.Path
-        Directory where the notebook's JSON output file is located
 
     Returns
     -------
@@ -712,7 +715,7 @@ def _process_nb(
     prior_commit_if_any, prior_execution_if_any, prior_version_if_any = (
         _read_nb_json_output_metadata(
             nb_path=nb_path,
-            output_dir=output_dir,
+            nb_json_output_dir=nb_json_output_dir,
         )
     )
 
@@ -1150,32 +1153,34 @@ def execute_and_convert_nbs_to_json(
             nb_path = os.path.join(current_directory, filename)
 
             # AES TODO as refactor with pathlib, expand Path usage
+            # AES TODO eventually, "JSON output" (and standalone HTML output) SHOULD be
+            # put in the per-notebook output folder where images currently are...
             nb_path = Path(nb_path)
             if dev_build:
                 # Replace "content" parent directory with "dev" one
-                output_dir = Path(str(nb_path).replace("content", "dev"))
-                output_dir = output_dir.parents[0]
-                output_dir.mkdir(parents=True, exist_ok=True)
+                nb_json_output_dir = Path(str(nb_path).replace("content", "dev"))
+                nb_json_output_dir = nb_json_output_dir.parents[0]
+                nb_json_output_dir.mkdir(parents=True, exist_ok=True)
             else:
-                output_dir = nb_path.parents[0]
+                nb_json_output_dir = nb_path.parents[0]
 
             # process nb and update hash
             processed_hash, loaded_nb, execution_initiated, execution_successful = (
                 _process_nb(
-                    nb_path=nb_path,
-                    nb_hashes=nb_hashes,
-                    nbs_to_skip=nbs_to_skip,
-                    dev_build=dev_build,
-                    execution_filter=execution_filter,
-                    output_dir=output_dir,
+                    nb_path,
+                    nb_hashes,
+                    nbs_to_skip,
+                    nb_json_output_dir,
+                    dev_build,
+                    execution_filter,
                 )
             )
 
             # extract and process the html from the nb
             html_content = _extract_html_from_nb(
                 loaded_nb,
+                nb_path,
                 current_directory,
-                filename,
                 dev_build=dev_build,
                 use_base64=use_base64,
             )
