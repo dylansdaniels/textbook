@@ -4,6 +4,7 @@ import hashlib
 import html
 import json
 import os
+from pathlib import Path
 import re
 import textwrap
 import warnings
@@ -17,6 +18,7 @@ from nbconvert.preprocessors import (
 )
 from packaging.version import Version
 
+textbook_root_path = Path(__file__).parents[1]
 
 def _save_plot_as_image(
     img_data,
@@ -521,19 +523,13 @@ def _setup_root_and_input(input_folder):
     return root, input_folder
 
 
-def _load_nbs_to_skip(dev_build):
+def _load_nbs_to_skip(nb_skip_path, dev_build):
     """
-    Get the list of notebooks to skip from the 'nbs_to_skip.json'
-    The "dev_build" flag determines which list is extracted from the json
+    Get the list of notebooks to skip from the 'nbs_to_skip.json' file in the 'nb_skip_path'.
+
+    The "dev_build" flag determines which list is extracted from the json.
     """
-    with open(
-        os.path.join(
-            os.getcwd(),
-            "scripts",
-            "nbs_to_skip.json",
-        ),
-        "r",
-    ) as f:
+    with open(nb_skip_path, "r") as f:
         nbs_to_skip = json.load(f)
 
     if dev_build:
@@ -979,6 +975,7 @@ def execute_and_convert_nbs_to_json(
     force_execute_all=False,
     dev_build=False,
     nb_hash_path="nb_hashes.json",
+    nb_skip_path=Path(textbook_root_path / "scripts" / "nbs_to_skip.json"),
 ):
     """
     Executes and converts .ipynb files in the input folder to JSON (and optionally HTML).
@@ -994,7 +991,7 @@ def execute_and_convert_nbs_to_json(
     updated_hashes = nb_hashes.copy()
 
     # get list of nbs to skip
-    nbs_to_skip = _load_nbs_to_skip(dev_build)
+    nbs_to_skip = _load_nbs_to_skip(nb_skip_path, dev_build)
 
     # notify user of forced nb re-execution
     if force_execute_all:
