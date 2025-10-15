@@ -65,17 +65,31 @@ def main():
     # AES TODO simplify stack with pathlib.Path
 
     # accept command line arguments
-    parser = argparse.ArgumentParser(description="Generate html pages for deployment")
-    parser.add_argument(
-        "--execute-notebooks",
-        action="store_true",
-        help="Execute notebooks as needed based on their status "
-        "before converting them to HTML.",
+    parser = argparse.ArgumentParser(
+        description="Generate html pages for deployment",
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
-        "--force-execute-all",
-        action="store_true",
-        help="Force execute all notebooks regardless of their status",
+        "--execution-filter",
+        action="store",
+        default='no-execution',
+        choices=[
+            'no-execution',
+            'execute-updated-unskipped-notebooks',
+            'execute-all-unskipped-notebooks',
+            'execute-absolutely-all-notebooks',
+        ],
+        help="""Specify different criteria for which notebooks you want to execute before converting
+them to HTML. The default is 'no-execution'. The four options are below, in order of
+more execution:\n
+- 'no-execution': This will not execute any notebooks. You may receive warnings if
+  specific notebooks should be executed.\n
+- 'execute-updated-unskipped-notebooks': Execute only notebooks which have been
+  updated/changed or are new, excluding notebooks flagged for skipping.\n
+- 'execute-all-unskipped-notebooks': Execute all notebooks except those flagged for
+  skipping.\n
+- 'execute-absolutely-all-notebooks': Execute all notebooks.
+""",
     )
     parser.add_argument(
         "--build-on-dev",
@@ -103,6 +117,8 @@ def main():
     nb_hash_path = Path(root_path / "scripts" / "nb_hashes.json")
     nb_skip_path = Path(root_path / "scripts" / "nbs_to_skip.json")
 
+    print(f"Configuration: Choosing notebooks based on '--execution-filter={args.execution_filter}'")
+
     # AES ref output to "build_type"
     commit_hash = get_commit_hash(build_on_dev_arg=args.build_on_dev)
 
@@ -111,11 +127,10 @@ def main():
     execute_and_convert_nbs_to_json(
         input_folder=content_path,
         write_standalone_html=False,
-        execute_nbs=args.execute_notebooks,
-        force_execute_all=args.force_execute_all,
         dev_build=commit_hash,
         nb_hash_path=nb_hash_path,
         nb_skip_path=nb_skip_path,
+        execution_filter=args.execution_filter,
     )
 
     # AES TODO move into generate_page_html since it only needs the content path input like the convert function above
