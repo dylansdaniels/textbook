@@ -53,6 +53,8 @@ def get_markdown_paths(root_path=None):
 def main():
     """
     Main function to generate html pages for deployment
+
+    AES TODO: describe required file structure
     """
 
     # AES TODO
@@ -93,11 +95,13 @@ def main():
     args = parser.parse_args()
 
     if args.custom_root_path:
-        content_path = Path(args.custom_root_path / "content")
-        nb_hash_path = Path(args.custom_root_path / "scripts" / "nb_hashes.json")
+        root_path = args.custom_root_path
     else:
-        content_path = Path(textbook_root_path / "content")
-        nb_hash_path = Path(textbook_root_path / "scripts" / "nb_hashes.json")
+        root_path = textbook_root_path
+
+    content_path = Path(root_path / "content")
+    nb_hash_path = Path(root_path / "scripts" / "nb_hashes.json")
+    nb_skip_path = Path(root_path / "scripts" / "nbs_to_skip.json")
 
     # AES ref output to "build_type"
     commit_hash = get_commit_hash(build_on_dev_arg=args.build_on_dev)
@@ -111,6 +115,7 @@ def main():
         force_execute_all=args.force_execute_all,
         dev_build=commit_hash,
         nb_hash_path=nb_hash_path,
+        nb_skip_path=nb_skip_path,
     )
 
     # AES TODO move into generate_page_html since it only needs the content path input like the convert function above
