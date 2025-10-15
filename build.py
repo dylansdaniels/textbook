@@ -45,7 +45,8 @@ def get_markdown_paths(root_path=None):
     paths_all = sorted(content_path.glob("**/*.md"))
     paths_readme_excluded = [p for p in paths_all if ("README" not in str(p))]
     md_paths = {
-        str(p.relative_to(content_path)): str(p.absolute()) for p in paths_readme_excluded
+        str(p.relative_to(content_path)): str(p.absolute())
+        for p in paths_readme_excluded
     }
     return md_paths
 
@@ -72,12 +73,12 @@ def main():
     parser.add_argument(
         "--execution-filter",
         action="store",
-        default='no-execution',
+        default="no-execution",
         choices=[
-            'no-execution',
-            'execute-updated-unskipped-notebooks',
-            'execute-all-unskipped-notebooks',
-            'execute-absolutely-all-notebooks',
+            "no-execution",
+            "execute-updated-unskipped-notebooks",
+            "execute-all-unskipped-notebooks",
+            "execute-absolutely-all-notebooks",
         ],
         help="""Specify different criteria for which notebooks you want to execute before converting
 them to HTML. The default is 'no-execution'. The four options are below, in order of
@@ -117,7 +118,9 @@ more execution:\n
     nb_hash_path = Path(root_path / "scripts" / "nb_hashes.json")
     nb_skip_path = Path(root_path / "scripts" / "nbs_to_skip.json")
 
-    print(f"Configuration: Choosing notebooks based on '--execution-filter={args.execution_filter}'")
+    print(
+        f"Configuration: Choosing notebooks based on '--execution-filter={args.execution_filter}'"
+    )
 
     # AES ref output to "build_type"
     commit_hash = get_commit_hash(build_on_dev_arg=args.build_on_dev)
