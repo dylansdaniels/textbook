@@ -1040,18 +1040,53 @@ def _write_standalone_nb_to_html(
 
 def _write_nb_json(
     html_content,
-    filename,
-    current_directory,
+    nb_path,
+    nb_json_output_dir,
     execution_initiated,
     execution_successful,
     dev_build=False,
 ):
     """
-    Generate structured json output for the notebook.
+    Generate and save structured JSON output file containing notebook HTML and metadata.
+
+    This function converts the notebook HTML content into a hierarchical JSON structure
+    organized by section headers and saves it to a JSON file. The output includes
+    execution metadata (execution status, hnn-core version, and optional commit hash
+    for dev builds) along with the structured HTML content.
+
+    (In the future, the JSON structure will enable selective insertion of notebook
+    sections into markdown pages by specifying header ranges (a planned enhancement
+    feature).)
+
+    Parameters
+    ----------
+    html_content : str
+        The complete HTML string containing all converted notebook cells, as returned
+        by _extract_html_from_nb
+    nb_path : pathlib.Path
+        Path to the Jupyter notebook file (.ipynb). Used to determine the output
+        JSON filename (stem of the notebook filename)
+    nb_json_output_dir : pathlib.Path
+        Directory where the JSON output file will be saved. The file will be named
+        {nb_path.stem}.json
+    execution_initiated : bool
+        True if notebook execution was attempted in this run, False otherwise.
+        Determines whether to use current or previously-saved hnn-core version
+    execution_successful : bool
+        True if the notebook was fully executed successfully (all non-empty code
+        cells completed execution), False otherwise
+    dev_build : str or bool, optional
+        False if not running a dev build. Otherwise, a string containing the repo
+        and commit hash to be used for the build. Default is False
+
+    Returns
+    -------
+    pathlib.Path
+        Path to the generated JSON output file
     """
 
     # ----------------------------------------
-    # generated structured json output
+    # generate structured json output
     # ----------------------------------------
     # Note: this section pertains to a planned enhancement
     # to enable inserting sections of a nb into an
@@ -1062,30 +1097,15 @@ def _write_nb_json(
 
     nb_html_json = _html_to_json(
         html_content,
-        filename,
+        str(nb_path.name),
     )
 
-    if dev_build:
-        output_json = os.path.join(
-            current_directory.replace("content", "dev"),
-            f"{os.path.splitext(filename)[0]}.json",
-        )
-        os.makedirs(
-            current_directory.replace("content", "dev"),
-            exist_ok=True,
-        )
-    else:
-        output_json = os.path.join(
-            current_directory,
-            f"{os.path.splitext(filename)[0]}.json",
-        )
+    output_json_path = nb_json_output_dir / f"{nb_path.stem}.json"
 
-    # AES why not just use nb_exec?
+    # Set or load the last version that the nb was executed with
     if execution_initiated:
         # Add execution status directly to json output
         # Track version used in nb execution
-        # AES if nb was started, but failed, then full_executed would be false here
-        # AES maybe the point is "this is the last version they were successfully executed with"
         nb_html_json = {
             "full_executed": execution_successful,
             "hnn_version": hnn_version,
@@ -1097,8 +1117,8 @@ def _write_nb_json(
     else:
         # get previously-used hnn version from json file
         previous_version = "NA"
-        if os.path.exists(output_json):
-            with open(output_json, "r") as f:
+        if output_json_path.exists():
+            with open(output_json_path, "r") as f:
                 nb_html_json = json.load(f)
             # check for hnn_version key
             if "hnn_version" in nb_html_json:
@@ -1111,10 +1131,10 @@ def _write_nb_json(
         if dev_build:
             nb_html_json["commit"] = dev_build
 
-    with open(output_json, "w") as f:
+    with open(output_json_path, "w") as f:
         json.dump(nb_html_json, f, indent=4)
 
-    return output_json
+    return output_json_path
 
 
 # AES I think most of these arguments should be required, not optional
@@ -1194,8 +1214,8 @@ def execute_and_convert_nbs_to_json(
             # generate complete json output file
             _write_nb_json(
                 html_content,
-                filename,
-                current_directory,
+                nb_path,
+                nb_json_output_dir,
                 execution_initiated,
                 execution_successful,
                 dev_build=dev_build,
