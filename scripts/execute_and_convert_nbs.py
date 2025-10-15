@@ -560,7 +560,7 @@ def _execute_nb(nb_path, timeout=600):
     )
 
     execution_initiated = True
-    print("Notebook has been executed")
+    print("Notebook execution has been initiated")
     execution_successful = _is_nb_fully_executed(
         loaded_nb,
     )
@@ -579,8 +579,10 @@ def _process_nb(
     dev_build,
 ):
     """
-    Execute notebooks as needed, convert them to html and json,
-    and return the updated hash.
+    Execute notebooks as needed and return the updated hash and execution contents.
+
+    AES: this docstring also included "convert [nbs] to html and json", but as far as I
+    can tell, this function no longer does that, so I have removed it.
     """
 
     # get the nb without executing it
@@ -614,6 +616,9 @@ def _process_nb(
             " this notebook."
         )
         execution_flag = prior_execution_if_any
+
+
+        ### AES really all of the above should go in should_exec
     else:
         # determine if nb should be executed
         print(f"Checking whether '{filename}' should be newly re-executed.")
@@ -642,6 +647,7 @@ def _process_nb(
             # warning for the case when nb execution was attempted
             # but the nb was not fully executed for some reason
             if not current_execution_initiated:
+                # AES This is a new warning.
                 warnings.warn(
                     "\n\n"
                     "# -------------------------------------------------------\n"
@@ -669,13 +675,14 @@ def _process_nb(
                 )
             else:
                 print(
-                    f"Notebook '{filename}' has been initiated and executed successfully"
+                    f"Success: Notebook '{filename}' has been initiated and executed successfully"
                 )
 
         else:
-            # AES: The detection logic of this warning and the other one was unclear, since both
-            # of them should never happen in the "skip" case, due to the "return" above under
-            # "if skip_nb". I've tried to reorganize them. Original comment follows:
+            # AES: The detection logic of this warning and the other one was unclear,
+            # since both of them should never happen in the "skip" case, due to the
+            # "return" that was above under "if skip_nb" (now deleted). I've tried to
+            # reorganize them. Original comment follows:
             # --------------------------------
             # warning for the case when a nb was flagged to be skipped [AES: maybe you meant to
             # write "flagged to be *executed*" here?], but the nb as it stands is not fully
@@ -980,9 +987,6 @@ def execute_and_convert_nbs_to_json(
     # ==================== #
     #        SETUP
     # ==================== #
-
-    # AES TODO simplify all this with pathlib.Path
-
     root, input_folder = _setup_root_and_input(input_folder)
 
     # get nb hashes from json

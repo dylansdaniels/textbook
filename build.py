@@ -74,7 +74,7 @@ def main():
     # - 4508128151
     # - stable
 
-    # commit hash diff from master vs hash
+    # AES TODO simplify stack with pathlib.Path
 
     # accept command line arguments
     parser = argparse.ArgumentParser(description="Generate html pages for deployment")
