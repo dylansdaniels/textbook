@@ -1,27 +1,34 @@
 import argparse
 import os
+from pathlib import Path
 
 from scripts.execute_and_convert_nbs import execute_and_convert_nbs_to_json
 from scripts.generate_page_html import generate_page_html
 from scripts.get_commit_hash import get_commit_hash
 
+textbook_root_path = Path(__file__).parents[0]
 
-def get_page_paths(path=None):
-    """
-    Recursively get paths to all markdown files in a directory
+
+def get_markdown_paths(root_path=None):
+    """Recursively get paths to all markdown files in a directory (except READMEs)
 
     Parameters
     ----------
-    path : (str | None)
-        The root directory to search. If None, defaults to the "content" folder in the
-        working directory. This parameter is used internally for recursion and should
-        initially be called with None or excluded.
+    root_path : (Path | str), default=None
+        The root directory to search, assumed to be the top-level directory of your
+        textbook, and assumed to have a "content" subdirectory. If None, defaults to the
+        directory of this file.
 
     Returns
     -------
     dict
         A dictionary mapping markdown page paths relative to the "content" directory
-        to their absolute paths in the form of: { relative_path: absolute_path, ...}
+        to their absolute paths in the form of:
+
+        {
+            relative_path: absolute_path,
+            ...
+        }
 
         This may seem redundant at a first glance, but having the absolute paths as
         well aids greatly in producing the correct path links for local/dev builds
@@ -30,38 +37,18 @@ def get_page_paths(path=None):
     Notes
     -----
     - README.md files are excluded.
-    - Keys in the returned dictionary are paths relative to the "content" directory
     """
+    if not root_path:
+        root_path = textbook_root_path
 
-    md_pages = {}
-    if path is None:
-        path = os.path.join(
-            os.getcwd(),
-            "content",
-        )
-    directories = os.listdir(path)
-    for item in directories:
-        item_path = os.path.join(
-            path,
-            item,
-        )
-        if os.path.isdir(item_path):
-            # add items from new dict into md_pages
-            md_pages.update(
-                get_page_paths(item_path),
-            )
-        else:
-            if not item == "README.md" and item.endswith(".md"):
-                rel_path = os.path.relpath(
-                    item_path,
-                    start=os.path.join(
-                        os.getcwd(),
-                        "content",
-                    ),
-                )
-                md_pages[rel_path] = item_path
-
-    return md_pages
+    content_path = Path(root_path / "content")
+    # This glob is recursive, see https://docs.python.org/3/library/pathlib.html#pathlib-pattern-language
+    paths_all = sorted(content_path.glob("**/*.md"))
+    paths_readme_excluded = [p for p in paths_all if ("README" not in str(p))]
+    md_paths = {
+        str(p.relative_to(content_path)): str(p.absolute()) for p in paths_readme_excluded
+    }
+    return md_paths
 
 
 def main():
@@ -121,8 +108,8 @@ def main():
         nb_hash_path=nb_hash_path,
     )
 
-    # AES TODO merge into generate_path_html or provide input like convert
-    md_paths = get_page_paths()
+    # AES TODO move into generate_page_html
+    md_paths = get_markdown_paths()
 
     generate_page_html(
         md_paths,
