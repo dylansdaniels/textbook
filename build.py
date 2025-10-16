@@ -122,13 +122,10 @@ more execution:\n
         f"Configuration: Choosing notebooks based on '--execution-filter={args.execution_filter}'"
     )
 
-    # AES ref output to "build_type"
+    # AES ref "build_type"
     commit_hash = get_commit_hash(build_on_dev_arg=args.build_on_dev)
 
-    # AES commented out standalone
-    # write_standalone_html=True,
-    # write_standalone_html=False,
-    execute_and_convert_nbs_to_json(
+    content_or_dev_path = execute_and_convert_nbs_to_json(
         content_path,
         nb_hash_path,
         nb_skip_path,
