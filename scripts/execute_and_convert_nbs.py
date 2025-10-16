@@ -914,58 +914,6 @@ def _determine_should_execute_nb(
             return True
 
 
-def _write_standalone_nb_to_html(
-    html_content,
-    current_directory,
-    filename,
-    dev_build=False,
-):
-    """
-    Write a notebook to a standalone HTML file. Note that the standalone html
-    files are not part of the textbook website. They merely provide a "snapshot" of
-    how the notebook is rendered in html. Writing standalone html files can be useful
-    to check how unpublished notebooks or notebooks in development will look on the
-    website once they are publishes
-
-    Inputs
-    ------
-    html_content : str
-        The html content extracted from the notebook
-    current_directory: str
-        The current working directory
-    filename : str
-        The name of the file being processed
-    dev_build : str or bool
-        False if not running a dev build. Otherwise, this variable will be
-        a string containing the repo and commit hash to be used for the build
-
-    """
-
-    if dev_build:
-        dev_dir = current_directory.replace(
-            "content",
-            "dev",
-        )
-        output_file = os.path.join(
-            dev_dir,
-            f"{os.path.splitext(filename)[0]}.html",
-        )
-        if not os.path.exists(dev_dir):
-            os.makedirs(dev_dir)
-    else:
-        output_file = os.path.join(
-            current_directory,
-            f"{os.path.splitext(filename)[0]}.html",
-        )
-
-    with open(output_file, "w", encoding="utf-8") as f:
-        f.write("<html><body>\n")
-        f.write(html_content)
-        f.write("\n</body></html>")
-
-    return
-
-
 def _write_nb_json(
     html_content,
     nb_path,
@@ -1150,18 +1098,20 @@ def execute_and_convert_nbs_to_json(
             )
 
             # optionally write standalone nb to an html file
-            # note: standalone nbs are NOT part of the website build; rather,
-            #   they offer a "snapshot" view of how the nb will look when
-            #   rendered in html. This is useful when creating/testing new nbs
+            #
+            # Note that the standalone html files are not part of the textbook
+            # website. They merely provide a "snapshot" of how the notebook is rendered
+            # in html. Writing standalone html files can be useful to check how
+            # unpublished notebooks or notebooks in development will look on the website
+            # once they are published.
             if write_standalone_html:
-                html_content = _write_standalone_nb_to_html(
-                    html_content,
-                    current_directory,
-                    filename,
-                    dev_build,
-                )
+                standalone_html_path = nb_json_output_dir / f"{nb_path.stem}.html"
+                with open(standalone_html_path, "w", encoding="utf-8") as f:
+                    f.write("<html><body>\n")
+                    f.write(html_content)
+                    f.write("\n</body></html>")
 
-            print(f"Successfully converted '{filename}' to html")
+            print(f"Successfully converted '{filename}' to html then json")
 
             updated_hashes[filename] = processed_hash
 
@@ -1170,7 +1120,6 @@ def execute_and_convert_nbs_to_json(
         updated_hashes,
         nb_hash_path,
     )
-
     return
 
 
