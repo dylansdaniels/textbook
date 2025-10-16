@@ -127,9 +127,10 @@ more execution:\n
 
     # AES commented out standalone
     # write_standalone_html=True,
+        # write_standalone_html=False,
     execute_and_convert_nbs_to_json(
         input_folder=content_path,
-        write_standalone_html=False,
+        write_standalone_html=True,
         dev_build=commit_hash,
         nb_hash_path=nb_hash_path,
         nb_skip_path=nb_skip_path,
