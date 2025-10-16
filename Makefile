@@ -68,6 +68,8 @@ execute-updated-unskipped-notebooks:
 clean:
 	rm -rf content/*.html
 	rm -rf content/*/*.html
+	rm -rf dev/*.html
+	rm -rf dev/*/*.html
 
 create-textbook-stable-build:
 	$(call create-and-configure-env,textbook-stable-build,false)
