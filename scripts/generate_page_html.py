@@ -1,11 +1,53 @@
 import json
 import re
 import os
-import textwrap
+from pathlib import Path
 
 import pypandoc
+import textwrap
 
 from .create_navbar import generate_sidebar_html
+
+
+def _get_markdown_paths(content_path: Path):
+    """Recursively get paths to all markdown files in a directory (except READMEs)
+
+    Parameters
+    ----------
+    content_path : pathlib.Path
+        Path to the directory containing all directories which contain markdown files,
+        notebook files, and possibly their outputs. This is ALWAYS
+        "<textbook_root>/content" and never "<textbook_root>/dev", since we currently do
+        not support "dev"-only versions of markdown files.
+
+    Returns
+    -------
+    dict
+        A dictionary mapping markdown page paths relative to the "content" directory
+        to their absolute paths in the form of:
+
+        {
+            relative_path: absolute_path,
+            ...
+        }
+
+        This may seem redundant at a first glance, but having the absolute paths as
+        well aids greatly in producing the correct path links for local/dev builds
+        where the absolute URL is not known
+
+    Notes
+    -----
+    - README.md files are excluded.
+    """
+    # This glob is recursive, see
+    # https://docs.python.org/3/library/pathlib.html#pathlib-pattern-language
+    paths_all = sorted(content_path.glob("**/*.md"))
+    paths_excluding_readme = [p for p in paths_all if ("README" not in str(p))]
+    md_paths = {
+        str(p.relative_to(content_path)): str(p.absolute())
+        for p in paths_excluding_readme
+    }
+    return md_paths
 
 
 def _compile_page_components(dev_build=False):
@@ -172,7 +214,7 @@ def add_nb_to_html(
 
 
 def generate_page_html(
-    md_paths,
+    content_path,
     dev_build=False,
 ):
     """
@@ -183,9 +225,11 @@ def generate_page_html(
 
     Parameters
     ----------
-    md_paths : dict
-        A dictionary mapping markdown page paths relative to the "content" directory
-        to their absolute paths in the form: { relative_path: absolute_path, ...}
+    content_path : pathlib.Path
+        Path to the directory containing all directories which contain markdown files,
+        notebook files, and possibly their outputs. This is ALWAYS
+        "<textbook_root>/content" and never "<textbook_root>/dev", since we currently do
+        not support "dev"-only versions of markdown files.
 
     dev_build : str or bool
         False if not running a dev build. Otherwise, this variable will be
@@ -195,6 +239,7 @@ def generate_page_html(
     -------
     None
     """
+    md_paths = _get_markdown_paths(content_path)
 
     # get the .html templates for building pages
     html_parts, ordered_links = _compile_page_components(dev_build=dev_build)
@@ -211,13 +256,25 @@ def generate_page_html(
 
     # iterate over all markdown pages found in the "content" directory (excluding ...
     # README.md files)
-    for md_page, path in md_paths.items():
+    for md_page, path_old in md_paths.items():
+
+
+        # Le new pathlib stuff
+        md_path = Path(path_old)
+        if dev_build:
+            # Replace "content" parent directory with "dev" one, and safely make it
+            new_output_dir_path = Path(str(md_path).replace("content", "dev"))
+            new_output_dir_path = new_output_dir_path.parents[0]
+            new_output_dir_path.mkdir(parents=True, exist_ok=True)
+        else:
+            new_output_dir_path = md_path.parents[0]
+
         page_components = html_parts.copy()
 
         # get the filename from the realtive path
         md_page = os.path.basename(md_page)
         # get the directory containing the markdown file
-        out_directory = path.split(md_page)[0]
+        out_directory = path_old.split(md_page)[0]
 
         if dev_build:
             out_directory = out_directory.replace(
@@ -338,7 +395,7 @@ def generate_page_html(
         # load markdown and add yaml metadata
         # ------------------------------------------------------------
         # read markdown file into a string
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path_old, "r", encoding="utf-8") as f:
             markdown_text = f.read()
 
         path_md_yaml_metadata = os.path.join(
@@ -401,7 +458,7 @@ def generate_page_html(
 
         combined_html = add_nb_to_html(
             converted_html,
-            path,
+            path_old,
             md_page,
         )
 
