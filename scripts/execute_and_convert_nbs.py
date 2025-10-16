@@ -511,7 +511,9 @@ def _read_nb_json_output_metadata(
         or if the prior execution was incomplete
     version_check : str or bool
         The version string of hnn-core used in the previous execution (e.g., "0.4.2").
-        False if the JSON file doesn't exist or doesn't contain version information
+        False if the JSON file doesn't exist or doesn't contain version
+        information. "NA" if the metadata exists, but the notebook has not been run
+        successfully since recording versions of last successful execution.
     """
 
     json_path = nb_json_output_dir / f"{nb_path.stem}.json"
@@ -870,27 +872,32 @@ def _determine_should_execute_nb(
             """)
             )
         # 2.3) warning if version out of date
+        # This one's a little complicated: read both the code of _write_nb_html_to_json
+        # and docstring of _read_nb_json_output_metadata for guidance on its (currently
+        # three) values. May need more refactoring.
         elif prior_version_if_any != "NA":
-            if Version(hnn_version) > Version(prior_version_if_any):
-                warnings.warn(
-                    textwrap.dedent(f"""
-                    # ------------------------------------------------------------------
-                    # WARNING: Notebook
-                    # '{filename}'
-                    # may have been executed on an older version of hnn-core, as your
-                    # installed version is greater than version used to run the notebook
-                    # previously. Please consider re-executing this notebook.
-                    #
-                    # Last version used to run notebook:
-                    #    {prior_version_if_any}
-                    # Installed version:
-                    #    {hnn_version}
-                    #
-                    # Not performing execution since execution_filter is set to
-                    # '{execution_filter}'.
-                    # ------------------------------------------------------------------
-                """)
-                )
+            if prior_version_if_any is not False:
+                if Version(hnn_version) > Version(prior_version_if_any):
+                    warnings.warn(
+                        textwrap.dedent(f"""
+                        # --------------------------------------------------------------
+                        # WARNING: Notebook
+                        # '{filename}'
+                        # may have been executed on an older version of hnn-core, as
+                        # your installed version is greater than version used to run the
+                        # notebook previously. Please consider re-executing this
+                        # notebook.
+                        #
+                        # Last version used to run notebook:
+                        #    {prior_version_if_any}
+                        # Installed version:
+                        #    {hnn_version}
+                        #
+                        # Not performing execution since execution_filter is set to
+                        # '{execution_filter}'.
+                        # --------------------------------------------------------------
+                    """)
+                    )
         # 2.4) warning if prior execution not successful
         elif not prior_execution_if_any:
             warnings.warn(
