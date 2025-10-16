@@ -1282,8 +1282,6 @@ def execute_and_convert_nbs_to_json(
         updated_hashes,
         nb_hash_path,
     )
-    return
-
 
 # # AES TODO
 # # %%

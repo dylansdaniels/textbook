@@ -8,49 +8,6 @@ from scripts.get_commit_hash import get_commit_hash
 textbook_root_path = Path(__file__).parents[0]
 
 
-def get_markdown_paths(root_path=None):
-    """Recursively get paths to all markdown files in a directory (except READMEs)
-
-    Parameters
-    ----------
-    root_path : (Path | str), default=None
-        The root directory to search, assumed to be the top-level directory of your
-        textbook, and assumed to have a "content" subdirectory. If None, defaults to the
-        directory of this file.
-
-    Returns
-    -------
-    dict
-        A dictionary mapping markdown page paths relative to the "content" directory
-        to their absolute paths in the form of:
-
-        {
-            relative_path: absolute_path,
-            ...
-        }
-
-        This may seem redundant at a first glance, but having the absolute paths as
-        well aids greatly in producing the correct path links for local/dev builds
-        where the absolute URL is not known
-
-    Notes
-    -----
-    - README.md files are excluded.
-    """
-    if not root_path:
-        root_path = textbook_root_path
-
-    content_path = Path(root_path / "content")
-    # This glob is recursive, see https://docs.python.org/3/library/pathlib.html#pathlib-pattern-language
-    paths_all = sorted(content_path.glob("**/*.md"))
-    paths_readme_excluded = [p for p in paths_all if ("README" not in str(p))]
-    md_paths = {
-        str(p.relative_to(content_path)): str(p.absolute())
-        for p in paths_readme_excluded
-    }
-    return md_paths
-
-
 def main():
     """
     Main function to generate html pages for deployment
@@ -125,7 +82,7 @@ more execution:\n
     # AES ref "build_type"
     commit_hash = get_commit_hash(build_on_dev_arg=args.build_on_dev)
 
-    content_or_dev_path = execute_and_convert_nbs_to_json(
+    execute_and_convert_nbs_to_json(
         content_path,
         nb_hash_path,
         nb_skip_path,
@@ -134,11 +91,9 @@ more execution:\n
         write_standalone_html=True,
     )
 
-    # AES TODO move into generate_page_html since it only needs the content path input like the convert function above
-    md_paths = get_markdown_paths()
-
+    # AES TODO bug: sidebar does NOT get updated with dev!
     generate_page_html(
-        md_paths,
+        content_path,
         dev_build=args.build_on_dev,
     )
 
