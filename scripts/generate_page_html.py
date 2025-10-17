@@ -17,8 +17,8 @@ def _get_markdown_paths(content_path: Path):
     content_path : pathlib.Path
         Path to the directory containing all directories which contain markdown files,
         notebook files, and possibly their outputs. This is ALWAYS
-        "<textbook_root>/content" and never "<textbook_root>/dev", since we currently do
-        not support "dev"-only versions of markdown files.
+        "<textbook_root>/content" and never "<textbook_root>/dev", since we do not
+        support "dev"-only versions of markdown files.
 
     Returns
     -------
@@ -50,7 +50,10 @@ def _get_markdown_paths(content_path: Path):
     return md_paths
 
 
-def _compile_page_components(dev_build=False):
+def _compile_page_components(
+    templates_path,
+    dev_build=False,
+):
     """
     Compile shared html components for building webpage from the template files in the
     templates directory
@@ -62,11 +65,6 @@ def _compile_page_components(dev_build=False):
         string containing the repo and commit hash to be used for the build
 
     """
-
-    templates_folder = os.path.join(
-        os.getcwd(),
-        "templates",
-    )
     templates = [
         "header",
         "topbar",
@@ -76,13 +74,10 @@ def _compile_page_components(dev_build=False):
     html_parts = {}
 
     for template in templates:
-        templates_path = os.path.join(
-            templates_folder,
-            f"{template}.html",
-        )
-        with open(templates_path, "r") as f:
+        with open((templates_path / f"{template}.html"), "r") as f:
             html_parts[template] = f.read()
 
+    breakpoint()  # AES debug
     navbar_html, ordered_links = generate_sidebar_html()
 
     html_parts["navbar"] = navbar_html
@@ -215,6 +210,7 @@ def add_nb_to_html(
 
 def generate_page_html(
     content_path,
+    templates_path,
     dev_build=False,
 ):
     """
@@ -228,21 +224,21 @@ def generate_page_html(
     content_path : pathlib.Path
         Path to the directory containing all directories which contain markdown files,
         notebook files, and possibly their outputs. This is ALWAYS
-        "<textbook_root>/content" and never "<textbook_root>/dev", since we currently do
-        not support "dev"-only versions of markdown files.
-
+        "<textbook_root>/content" and never "<textbook_root>/dev", since "dev" versions
+        of required directories will be created as needed. Also, we do not
+        support "dev"-only versions of markdown files.
+    templates_path : pathlib.Path
+        Path to the directory containing various template files. Typically the
+        "templates" subdirectory of the textbook root directory
     dev_build : str or bool
         False if not running a dev build. Otherwise, this variable will be
         a string containing the repo and commit hash to be used for the build
-
-    Returns
-    -------
-    None
     """
-    md_paths = _get_markdown_paths(content_path)
-
     # get the .html templates for building pages
-    html_parts, ordered_links = _compile_page_components(dev_build=dev_build)
+    html_parts, ordered_links = _compile_page_components(
+        templates_path,
+        dev_build=dev_build,
+    )
 
     # specify the order of components for assembling pages
     order = [
@@ -256,12 +252,15 @@ def generate_page_html(
 
     # iterate over all markdown pages found in the "content" directory (excluding ...
     # README.md files)
+    md_paths = _get_markdown_paths(content_path)
     for md_page, path_old in md_paths.items():
-
-
         # Le new pathlib stuff
         md_path = Path(path_old)
         if dev_build:
+            # This needs to be done separately in both the notebook-execution code and
+            # here in the page-generation code, since there is not necessarily a 1-to-1
+            # correspondence between every markdown file and every notebook.
+            #
             # Replace "content" parent directory with "dev" one, and safely make it
             new_output_dir_path = Path(str(md_path).replace("content", "dev"))
             new_output_dir_path = new_output_dir_path.parents[0]
