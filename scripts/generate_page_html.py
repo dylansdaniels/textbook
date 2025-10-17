@@ -407,16 +407,7 @@ def generate_page_html(
         with open(path_old, "r", encoding="utf-8") as f:
             markdown_text = f.read()
 
-        # path_md_yaml_metadata = os.path.join(
-        #     os.getcwd(),
-        #     "templates",
-        #     "md_yaml_metadata.txt",
-        # )
-        # with open(path_md_yaml_metadata) as f:
-        #     md_yaml_metadata = f.read()
-
         # add check for title section in markdown file
-
         markdown_text = markdown_text.replace("-->", "-->\n\n" + md_yaml_metadata, 1)
 
         # convert markdown to html with pypandoc
