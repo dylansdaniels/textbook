@@ -18,8 +18,6 @@ from nbconvert.preprocessors import (
 )
 from packaging.version import Version
 
-textbook_root_path = Path(__file__).parents[1]
-
 
 def _convert_html_to_json(
     html: str,
@@ -1172,8 +1170,10 @@ def execute_and_convert_nbs_to_json(
     Parameters
     ----------
     content_path : pathlib.Path
-        Path to the content directory containing .ipynb files to process. The function
-        will recursively discover all notebooks under this directory
+        Path to the directory containing all directories which contain markdown files,
+        notebook files, and possibly their outputs. This is ALWAYS
+        "<textbook_root>/content" and never "<textbook_root>/dev", since "dev" versions
+        of required directories will be created as needed.
     nb_hash_path : pathlib.Path
         Path to the JSON file for loading/saving notebook content hashes, typically
         'scripts/nb_hashes.json'
@@ -1234,6 +1234,10 @@ def execute_and_convert_nbs_to_json(
         # put in the per-notebook output folder where images currently are...
         nb_path = Path(nb_path)
         if dev_build:
+            # This needs to be done separately in both the notebook-execution code and
+            # here in the page-generation code, since there is not necessarily a 1-to-1
+            # correspondence between every markdown file and every notebook.
+            #
             # Replace "content" parent directory with "dev" one, and safely make it
             nb_json_output_dir = Path(str(nb_path).replace("content", "dev"))
             nb_json_output_dir = nb_json_output_dir.parents[0]

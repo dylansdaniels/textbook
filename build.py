@@ -71,9 +71,10 @@ more execution:\n
     else:
         root_path = textbook_root_path
 
-    content_path = Path(root_path / "content")
-    nb_hash_path = Path(root_path / "scripts" / "nb_hashes.json")
-    nb_skip_path = Path(root_path / "scripts" / "nbs_to_skip.json")
+    content_path =   Path(root_path / "content")
+    nb_hash_path =   Path(root_path / "scripts" / "nb_hashes.json")
+    nb_skip_path =   Path(root_path / "scripts" / "nbs_to_skip.json")
+    templates_path = Path(root_path / "templates")
 
     print(
         f"Configuration: Choosing notebooks based on '--execution-filter={args.execution_filter}'"
@@ -82,18 +83,20 @@ more execution:\n
     # AES ref "build_type"
     commit_hash = get_commit_hash(build_on_dev_arg=args.build_on_dev)
 
-    execute_and_convert_nbs_to_json(
-        content_path,
-        nb_hash_path,
-        nb_skip_path,
-        args.execution_filter,
-        dev_build=commit_hash,
-        write_standalone_html=True,
-    )
+    # execute_and_convert_nbs_to_json(
+    #     content_path,
+    #     nb_hash_path,
+    #     nb_skip_path,
+    #     args.execution_filter,
+    #     dev_build=commit_hash,
+    #     write_standalone_html=True,
+    # )
 
     # AES TODO bug: sidebar does NOT get updated with dev!
+    # AES collapse sidebar vs navbar
     generate_page_html(
         content_path,
+        templates_path,
         dev_build=args.build_on_dev,
     )
 
