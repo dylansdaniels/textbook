@@ -135,6 +135,7 @@ def build_navbar(json_page_index):
 
 
 def generate_sidebar_html(
+    index_path,
     add_workshop_link=False,
 ):
     """
@@ -238,13 +239,7 @@ def generate_sidebar_html(
     # ----------------------------------
     # AES we are NOT re-indexing the entire website in the middle of some html generation function!
     # update_page_index()
-
-    index_path = os.getcwd() + "/index.json"
-
-    with open(
-        index_path,
-        "r",
-    ) as f:
+    with open(index_path, "r",) as f:
         json_page_index = json.load(f)
 
     # build the page navigation elements
