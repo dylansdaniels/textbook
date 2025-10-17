@@ -4,6 +4,7 @@ from pathlib import Path
 from scripts.execute_and_convert_nbs import execute_and_convert_nbs_to_json
 from scripts.generate_page_html import generate_page_html
 from scripts.get_commit_hash import get_commit_hash
+from scripts.update_page_index import update_page_index
 
 textbook_root_path = Path(__file__).parents[0]
 
@@ -71,9 +72,9 @@ more execution:\n
     else:
         root_path = textbook_root_path
 
-    content_path =   Path(root_path / "content")
-    nb_hash_path =   Path(root_path / "scripts" / "nb_hashes.json")
-    nb_skip_path =   Path(root_path / "scripts" / "nbs_to_skip.json")
+    content_path = Path(root_path / "content")
+    nb_hash_path = Path(root_path / "scripts" / "nb_hashes.json")
+    nb_skip_path = Path(root_path / "scripts" / "nbs_to_skip.json")
     templates_path = Path(root_path / "templates")
 
     print(
@@ -92,6 +93,11 @@ more execution:\n
     #     write_standalone_html=True,
     # )
 
+    index_path = update_page_index(
+        content_path,
+        dev_build=commit_hash,
+    )
+    breakpoint()  # AES debug
     # AES TODO bug: sidebar does NOT get updated with dev!
     # AES collapse sidebar vs navbar
     generate_page_html(
