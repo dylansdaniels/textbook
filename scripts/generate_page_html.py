@@ -225,6 +225,9 @@ def generate_page_html(
     # not others.
     html_parts = _load_simple_templates(templates_path)
 
+    # update/load the dynamically-generated
+    # page index from the index.json file
+    # ----------------------------------
     update_page_index(
         content_path,
         index_path,
@@ -335,23 +338,6 @@ def generate_page_html(
 
         # update 'footer' page_component with the correct links
         # ------------------------------------------------------------
-        # footer_path = os.path.join(
-        #     os.getcwd(),
-        #     "templates",
-        #     "ordered_page_links.json",
-        # )
-
-        # with open(footer_path, "r") as f:
-        #     ordered_page_links = json.load(f)
-
-        # ordered_links = ordered_page_links["links"]
-        # ordered_titles = ordered_page_links["titles"]
-
-        # if dev_build:
-        #     ordered_links = [
-        #         link.replace("content", "dev") for link in ordered_page_links["links"]
-        #     ]
-        #     out_path = out_path.replace("content", "dev")
         if dev_build:
             out_path = out_path.replace("content", "dev")
 

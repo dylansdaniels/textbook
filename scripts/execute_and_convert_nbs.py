@@ -136,7 +136,6 @@ def _extract_html_from_nb(
     fig_id = 0
     aggregated_output = ""
 
-    # AES TODO eventually this should be the same dir as the JSON output one
     img_output_dir = nb_json_output_dir / f"output_nb_{nb_path.stem}"
     img_output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1230,8 +1229,6 @@ def execute_and_convert_nbs_to_json(
     for nb_path in all_nb_paths:
         print(f"\nProcessing notebook: '{nb_path.name}'")
 
-        # AES TODO eventually, "JSON output" (and standalone HTML output) SHOULD be
-        # put in the per-notebook output folder where images currently are...
         nb_path = Path(nb_path)
         if dev_build:
             # This needs to be done separately in both the notebook-execution code and

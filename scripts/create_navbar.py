@@ -234,11 +234,7 @@ def generate_sidebar_html(
 
         sidebar_html += workshop_link
 
-    # update/load the dynamically-generated
-    # page index from the index.json file
-    # ----------------------------------
-    # AES we are NOT re-indexing the entire website in the middle of some html generation function!
-    # update_page_index()
+    # AES updating of the index has been moved upwards into generate_page_html
     with open(index_path, "r",) as f:
         json_page_index = json.load(f)
 
