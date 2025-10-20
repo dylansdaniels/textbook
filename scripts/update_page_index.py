@@ -1,8 +1,14 @@
 import json
 from pathlib import Path
 
-# AES: This file will *not* be deprecated
 
+# AES TODO: "Index" and "ordered_page_links" should probably be greatly expanded to
+# prevent frequent re-searching of Markdown and other files in
+# generate_page_html.py. For example, "Index" could have titles removed and consist only
+# of the hierarchical mapping, while "ordered_page_links" could be changed to something
+# like "page_metadata", where each Section (dir containing md files) and markdown
+# filenames each contain child data like "title", "relative root path" (to textbook
+# root), "output path" (where their output html goes, if necessary), etc.
 
 def _get_title(file_path):
     file = open(file_path, "r")

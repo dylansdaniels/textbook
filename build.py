@@ -15,13 +15,6 @@ def main():
     AES TODO: describe required file structure
     """
 
-    # AES TODO
-    # replace the `dev_build` arg (which acts as both a flag and content) with 3 values. But what? not "version" since overloaded. Maybe just two? stable vs anything else? "variant". Actually build_type
-    # - 4508128151
-    # - stable
-
-    # AES TODO simplify stack with pathlib.Path
-
     # accept command line arguments
     parser = argparse.ArgumentParser(
         description="Generate html pages for deployment",
@@ -81,7 +74,6 @@ more execution:\n
         f"Configuration: Choosing notebooks based on '--execution-filter={args.execution_filter}'"
     )
 
-    # AES ref "build_type"
     commit_hash = get_commit_hash(build_on_dev_arg=args.build_on_dev)
 
     execute_and_convert_nbs_to_json(
@@ -93,8 +85,6 @@ more execution:\n
         write_standalone_html=True,
     )
 
-    # AES TODO bug: sidebar does NOT get updated with dev!
-    # AES collapse sidebar vs navbar
     generate_page_html(
         content_path,
         index_path,
