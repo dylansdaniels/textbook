@@ -503,7 +503,6 @@ body.is-mobile .sidebar-close {
 }
 
 .title-row {
-    display: flex;
     align-items: center;
     width: 100%;
 }
