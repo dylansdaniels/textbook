@@ -557,10 +557,10 @@ body.is-mobile .sidebar-close {
 }
 
 /* On hover, apply transitions */
-.install-row:hover a,
+/* .install-row:hover a,
 .install-row:hover .download-icon {
     transition: color 0.2s ease-in-out !important, stroke 0.2s ease-in-out !important;
-}
+} */
 
 .install-row:hover a {
     color: var(--hnn-yellow);

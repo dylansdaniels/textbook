@@ -287,7 +287,7 @@
             Online HNN Workshop, Spring 2025
         </h1>
         <p>
-            Welcome to our Online HNN Workshop for spring 2025! In this interactive workshop, we will begin with a didactic overview of the background and development of HNN. We will then introduce you to the GUI and Python interfaces of HNN through lectures and hands-on investigations of the most commonly measured signals, including ERPs and low-frequency brain rhythms. We will also cover automatic parameter optimization in the Python interface.
+            Welcome to our HNN Toolbox Bouquet at Practical MEEG 2025! In this hybrid lecture-based/interactive workshop, we will begin with a didactic overview of the background and development of HNN. We will then introduce you to the graphical user interface (GUI) and application programming interface (API) of HNN through demonstrations and hands-on investigations of one of the most common non-invasively recorded brain signals: event-related potentials (ERPs). We will also cover automatic parameter optimization in the HNN API using simulated ERPs as an example.
         </p>
         <h3>
             Table of Contents
@@ -309,18 +309,42 @@
                 </a>
             </li>
             <li>
-                <a style="color: inherit;" href="https://jonescompneurolab.github.io/textbook/tests/workshop.html#erp-tutorial-with-hnn-gui">ERP Tutorial with HNN GUI</a>
+                <a style="color: inherit;" href="https://jonescompneurolab.github.io/textbook/tests/workshop.html#erp-tutorial-with-hnn-gui">HNN GUI and ERP Tutorial</a>
             </li>
-            <li>
+            <!-- <li>
                 <a style="color: inherit;" href="https://jonescompneurolab.github.io/textbook/tests/workshop.html#simulating-oscillations-in-the-hnn-gui">Simulating Oscillations in the HNN GUI</a>
-            </li>
+            </li> -->
             <li>
-                <a style="color: inherit;" href="https://jonescompneurolab.github.io/textbook/tests/workshop.html#simulating-an-event-related-potential-erp-in-the-hnn-api">Simulating an ERP in the HNN API</a>
+                <a style="color: inherit;" href="https://jonescompneurolab.github.io/textbook/tests/workshop.html#simulating-an-event-related-potential-erp-in-the-hnn-api">ERP Simulation and Optimization with the HNN API</a>
             </li>
             <li>
                 <a style="color: inherit;" href="https://jonescompneurolab.github.io/textbook/tests/workshop.html#workshop-feedback">Workshop Feedback</a>
             </li>
         </ol>
+        </span>
+        <h3>
+            Workshop Page Link
+        </h3>
+
+        <span style="font-size: 1.2em;">
+            <div class="callout callout-note">
+                <table class="callout-table">
+                    <tr>
+                        <td class="emoji-cell">
+                            <svg class="lightbulb-icon" width="20" height="20">
+                                <use href="#lightbulb"></use>
+                            </svg>
+                        </td>
+                        <td class="text-cell">
+                            To access this page and follow along with the interactive sections of the workshop, please enter the following URL into your browser's search bar:
+                            <br>
+                            <span style="display: block; height: 10px;"></span>
+                            <a href="">tinyurl.com/hnn-workshop-2025-10-30</a>
+                        </td>
+                        <td class="emoji-cell"></td>
+                    </tr>
+                </table>
+            </div>
         </span>
         <h3>
             Workshop Schedule
@@ -816,7 +840,7 @@
         <img src="https://jonescompneurolab.github.io/hnn-tutorials/workshop-instructions/imgs/full_schematic.png" alt="full schematic" style="width: 100%; max-width: 800px; margin: 0 auto; display: block;">
         <br>
         <h2>
-            ERP Tutorial with HNN GUI
+            HNN Graphical-User Interface (GUI) and Event-Related Potential (ERP) Tutorial
         </h2>
         <p>
             In this section of the hands-on workshop, we will walk through the steps for 1) simulating an ERP in the GUI, and 2) adjusting model parameters to get a better match to experimental data. 
@@ -833,6 +857,515 @@
             For each exercise in the GUI walkthrough, we will provide a set of steps you can follow to reach the intended 'starting point' for completing the exercise. (The 'starting point' is the assumed state of the GUI <i>before</i> you begin the exercise.)
         </p>
         <h4>
+            Interactive Exercise 1
+        </h4>
+        <p>
+            In this exercise, we will try to improve the fit of the dipole to the data in the time period around the first proximal drive. Below, we provide two possible "paths" for you. Please read them and decide on one option to try. We also include instructions to get the the "starting point" for this exercise.
+        </p>
+        <div class="collapsible-section">
+            <h5 class="collapsible-header">
+                Exercise 1 Starting Point
+            </h5>
+
+            <div class="collapsible-content">
+                <ul>
+                <li>
+                    Stay tuned...
+                </li>
+                </ul>
+            </div>
+        </div>
+        <br>
+        <div class="collapsible-section">
+            <h5 class="collapsible-header">
+                Path A: Adjusting the Drive Standard Deviation
+            </h5>
+            <div class="collapsible-content">
+                <p>
+                    Perhaps you have a hypothesis that the initial feedforward input to the network has a wider standard deviation in your experimental population. Given this hypothesis, let's try adjusting the standard deviation of the first proximal input, and see if that yields a better fit to the experimental data. 
+                </p>
+                <ul>
+                    <li>
+                        If you're following from the <code>Exercise 1 Starting Point</code> outlined above, click on the <code>External drives</code> tab and then select <code>evprox1 (proximal)</code> - this is the first proximal drive. 
+                    </li>
+                    <li>
+                        The starting value for the standard deviation should be 2.52.
+                    </li>
+                    <li> 
+                        Before making each of the changes below, write down a prediction on how you think the dipoles and the spiking will change.
+                    </li>
+                    <li>
+                        Try changing the <code>Std dev time</code> to each of the following values, and see if the fit for your simulation improves:
+                    </li>
+                    <ul>
+                        <li>
+                            <code>Std dev time: 3.5</code>
+                        </li>
+                        <li>
+                            <code>Std dev time: 5.0</code>
+                        </li>
+                    </ul>
+                </ul>
+                <div class="callout callout-note">
+                    <table class="callout-table">
+                        <tr>
+                            <td class="emoji-cell">
+                                <svg class="lightbulb-icon" width="20" height="20">
+                                    <use href="#lightbulb"></use>
+                                </svg>
+                            </td>
+                            <td class="text-cell">
+                                Remember that each time you change a parameter, you must return to the <code>Simulation</code> tab to update the "Name" field to something new. 
+                            </td>
+                            <td class="emoji-cell"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <br>
+        </div>
+        <div class="collapsible-section">
+            <h5 class="collapsible-header">
+                Path B: Adjusting the Drive Mean Arrival Time
+            </h5>
+            <div class="collapsible-content">
+                <p>
+                    Perhaps you have a hypothesis that the initial feedforward input to the network arrives earlier in your experimental population. Given this hypothesis, let's try adjusting the <code>Mean time</code> of the first proximal input, and see if that yields a better fit to the experimental data. 
+                </p>
+                <ul>
+                    <li>
+                        If you're following from the <code>Exercise 1 Starting Point</code> outlined above, click on the <code>External drives</code> tab and then select <code>evprox1 (proximal)</code> - this is the first proximal drive. 
+                    </li>
+                    <li>
+                        The starting value for the <code>Mean time</code> should be 28.
+                    </li>
+                    <li> 
+                        Before making each of the changes below, write down a prediction on how you think the dipoles and the spiking will change.
+                    </li>
+                    <li>
+                        Try changing the <code>Mean time</code> to each of the following values, and see if the fit for your simulation improves:
+                    </li>
+                    <ul>
+                        <li>
+                            <code>Mean time: 23</code>
+                        </li>
+                        <li>
+                            <code>Mean time: 18</code>
+                        </li>
+                    </ul>
+                </ul>
+                <div class="callout callout-note">
+                    <table class="callout-table">
+                        <tr>
+                            <td class="emoji-cell">
+                                <svg class="lightbulb-icon" width="20" height="20">
+                                    <use href="#lightbulb"></use>
+                                </svg>
+                            </td>
+                            <td class="text-cell">
+                                Remember that each time you change a parameter, you must return to the <code>Simulation</code> tab to update the "Name" field to something new. 
+                            </td>
+                            <td class="emoji-cell"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <p>
+            <b>Discussion Questions:</b>
+            <ul>
+                <li>
+                    Did the fit of the simulation to the data improve?
+                </li>
+                <li>
+                    Did the spiking and dipoles change in the ways you expected?
+                </li>
+            </ul>
+        </p>
+
+
+
+
+
+
+
+
+        <h4>
+            Interactive Exercise 2
+        </h4>
+        <p>
+            In this exercise, we will try to improve the fit of the dipole to the data in the time period around the first distal drive. Below, we provide two possible "paths" for you. Please read them and decide on one option to try. We also include instructions to get the the "starting point" for this exercise.
+        </p>
+        <div class="collapsible-section">
+            <h5 class="collapsible-header">
+                Exercise 2 Starting Point
+            </h5>
+
+            <div class="collapsible-content">
+                <ul>
+                <li>
+                    Stay tuned...
+                </li>
+                </ul>
+            </div>
+        </div>
+        <br>
+        <div class="collapsible-section">
+            <h5 class="collapsible-header">
+                Path A: Adjusting the E-I and E-I synaptic gains
+            </h5>
+            <div class="collapsible-content">
+                <p>
+                    Perhaps you have a hypothesis that the excitatory connections in the local network are stronger in your experimental population. Given this hypothesis, let's try adjusting the synaptic gains to see if that yields a better fit to the experimental data.
+                </p>
+                <ul>
+                    <li>
+                        If you're following from the <code>Exercise 2 Starting Point</code> outlined above, click on the <code>Network</code> tab
+                    </li>
+                    <li>
+                        At the top of the <code>Connectivity</code> sub tab, you should see a section with the <code>Global Synaptic Gain Modifiers</code>. These should all have initial values of 1, which means all the weights for the specified connection type are multiplied by 1.
+                    </li>
+                    <li> 
+                        Before making each of the changes below, write down a prediction on how you think the dipoles and the spiking will change.
+                    </li>
+                    <li>
+                        Try changing the <code>Exc-to-Exc</code> and the <code>Exc-to-Inh</code> gains to each of the following values listed below, and see if the fit for your simulation improves:
+                    </li>
+                    <ul>
+                        <li>
+                            Simulation 1
+                        </li>
+                        <ul>
+                            <li>
+                                Exc-to-Exc: 1.5
+                            </li>
+                            <li>
+                                Exc-to-Inh: 1.5
+                            </li>
+                        </ul>
+                        <li>
+                            Simulation 2
+                        </li>
+                        <ul>
+                            <li>
+                                Exc-to-Exc: 2
+                            </li>
+                            <li>
+                                Exc-to-Inh: 2
+                            </li>
+                        </ul>
+                    </ul>
+                </ul>
+                <div class="callout callout-note">
+                    <table class="callout-table">
+                        <tr>
+                            <td class="emoji-cell">
+                                <svg class="lightbulb-icon" width="20" height="20">
+                                    <use href="#lightbulb"></use>
+                                </svg>
+                            </td>
+                            <td class="text-cell">
+                                Remember that each time you change a parameter, you must return to the <code>Simulation</code> tab to update the "Name" field to something new. 
+                            </td>
+                            <td class="emoji-cell"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <br>
+        </div>
+        <div class="collapsible-section">
+            <h5 class="collapsible-header">
+                Path B: Adjusting the I-I and I-E synaptic gains
+            </h5>
+            <div class="collapsible-content">
+                <p>
+                    Perhaps you have a hypothesis that the inhibitory connections in the local network are stronger in your experimental population. Given this hypothesis, let's try adjusting the synaptic gains to see if that yields a better fit to the experimental data.
+                </p>
+                <ul>
+                    <li>
+                        If you're following from the <code>Exercise 2 Starting Point</code> outlined above, click on the <code>Network</code> tab
+                    </li>
+                    <li>
+                        At the top of the <code>Connectivity</code> sub tab, you should see a section with the <code>Global Synaptic Gain Modifiers</code>. These should all have initial values of 1, which means all the weights for the specified connection type are multiplied by 1.
+                    </li>
+                    <li> 
+                        Before making each of the changes below, write down a prediction on how you think the dipoles and the spiking will change.
+                    </li>
+                    <li>
+                        Try changing the <code>Inh-to-Ing</code> and the <code>Inh-to-Exc</code> gains to each of the following values listed below, and see if the fit for your simulation improves:
+                    </li>
+                    <ul>
+                        <li>
+                            Simulation 1
+                        </li>
+                        <ul>
+                            <li>
+                                Inh-to-Inh: 1.5
+                            </li>
+                            <li>
+                                Inh-to-Exc: 1.5
+                            </li>
+                        </ul>
+                        <li>
+                            Simulation 2
+                        </li>
+                        <ul>
+                            <li>
+                                Inh-to-Inh: 2
+                            </li>
+                            <li>
+                                Inh-to-Exc: 2
+                            </li>
+                        </ul>
+                    </ul>
+                </ul>
+                <div class="callout callout-note">
+                    <table class="callout-table">
+                        <tr>
+                            <td class="emoji-cell">
+                                <svg class="lightbulb-icon" width="20" height="20">
+                                    <use href="#lightbulb"></use>
+                                </svg>
+                            </td>
+                            <td class="text-cell">
+                                Remember that each time you change a parameter, you must return to the <code>Simulation</code> tab to update the "Name" field to something new. 
+                            </td>
+                            <td class="emoji-cell"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <br>
+        </div>
+        <p>
+            <b>Discussion Questions:</b>
+            <ul>
+                <li>
+                    Did the fit of the simulation to the data improve?
+                </li>
+                <li>
+                    Did the spiking and dipoles change in the ways you expected?
+                </li>
+            </ul>
+        </p>
+
+
+
+
+
+
+
+<h4>
+    Interactive Exercise 3
+</h4>
+
+<p>
+    For this exercise, we will be using "mock" (simulated) data from a hypothetical patient population. 
+    
+    Imagine you have a dataset of visual evoked potentials (VEP) from multiple sclerosis (MS) patients source localized to V1. Your VEP in your MS population are notably different from the control population.
+
+    You have already modeled VEPs in your control population, and you have a previous simulation that you can load into HNN as a starting point. 
+
+    After loading in the data for the MS population, you make note of two key differences between the simulated dipole and the data.
+</p>
+<ul>
+    <li>
+        The timing of the peaks around each of the driving inputs appears to be shifted
+    </li>
+    <li>
+        The magnitudes of the large deflections in the dipole are reduced
+    </li>
+</ul> 
+
+<p>
+    These observations led you to consider what underlying mechanisms might account for these differences in the signals. To explore these differences, we will test multiple hypotheses by changing specific model parameters that affect different aspects of circuit dynamics.  
+
+    For each of the sections below, you should select one of the two provided hypotheses about how MS might alter the cortical response. You are of course welcome to try both hypotheses if time permits. 
+</p>
+
+
+<div class="collapsible-section">
+    <h5 class="collapsible-header">
+        Exercise Starting Point
+    </h5>
+
+    <div class="collapsible-content">
+        Coming soon...
+    </div>
+</div>
+
+<br>
+
+<div class="collapsible-section">
+    <h5 class="collapsible-header">
+        Part A: Timing of Drives
+    </h5>
+    <div class="collapsible-content">
+        <div class="callout callout-note">
+            <table class="callout-table">
+                <tr>
+                    <td class="emoji-cell">
+                        <svg class="lightbulb-icon" width="20" height="20">
+                            <use href="#lightbulb"></use>
+                        </svg>
+                    </td>
+                    <td class="text-cell">
+                        Hypothesis 01: Conduction delays due to demyelination may slow the arrival of visual signals from the thalamus and associated cortical regions involved in VEPs.
+                    </td>
+                    <td class="emoji-cell"></td>
+                </tr>
+            </table>
+        </div>
+        <p>
+            To model this, we can increase the arrival times and standard deviations of the proximal and distal drives.
+        </p>
+        <p>
+            <b>Instructions</b>: Try adjusting the <code>Mean time</code> of each of the drives. You can start with increments of 2.5, and increasing as needed. For example, your first simulation might be:
+        </p>
+        <ul>
+            <li>Proximal 1: <code>Mean time</code> = 18ms + 2.5ms = 20.5ms</li>
+            <li>Distal 1: <code>Mean time</code> = 62ms + 2.5ms = 64.5ms</li>
+            <li>Proximal 2: <code>Mean time</code>= 95ms + 2.5ms = 97.5ms</li>
+        </ul>
+        <p>
+            Don't feel constrained to only making adjustments in increments of 2.5. This is merely a suggested starting point. You can look at the input histograms and make an informed decision about what increments you'd like to use. 
+        </p>
+        <p>
+            <b>Instructions</b>: After adjusting the mean arrival times of the drives, try adjusting the <code>Std dev time</code> for each of the drives. You can start with increments of around 0.5 to 1. For example, your simulation might be:
+        </p>
+        <ul>
+            <li>Proximal 1: <code>Std dev time</code> = 2.52 + 1 = ~3.5 </li>
+            <li>Distal 1: <code>Std dev time</code> = 3.81 + 1 = ~4</li>
+            <li>Proximal 2: <code>Std dev time</code>= 13.38 + 1 = ~14</li>
+        </ul>
+        <p>
+            Continue to run simulations until you are either satisfied with your result or are convinced that you should explore other hypotheses. 
+        </p>
+        <div class="callout callout-note">
+            <table class="callout-table">
+                <tr>
+                    <td class="emoji-cell">
+                        <svg class="lightbulb-icon" width="20" height="20">
+                            <use href="#lightbulb"></use>
+                        </svg>
+                    </td>
+                    <td class="text-cell">
+                        Hypothesis 02: Even if inputs arrive at the usual time, postsynaptic neurons might integrate them more slowly leading to the delayed peaks and troughs observed in the dipole. This slower integration could result from MS-related inflammation affecting post-synaptic receptors.
+                    </td>
+                    <td class="emoji-cell"></td>
+                </tr>
+            </table>
+        </div>
+    <p>
+        We can model this by increasing the decay times for the local AMPA, NMDA, and GABAA synapses. Doing so will make postsynaptic currents last longer.
+    </p>
+    <p>
+        <b>Instructions</b>: try doubling each of the decay parameters listed below. For example, your first simulation might be:
+    </p>
+
+    <ul>
+        <li>
+            For Layer 2/3
+        </li>
+        <ul>
+            <li><code>AMPA decay time</code>: 5 * 2 = 10</li>
+            <li><code>NMDA decay time</code>: 10 * 2 = 20</li>
+            <li><code>GABAA decay time</code>: 5 * 2 = 10</li>
+        </ul>
+        <li>
+            For Layer 5
+        </li>
+        <ul>
+            <li><code>AMPA decay time</code>: 5 * 2 = 10</li>
+            <li><code>AMPA decay time</code>: 10 * 2 = 20</li>
+            <li><code>GABAA decay time</code>: 5 * 2 = 10</li>
+        </ul>
+    </ul>
+    <p>
+        Continue to run double the decay times until you are either satisfied with your result or are convinced that you should explore other hypotheses. 
+    </p>
+
+    </div>
+</div>
+
+<br>
+
+<div class="collapsible-section">
+    <h5 class="collapsible-header">
+        Path B: Magnitudes of Dipole Deflections
+    </h5>
+    <div class="collapsible-content">
+        <div class="callout callout-note">
+            <table class="callout-table">
+                <tr>
+                    <td class="emoji-cell">
+                        <svg class="lightbulb-icon" width="20" height="20">
+                            <use href="#lightbulb"></use>
+                        </svg>
+                    </td>
+                    <td class="text-cell">
+                        Hypothesis 01: ...
+                    </td>
+                    <td class="emoji-cell"></td>
+                </tr>
+            </table>
+        </div>
+        <p>
+            Content here...
+        </p>
+        <div class="callout callout-note">
+            <table class="callout-table">
+                <tr>
+                    <td class="emoji-cell">
+                        <svg class="lightbulb-icon" width="20" height="20">
+                            <use href="#lightbulb"></use>
+                        </svg>
+                    </td>
+                    <td class="text-cell">
+                        Hypothesis 02: Cortical disinhibition has been reported in MS patients, possibly due to altered balance between excitatory and inhibitory neurons. You hypothesize that reduced excitatory synaptic strengths may be responsible for the observed differences in the magnitudes of the dipole deflections.
+                    </td>
+                    <td class="emoji-cell"></td>
+                </tr>
+            </table>
+        </div>
+        <p>
+            To simulate this, we can reduce excitatory synaptic strengths
+        </p>
+        <ul>
+            <li>
+                Open the <code>Network</code> tab and select the <code>Connectivity</code> sub-tab.
+            </li>
+            <li>
+                Under <code>Global Synaptic Gain Modifiers</code>, try changing the Exc-to-Exc and Exc-to-Inh in increments of 0.25. For example, for you first simulation would be:
+                <ul>
+                    <li><b>Exc-to-Exc</b>: 0.75</li>
+                    <li><b>Exc-to-Inh</b>: 0.75</li>
+                </ul>
+            </li>
+        </ul>
+        <p>
+            Continue to adjust the gains until you are either satisfied with your result or are convinced that you should explore other hypotheses. 
+        </p>
+
+    </div>
+</div>
+
+<p>
+    <b>Discussion Questions:</b>
+    <ul>
+        <li>
+            ...
+        </li>
+    </ul>
+</p>
+
+
+
+
+
+
+        <!-- <h4>
             Interactive Exercise 1
         </h4>
         <p>
@@ -934,7 +1467,7 @@
                 </div>
             </div>
         </div>
-            <p>
+        <p>
             <b>Discussion Questions:</b>
             <ul>
                 <li>
@@ -1560,8 +2093,8 @@
         <p>
             Once you've run some simulations and answered the above questions, you can load our "solution" from the <code>External Drives</code> tab by clicking the <code>Load external drives</code> button and selecting the "ERPSupraT_hand-tuned.json" file from the "workshops/erp_gui_walkthrough" directory of the "hnn-data" folder. Note that our "solution" is merely one possible answer among many, and so don't feel constrained by the solution we provide.
         </p>
-    <br>
-    <h2>
+    <br> -->
+    <!-- <h2>
         Simulating Oscillations in the HNN GUI
     </h2>
     <p>
@@ -1576,9 +2109,9 @@
         <a href="https://jonescompneurolab.github.io/textbook/content/06_alpha_beta/gui.html">click here</a>
         to be redirected to the Alpha-Beta GUI tutorial.
     </p>
-    <br>
+    <br> -->
     <h2>
-        Simulating an Event-Related Potential (ERP) in the HNN API
+        ERP Simulation and Optimization with the HNN API
     </h2>
     <p>
         In this section, we will cover how to simulation an ERP in the HNN API, and we will also cover how to use HNN's built-in optimization features. To follow along with Dr. Fernandez, please access the CoLab notebooks via the following links:
