@@ -964,8 +964,33 @@
     If you followed the <code-basic>Starting Point</code-basic> instructions correctly, your figure comparing the mock patient data to the control simulation should look like so:
 </p>
 <img src="workshop_assets/Ex1-start.png" />
-<br>
 
+<p>
+    <b>Pre-Exercise Questions:</b> before adjusting any parameters, please consider the following questions.
+</p>
+<ul>
+    <li>
+        What does the parameter represent in the model? Relatedly, in what <i>direction</i> should you change the parameter(s) to test your hypothesis?
+    </li>
+    <li>
+        In what ways do you expect the <b>dipole</b> to change when you adjust the parameters in this way?
+    </li>
+    <li>
+        In what ways do you expect the <b>spiking</b> to change when you adjust the parameters in this way?
+    </li>
+    <li>
+        If you are changing multiple parameters, or different types of parameters, how might those changes interact with each other?
+    </li>
+</ul>
+<p>
+    After each simulation, you should add the data to the dipole plot by selecting your figure from the <code>Visualization</code> tab, by setting <code-basic>"Data to Compare"</code-basic> to whatever you used for your simulation name, and lastly by clicking <code>Clear axis</code> followed by <code>Add plot</code>.
+</p>
+<p>
+    After each set of parameter changes (not necessarily after each simulation), please generate the raster plot with the dipoles overlaid by selecting <code-basic>"Dipole Layers-Spikes (1x1)"</code-basic> option from the <code-basic>Template figures</code-basic> box in the <code>Visualization</code> tab.
+</p>
+<p>
+    <b>As a reminder</b>: you are to choose one of the paths below to follow. Please click each path and read the hypothesis therein before making a decision.
+</p>
 <div class="collapsible-section">
     <h5 class="collapsible-header">
         Path 1.1: Conduction delays
@@ -1059,6 +1084,9 @@
         </li>
     </ul>
     <p>
+        <b>Tip</b>: repeat the process for the other two drives <i>before</i> changing the simulation <code-basic>Name</code-basic> and running the simulation.
+    </p>
+    <p>
         <b>Instructions</b>: After adjusting the the synaptic delays for the drives, try adjusting the <code>decay time</code> for the synapses in the local network by a factor of 2. For example, if you wanted to double the decay times for <code>L5 Pyramidal</code>, you would navigate to <code>Network > Cell Parameters</code> tab and make the following changes to the the AMPA, NMDA, and GABAA decay times:
     </p>
     <ul class="sm-gray">
@@ -1067,7 +1095,7 @@
         <li><code>GABAA decay time</code> : <code-basic>&nbsp;5 * 2 = 10</li>
     </ul>
     <p>
-        <b>Tip</b>: Remember to repeat this process for both <code>L2/3 Pyramidal</code> (Layer 2/3) <i>and</i> <code>L5 Pyramidal</code> (Layer 5)
+        <b>Tip</b>: Remember to repeat this process for both <code>L2/3 Pyramidal</code> (Layer 2/3) <i>and</i> <code>L5 Pyramidal</code> (Layer 5) <i>before</i> changing the simulation <code-basic>Name</code-basic> and running the simulation.
     </p>
     <p>
         Continue running simulations until you are either satisfied with your result or are convinced that you should explore other hypotheses. 
@@ -1155,7 +1183,34 @@
 </div>
 
 <p>
-    This time, we will not include an inline picture of the starting point, as it hints and our preferred path for exercise 1. However, if you followed the steps correctly for exercise 1, then we're confident that you've done it correctly this time around as well. (But if something looks strange, please let us know!)
+    This time, we will not include an inline picture of the starting point, as it hints at the path we took for Exercise 1. However, if you followed the steps correctly for exercise 1, then we're confident that you've done it correctly this time around as well. (But if something looks strange, please let us know!)
+</p>
+
+<p>
+    <b>Pre-Exercise Questions:</b> before adjusting any parameters, please consider the following questions. Note that these are the same as those listed above, so you can skip reading this bit if you've done Exercise 1.
+</p>
+<ul>
+    <li>
+        What does the parameter represent in the model? Relatedly, in what <i>direction</i> should you change the parameter(s) to test your hypothesis?
+    </li>
+    <li>
+        In what ways do you expect the <b>dipole</b> to change when you adjust the parameters in this way?
+    </li>
+    <li>
+        In what ways do you expect the <b>spiking</b> to change when you adjust the parameters in this way?
+    </li>
+    <li>
+        If you are changing multiple parameters, or different types of parameters, how might those changes interact with each other?
+    </li>
+</ul>
+<p>
+    After each simulation, you should add the data to the dipole plot by selecting your figure from the <code>Visualization</code> tab, by setting <code-basic>"Data to Compare"</code-basic> to whatever you used for your simulation name, and lastly by clicking <code>Clear axis</code> followed by <code>Add plot</code>.
+</p>
+<p>
+    After each set of parameter changes (not necessarily after each simulation), please generate the raster plot with the dipoles overlaid by selecting <code-basic>"Dipole Layers-Spikes (1x1)"</code-basic> option from the <code-basic>Template figures</code-basic> box in the <code>Visualization</code> tab.
+</p>
+<p>
+    <b>As a reminder</b>: you are to choose one of the paths below to follow. Please click each path and read the hypothesis therein before making a decision.
 </p>
 
 <br>
@@ -1193,12 +1248,18 @@
             <li><code>L2_Basket</code> (NMDA): <code-basic>~0.06 / 2 = ~0.030</code-basic></li>
         </ul>
         <p>
+            <b>Tip</b>: remember to repeat the process for the other two drives <i>before</i> changing the simulation <code-basic>Name</code-basic> and running the simulation.
+        </p>
+        <p>
             <b>Instructions</b>: After adjusting the external drive weights, try adjusting the gains in the local network. Open the <code>Network</code> tab and select the <code>Connectivity</code> sub-tab. Under <code>Global Synaptic Gain Modifiers</code>, try changing the Exc-to-Exc and Exc-to-Inh in increments of 0.25. For example, if you want to lower the gain value, your first simulation would look like so:
         </p>
         <ul class="sm-gray">
             <li><code>Inh-to-Exc</code>: 0.75</li>
             <li><code>Inh-to-Inh</code>: 0.75</li>
         </ul>
+        <p>
+            <b>Tip</b>: Reducing the gain from 1 to 0.75 equates to a 25% <i>reduction</i> in the strength of the weight.
+        </p>
         <p>
             Continue to adjust the parameters until you are either satisfied with your result or are convinced that you should explore other hypotheses. 
         </p>
@@ -1242,6 +1303,9 @@
             <li><code>&ensp;&nbsp; L2_Basket</code> (NMDA): <code-basic>~0.06 / 2 = ~0.030</code-basic></li>
         </ul>
         <p>
+            <b>Tip</b>: remember to repeat the process for the other two drives <i>before</i> changing the simulation <code-basic>Name</code-basic> and running the simulation. If this seems like to many parameters to adjust at once, feel free to focus on the driving inputs to one of the two layers. We recommend focusing on Layer 5, as it generally contributes more strongly to the aggregate dipole given the axial dendrites of the Layer 5 Pyramidal neurons are longer. 
+        </p>
+        <p>
             <b>Instructions</b>: After adjusting the external drive weights, try adjusting the gains in the local network. Open the <code>Network</code> tab and select the <code>Connectivity</code> sub-tab. Under <code>Global Synaptic Gain Modifiers</code>, try changing the Exc-to-Exc and Exc-to-Inh in increments of 0.25. For example, if you want to lower the gain value, your first simulation would look like so:
         </p>
         <ul class="sm-gray">
@@ -1251,18 +1315,11 @@
         <p>
             Continue to adjust the parameters until you are either satisfied with your result or are convinced that you should explore other hypotheses. 
         </p>
-
+        <p>
+            <b>Tip</b>: Reducing the gain from 1 to 0.75 equates to a 25% <i>reduction</i> in the strength of the weight.
+        </p>
     </div>
 </div>
-
-<p>
-    <b>Discussion Questions:</b>
-    <ul>
-        <li>
-            ...
-        </li>
-    </ul>
-</p>
 
 <!-- ############################################################ -->
 <!-- Newly-developed content for CuttingMEEG workshop, 2025-10-30 -->
