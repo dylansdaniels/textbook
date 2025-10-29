@@ -152,6 +152,20 @@ code {
     border: 2px solid var(--lighter-gray);
 }
 
+code-basic {
+    color: var(--hnn-violet);
+    font-size: 90%;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; 
+    font-weight: normal;
+}
+
+ul.sm-gray code-basic {
+    color: var(--text-light);
+    font-size: 80%;
+    font-family: 'Courier New', monospace !important;
+    font-size: 0.95em !important;
+}
+
 #block {
     color: var(--text-light);
     display: block;
@@ -186,6 +200,17 @@ pre code {
     word-wrap: break-word;
     overflow: hidden;
 }
+
+p .code-text, ul.code-text, ul.code-text li {
+    font-family: 'Courier New', monospace !important;
+    font-size: 0.95em !important;
+}
+
+p .code-text {
+    color: var(--hnn-violet);
+}
+
+
 
 /*
     Element: .csl-entry
