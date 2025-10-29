@@ -484,7 +484,7 @@
                 </tr>
                 <tr>
                     <td>
-                        14:30 - 14:50
+                        14:30 - 14:55
                     </td>
                     <td>
                         Lecture
@@ -498,7 +498,7 @@
                 </tr>
                 <tr>
                     <td>
-                        14:50 - 14:55
+                        14:55 - 15:00
                     </td>
                     <td>
                         Break
@@ -517,7 +517,7 @@
                 </tr>
                 <tr>
                     <td>
-                        14:55 - 15:30
+                        15:00 - 15:30
                     </td>
                     <td>
                         Demo
@@ -531,7 +531,7 @@
                 </tr>
                 <tr>
                     <td>
-                        15:30 - 16:00
+                        15:30 - 15:55
                     </td>
                     <td>
                         Demo
@@ -545,7 +545,7 @@
                 </tr>
                 <tr>
                     <td>
-                        16:00 - 16:05
+                        15:55 - 16:00
                     </td>
                     <td>
                         Break
@@ -559,7 +559,7 @@
                 </tr>
                 <tr>
                     <td>
-                        16:05 - 16:25
+                        16:00 - 16:30
                     </td>
                     <td>
                         Interactive Session
@@ -573,7 +573,7 @@
                 </tr>
                 <tr>
                     <td>
-                        16:25 - 16:30
+                        16:30-16:35
                     </td>
                     <td>
                         Break
@@ -592,27 +592,13 @@
                 </tr>
                 <tr>
                     <td>
-                        16:30 - 16:35
+                        16:30 - 16:45
                     </td>
                     <td>
                         Lecture
                     </td>
                     <td>
-                        Introducing the HNN API
-                    </td>
-                    <td>
-                        Nicholas Tolley
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        16:35 - 16:55
-                    </td>
-                    <td>
-                        Lecture
-                    </td>
-                    <td>
-                        Using the HNN API for Optimizing ERP Simulations 
+                        ERP Case Study
                     </td>
                     <td>
                         Carolina Fernandez
@@ -620,10 +606,24 @@
                 </tr>
                 <tr>
                     <td>
+                        16:45 - 16:55
+                    </td>
+                    <td>
+                        Demo
+                    </td>
+                    <td>
+                        API and Optimization Overview
+                    </td>
+                    <td>
+                        Nick Tolley
+                    </td>
+                </tr>
+                <tr>
+                    <td>
                         16:55 - 17:00
                     </td>
                     <td>
-                        Conclusion
+                        Survey
                     </td>
                     <td>
                         Closing Remarks and (Optional) Feedback Survey 
@@ -643,7 +643,7 @@
         </h5>
 
             <p>
-                We offer many methods to use HNN. To use the HNN GUI without installing it locally, you can use our <a href="https://colab.research.google.com/drive/1yyjuEBimIu_f7_0Nf3YLwUiVOO7ZrKK3?usp=sharing">click here to open our Google CoLab notebook.</a> This is the simplest way to use HNN, but the simulations will take notably longer. This method does require a Google account, but the resources are <b>free</b> and allow you to run HNN GUI at no charge. To run the notebook, click "Runtime" then "Run all", and follow the instructions.
+                We offer many methods to use HNN. To use the HNN GUI without installing it locally, you can <a href="https://colab.research.google.com/drive/1yyjuEBimIu_f7_0Nf3YLwUiVOO7ZrKK3?usp=sharing">click here to open our Google CoLab notebook</a>. This is the simplest way to use HNN, but the simulations will take notably longer. This method does require a Google account, but the resources are <b>free</b> and allow you to run HNN GUI at no charge. To run the notebook, click "Runtime" then "Run all", and follow the instructions.
             </p>
             <p>
                 If you would like to install HNN locally for faster simulations, please follow our <a href="https://jonescompneurolab.github.io/textbook/content/01_getting_started/installation.html#local-installation">local installation instructions</a>.
@@ -1046,13 +1046,13 @@
             <code>L5_pyramidal</code> : <code-basic>&nbsp;&nbsp;1 + 0.5 = 1.50</code-basic>
         </li>
         <li>
-            <code>L2_pyramidal</code> : <code-basic>0.1 + 0.5 = 0.15</code-basic>
+            <code>L2_pyramidal</code> : <code-basic>0.1 + 0.05 = 0.15</code-basic>
         </li>
         <li>
             <code>&nbsp&nbsp L5_basket</code> : <code-basic>&nbsp;&nbsp;1 + 0.5 = 1.50</code-basic>
         </li>
         <li>
-            <code>&nbsp&nbsp L2_basket</code> : <code-basic>0.1 + 0.5 = 0.15</code-basic>
+            <code>&nbsp&nbsp L2_basket</code> : <code-basic>0.1 + 0.05 = 0.15</code-basic>
         </li>
     </ul>
     <p>
@@ -2306,9 +2306,12 @@
         ERP Simulation and Optimization with the HNN API
     </h2>
     <p>
-        In this section, we will cover how to simulation an ERP in the HNN API, and we will also cover how to use HNN's built-in optimization features. To follow along with Dr. Fernandez, please access the CoLab notebooks via the following links:
+        In this section, we will present a case study in which the HNN API was used to simulate the auditory awareness negativity (AAN) evoked response. We will also demo how to use the HNN API, with a specific focus on the built-in optimization features.
     </p>
-    <ul>
+    <p>
+        To follow along with Nick's demo, please <a href="https://docs.google.com/presentation/d/1mbFD_PK_ptEG5sgwmgtq6DlT-8h3yBWovoGKu8Wd7lA/edit?usp=sharing">click here to access the slides</a>.
+    </p>
+    <!-- <ul>
         <li>
             <a href="https://colab.research.google.com/drive/1sGSAvophP8v-42zFk9t-dpWbGvycUo2u?usp=sharing">Simulating ERPs with HNN API</a>
         </li>
@@ -2323,7 +2326,7 @@
         <li>
             <a href="https://colab.research.google.com/drive/1kb5gA-S2y8j8a3DCbT0MIOH2UXRXT1hL?usp=sharing">Optimizing ERPs with HNN API</a>
         </li>
-    </ul>
+    </ul> -->
     <br>
     <h2>
         Workshop Feedback
