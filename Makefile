@@ -1,7 +1,7 @@
 
 .PHONY: all build clean create-textbook-stable-build create-textbook-dev-build
 
-HNN_VERSION := 0.4.3
+HNN_VERSION := 0.5.0
 OS := $(shell uname -s)
 
 # Function to create and configure a conda environment with library paths
@@ -81,8 +81,7 @@ create-textbook-dev-build:
 	$(call create-and-configure-env,textbook-dev-build,true)
 
 	@# Get the latest commit hash of hnn-core master branch
-	LATEST_HASH=$$(git ls-remote https://github.com/jonescompneurolab/hnn-core.git master | cut -f1)
-
+	LATEST_HASH=$$(git ls-remote https://github.com/jonescompneurolab/hnn-core.git master | cut -f1);
 	@# Install hnn-core in developer mode, forcing reinstall without cache
 	conda run -n textbook-dev-build pip install --upgrade --force-reinstall --no-cache-dir "hnn-core[dev] @ git+https://github.com/jonescompneurolab/hnn-core.git@master"
 
