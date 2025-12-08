@@ -244,6 +244,9 @@ def generate_sidebar_html(
     dynamic_links_html, ordered_links = build_navbar(json_page_index)
 
     close_sidebar = textwrap.dedent("""
+                <div style="height:
+                     20px
+                ;"></div>
                 <div class="survey-row">
                     <a class="download-icon-link">
                         <svg class="download-icon" viewBox="0 0 24 24" fill="none"
