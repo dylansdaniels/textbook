@@ -203,6 +203,21 @@ def generate_sidebar_html(
                         Installation
                     </a>
                 </div>
+                <div class="survey-row">
+                    <a>
+                        ➜ Take the HNN Survey here!
+                    </a>
+                </div>
+                <div class="survey-row">
+                    <a>
+                        → Take the HNN Survey here!
+                    </a>
+                </div>
+                <div class="survey-row">
+                    <a>
+                        📝 Take the HNN Survey here!
+                    </a>
+                </div>
             </div>
     """)
 

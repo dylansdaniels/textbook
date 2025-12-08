@@ -626,6 +626,23 @@ body.is-mobile .sidebar-close {
 
 
 
+/*
+    Element: .survey-row
+    Description: Used for Title and collapse all button
+*/
+.survey-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.survey-row a {
+    margin: 0px;
+}
+
+.survey-row:hover a {
+    color: var(--hnn-yellow);
+}
 
 
 /*
