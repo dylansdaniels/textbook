@@ -2,7 +2,7 @@ name: textbook-env
 channels:
   - conda-forge
 dependencies:
-  - python=3.12
+  - python=3.11
   - beautifulsoup4==4.12.3
   - pandoc==3.6.2
   - pip==25.0
