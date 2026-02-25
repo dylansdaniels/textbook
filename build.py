@@ -315,7 +315,7 @@ anything. The four options are:
 
 - 'stable': This builds the textbook using the latest stable version of HNN-Core. This
     version is validated based on a request to PyPI, checking if your version is using the latest
-    stable. This produces a 'stable' build, meaning it creates the output HTML files in the
+    stable. This produces a 'content' build, meaning it creates the output HTML files in the
     '<textbook-root>/content' folder (unless you also pass '--build-directory=dev').
 - 'master': This builds the textbook using the latest development version of
     HNN-Core. This version is validated based on a request to Github, checking if your version is
@@ -439,7 +439,7 @@ during the build process. Defaults to False.
     installed_commit = get_hnn_commit_hash()
 
     # We can't pre-empt this function in the no-validation case, since the value of the
-    # hash varies between "stable" and "dev" builds
+    # hash varies between "content" and "dev" builds
     hnn_commit_hash = validate_hnn_versions(
         installed_commit,
         args.code_version,
