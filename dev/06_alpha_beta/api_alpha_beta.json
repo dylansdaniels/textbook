@@ -1,6 +1,6 @@
 {
-    "full_executed": false,
-    "hnn_version": "NA",
+    "last_execution_successful": false,
+    "last_hnn_version_used": "NA",
     "api_alpha_beta.ipynb": {
         "Welcome to the HNN-Core Alpha and Beta tutorial": {
             "level": 1,
@@ -98,6 +98,5 @@
             "level": 2,
             "html": "                <div class='markdown-cell'>\n                    <h2>6. Have fun exploring your own data!</h2>\n<p>Follow steps 1-5 above using your data and parameter adjustments\nbased on your own hypotheses.</p>\n\n                </div>\n\n\n<!-- markdown cell -->\n<div class='markdown-cell'>\n\n\n</div>"
         }
-    },
-    "commit": "6b099a7dfe3f3ddbb3cd8c1472832089d80158bf"
+    }
 }

@@ -23,40 +23,67 @@
         </symbol>
     </svg>
 
+
 	<div id="mySidebar" class="sidebar">
-		<div class="sidebar-close">
-		<svg class="popup-symbol" viewBox="0 0 24 24">
-		<use href="#popup-symbol" />
-		</svg>
-		</div>
-		<div class="navbar-header">
-		<a>
-			Human Neocortical Neurosolver
-		</a>
-		<br>
-			<svg class="collapse-icon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-				<path d="M9 9H4v1h5V9z"/>
-				<path fill-rule="evenodd" clip-rule="evenodd" d="M5 3l1-1h7l1 1v7l-1 1h-2v2l-1 1H3l-1-1V6l1-1h2V3zm1 2h4l1 1v4h2V3H6v2zm4 1H3v7h7V6z"/>
-			</svg>
-		</div>
+	    <div class="sidebar-close">
+	        <svg class="popup-symbol" viewBox="0 0 24 24">
+	            <use href="#popup-symbol" />
+	        </svg>
+	    </div>
+	    <div class="sidebar-header">
+	        <div class="title-row">
+	            <a>
+	                Human Neocortical Neurosolver
+	            </a>
+	            <br>
+	                <svg class="collapse-icon" viewBox="0 0 16 16"
+	                    xmlns="http://www.w3.org/2000/svg">
+	                    <path d="M9 9H4v1h5V9z"/>
+	                    <path fill-rule="evenodd" clip-rule="evenodd"
+	                        d="M5 3l1-1h7l1 1v7l-1 1h-2v2l-1 1H3l-1-1V6l1-1h2V3zm1
+	                            2h4l1 1v4h2V3H6v2zm4 1H3v7h7V6z"/>
+	                </svg>
+	        </div>
+	        <div class="install-row">
+	            <a class="download-icon-link" aria-label="Installation">
+	                <svg class="download-icon" viewBox="0 0 24 24" fill="none"
+	                    xmlns="http://www.w3.org/2000/svg">
+	                <path d="M7 19L5.78311 18.9954C3.12231 18.8818 1 16.6888 1
+	                    14C1 11.3501 3.06139 9.18169 5.66806 9.01084C6.78942
+	                    6.64027 9.20316 5 12 5C15.5268 5 18.4445 7.60822 18.9293
+	                    11.001L19 11C21.2091 11 23 12.7909 23 15C23 17.1422 21.316
+	                    18.8911 19.1996 18.9951L17 19M12 10V18M12 18L15 15M12 18L9
+	                    15"
+	                   stroke-width="2" stroke-linecap="round"
+	                   stroke-linejoin="round"/>
+	                </svg>
+	            </a>
+	            <a>
+	                Installation
+	            </a>
+	        </div>
+	    </div>
+
 		<a href="/textbook/dev/preface.html">Preface</a>
 		<div class="sidebar-list">
-			<a id="sidebar-header" onclick="toggleSubmenu(event)">
-		<span class="toggle-icon">+</span>
-				1. Getting Started
-			</a>
-			<div class="submenu">
+		    <a id="sidebar-section" onclick="toggleSubmenu(event)">
+		        <span class="toggle-icon">+</span>
+		        1. Getting Started
+		    </a>
+		    <div class="submenu">
+
 				<a href="/textbook/dev/01_getting_started/challenge.html">1.1 Introducing HNN</a>
 				<a href="/textbook/dev/01_getting_started/template_model.html">1.2 Template Model</a>
 				<a href="/textbook/dev/01_getting_started/installation.html">1.3 Installation</a>
 			</div>
 		</div>
 		<div class="sidebar-list">
-			<a id="sidebar-header" onclick="toggleSubmenu(event)">
-		<span class="toggle-icon">+</span>
-				2. Model Assumptions
-			</a>
-			<div class="submenu">
+		    <a id="sidebar-section" onclick="toggleSubmenu(event)">
+		        <span class="toggle-icon">+</span>
+		        2. Model Assumptions
+		    </a>
+		    <div class="submenu">
+
 				<a href="/textbook/dev/03_model_assumptions/cortical_column_structure.html">2.1 Cortical Column Structure</a>
 				<a href="/textbook/dev/03_model_assumptions/primary_electric_currents.html">2.2 Primary Electrical Currents</a>
 				<a href="/textbook/dev/03_model_assumptions/neurons_morphology_and_physiology.html">2.3 Neurons: Morphology and Physiology</a>
@@ -66,50 +93,55 @@
 			</div>
 		</div>
 		<div class="sidebar-list">
-			<a id="sidebar-header" onclick="toggleSubmenu(event)">
-		<span class="toggle-icon">+</span>
-				3. Using the HNN GUI
-			</a>
-			<div class="submenu">
+		    <a id="sidebar-section" onclick="toggleSubmenu(event)">
+		        <span class="toggle-icon">+</span>
+		        3. Using the HNN GUI
+		    </a>
+		    <div class="submenu">
+
 				<a href="/textbook/dev/04_using_hnn_gui/gui_quickstart.html">3.1 GUI Quickstart</a>
 			</div>
 		</div>
 		<div class="sidebar-list">
-			<a id="sidebar-header" onclick="toggleSubmenu(event)">
-		<span class="toggle-icon">+</span>
-				4. Simulating ERPs
-			</a>
-			<div class="submenu">
+		    <a id="sidebar-section" onclick="toggleSubmenu(event)">
+		        <span class="toggle-icon">+</span>
+		        4. Simulating ERPs
+		    </a>
+		    <div class="submenu">
+
 				<a href="/textbook/dev/05_erps/erps_in_gui.html">4.1 GUI Tutorial of ERPs Simulation</a>
 				<a href="/textbook/dev/05_erps/hnn_core.html">4.2 API Tutorial of ERPs Simulation</a>
 			</div>
 		</div>
 		<div class="sidebar-list">
-			<a id="sidebar-header" onclick="toggleSubmenu(event)">
-		<span class="toggle-icon">+</span>
-				5. Simulating Alpha/Beta Rhythms
-			</a>
-			<div class="submenu">
+		    <a id="sidebar-section" onclick="toggleSubmenu(event)">
+		        <span class="toggle-icon">+</span>
+		        5. Simulating Alpha/Beta Rhythms
+		    </a>
+		    <div class="submenu">
+
 				<a href="/textbook/dev/06_alpha_beta/gui.html">5.1 GUI Tutorial of Alpha/Beta Rhythms</a>
 				<a href="/textbook/dev/06_alpha_beta/api.html">5.2 API Tutorial of Alpha/Beta Rhythms</a>
 			</div>
 		</div>
 		<div class="sidebar-list">
-			<a id="sidebar-header" onclick="toggleSubmenu(event)">
-		<span class="toggle-icon">+</span>
-				6. Simulating Gamma Rhythms
-			</a>
-			<div class="submenu">
+		    <a id="sidebar-section" onclick="toggleSubmenu(event)">
+		        <span class="toggle-icon">+</span>
+		        6. Simulating Gamma Rhythms
+		    </a>
+		    <div class="submenu">
+
 				<a href="/textbook/dev/07_gamma/gamma_in_gui.html">6.1 GUI Tutorial of Gamma Rhythms</a>
 				<a href="/textbook/dev/07_gamma/gamma_in_api.html">6.2 API Tutorial of Gamma Rhythms</a>
 			</div>
 		</div>
 		<div class="sidebar-list">
-			<a id="sidebar-header" onclick="toggleSubmenu(event)">
-		<span class="toggle-icon">+</span>
-				7. Using the HNN API
-			</a>
-			<div class="submenu">
+		    <a id="sidebar-section" onclick="toggleSubmenu(event)">
+		        <span class="toggle-icon">+</span>
+		        7. Using the HNN API
+		    </a>
+		    <div class="submenu">
+
 				<a href="/textbook/dev/08_using_hnn_api/plot_firing_pattern.html">7.1 Plot Firing Pattern</a>
 				<a href="/textbook/dev/08_using_hnn_api/record_and_plot_extracellular_potentials.html">7.2 Record & Plot Extracellular Potentials</a>
 				<a href="/textbook/dev/08_using_hnn_api/modifying_local_connectivity.html">7.3 Modifying Local Connectivity</a>
@@ -120,19 +152,22 @@
 				<a href="/textbook/dev/08_using_hnn_api/parallelism_mpi.html">7.8 Parallelism: MPI</a>
 				<a href="/textbook/dev/08_using_hnn_api/optimize_simulated_evoked_response_parameters.html">7.9 Optimize simulated evoked response parameters</a>
 				<a href="/textbook/dev/08_using_hnn_api/optimize_simulated_rhythmic_response_parameters.html">7.10 Optimize simulated rhythmic response parameters</a>
+				<a href="/textbook/dev/08_using_hnn_api/metadata_tutorial.html">7.11 Cell Metadata Tutorial</a>
 			</div>
 		</div>
 		<div class="sidebar-list">
-			<a id="sidebar-header" onclick="toggleSubmenu(event)">
-		<span class="toggle-icon">+</span>
-				8. From Data to Simulation
-			</a>
-			<div class="submenu">
+		    <a id="sidebar-section" onclick="toggleSubmenu(event)">
+		        <span class="toggle-icon">+</span>
+		        8. From Data to Simulation
+		    </a>
+		    <div class="submenu">
+
 				<a href="/textbook/dev/09_data_to_simulation/from_meg_to_hnn.html">8.1 From MEG sensor-space data to HNN simulation</a>
 			</div>
 		</div>
-	<div style='height: 30px;'></div>
+	    <div style='height: 30px;'></div>
 	</div>
+
 
 
     <div class="topbar">
@@ -143,7 +178,7 @@
                 <button class="openbtn" onclick="toggleNav()">
                     ☰
                 </button>
-                <a href="https://hnn.brown.edu" class="home-link">
+                <a href="https://hnn.brown.edu" class="home-link" aria-label="HNN homepage">
                     <div class="home-icon-container">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -157,7 +192,7 @@
                         </svg>
                     </div>
                 </a>
-                <button class="theme-toggle">
+                <button class="theme-toggle" aria-label="Toggle dark mode">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                         <path d="M361.5 1.2c5 2.1 8.6 6.6 9.6 11.9L391 121l107.9 19.8c5.3 1 9.8 4.6 11.9 9.6s1.5 10.7-1.6 15.2L446.9 256l62.3 90.3c3.1 4.5 3.7 10.2 1.6 15.2s-6.6 8.6-11.9 9.6L391 391 371.1 498.9c-1 5.3-4.6 9.8-9.6 11.9s-10.7 1.5-15.2-1.6L256 446.9l-90.3 62.3c-4.5 3.1-10.2 3.7-15.2 1.6s-8.6-6.6-9.6-11.9L121 391 13.1 371.1c-5.3-1-9.8-4.6-11.9-9.6s-1.5-10.7 1.6-15.2L65.1 256 2.8 165.7c-3.1-4.5-3.7-10.2-1.6-15.2s6.6-8.6 11.9-9.6L121 121 140.9 13.1c1-5.3 4.6-9.8 9.6-11.9s10.7-1.5 15.2 1.6L256 65.1 346.3 2.8c4.5-3.1 10.2-3.7 15.2-1.6zM160 256a96 96 0 1 1 192 0 96 96 0 1 1 -192 0zm224 0a128 128 0 1 0 -256 0 128 128 0 1 0 256 0z"></path>
                     </svg>
@@ -198,6 +233,7 @@
             <img 
                 id="topbar-logo"
                 src="https://raw.githubusercontent.com/jonescompneurolab/jones-website/master/images/frontpage/logos/logo-hnn-medium.png"
+                alt="HNN Logo"
             />
         </div>
 
@@ -252,8 +288,15 @@ connectivity and input and output connectivity patterns. We have
 harnessed this generalization into HNN’s foundational neural model that
 is provided as a template circuit to work with.</p>
 <div style="display:block; width:50%; margin: 0 auto;">
-<p><img
-src="https://raw.githubusercontent.com/jonescompneurolab/jones-website/master/images/textbook/content/03_assumptions/images/netpyne-schematic-tilted-colored.png" /></p>
+<figure>
+<img
+src="https://raw.githubusercontent.com/jonescompneurolab/jones-website/master/images/textbook/content/03_assumptions/images/netpyne-schematic-tilted-colored.png"
+alt="3D representation of our cortical model. Abstracted multi-compartment pyramidal neurons are aligned in a 10-by-10 grid in layer 2 and layer 5. Interneurons are shown as red point neurons near the pyramidal cell somas." />
+<figcaption aria-hidden="true">3D representation of our cortical model.
+Abstracted multi-compartment pyramidal neurons are aligned in a 10-by-10
+grid in layer 2 and layer 5. Interneurons are shown as red point neurons
+near the pyramidal cell somas.</figcaption>
+</figure>
 </div>
 <p style="text-align:justify; display: block; margin: 0 auto;width: 90%; font-size: 1em;">
 <strong>Figure 1</strong>: Most importantly, our model contains
