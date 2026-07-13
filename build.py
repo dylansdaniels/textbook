@@ -1,10 +1,13 @@
 import argparse
-from pathlib import Path
 import textwrap
+from pathlib import Path
 
 from scripts.execute_and_convert_nbs import execute_and_convert_nbs_to_json
 from scripts.generate_page_html import generate_page_html
 from scripts.process_hnn_commit_hashes import get_hnn_commit_hash, validate_hnn_versions
+
+# import sys
+# sys.argv = ["build.py", "--regenerate-html-only", "--code-version=no-check"]
 
 textbook_root_path = Path(__file__).parents[0]
 

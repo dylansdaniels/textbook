@@ -1,5 +1,5 @@
 <!--
-# Title: 4.1 GUI Tutorial of ERPs Simulation
+# Title: 4.11 GUI Tutorial of ERPs Simulation
 # Updated: 2024-11-14
 #
 # Contributors:
