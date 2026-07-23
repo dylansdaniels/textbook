@@ -1,5 +1,5 @@
 <!--
-# Title: 4.2 ERP Tutorial: Getting Started
+# Title: 4.3 Getting Started
 # Updated: 2025-01-29
 #
 # Contributors:
@@ -10,7 +10,7 @@
     # Christopher Bailey <cjb@cfin.au.dk>
 -->
 
-# Getting Started with the HNN GUI
+# 4.3 Getting Started with HNN and ERP Simulations
 
 <div
   id="video-container"
@@ -19,4 +19,4 @@
   style="padding: 10px 0px 30px 0px;"
 ></div>
 
-[[erp_api_walkthrough.ipynb][Getting Started with the HNN Python API]]
+[[erp_api_walkthrough.ipynb][Using the HNN Python API]]

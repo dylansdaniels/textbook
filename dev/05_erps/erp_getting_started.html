@@ -114,9 +114,13 @@
 		    </a>
 		    <div class="submenu">
 
-				<a href="/textbook/dev/05_erps/erp_overview.html">4.1 ERP Overview Lecture</a>
-				<a href="/textbook/dev/05_erps/erp_getting_started.html">4.2 ERP Tutorial: Getting Started</a>
-				<a href="/textbook/dev/05_erps/erp_simulation_workflow.html">4.3 Simulation Workflow</a>
+				<a href="/textbook/dev/05_erps/erp_overview.html">4.1 Intro and Overview Lecture</a>
+				<a href="/textbook/dev/05_erps/erp_following_along.html">4.2 Following Along</a>
+				<a href="/textbook/dev/05_erps/erp_getting_started.html">4.3 Getting Started</a>
+				<a href="/textbook/dev/05_erps/erp_simulation_workflow.html">4.4 Simulation Workflow</a>
+				<a href="/textbook/dev/05_erps/erp_initial_simulation.html">4.5 Simulate the Default Network</a>
+				<a href="/textbook/dev/05_erps/erp_scaling_smoothing.html">4.6 Simulation Scaling and Smoothing</a>
+				<a href="/textbook/dev/05_erps/title.html">4.7 </a>
 				<a href="/textbook/dev/05_erps/erps_in_gui.html">4.11 GUI Tutorial of ERPs Simulation</a>
 				<a href="/textbook/dev/05_erps/hnn_core.html">4.12 API Tutorial of ERPs Simulation</a>
 			</div>
@@ -305,7 +309,7 @@
 
 
 <!--
-# Title: 4.2 ERP Tutorial: Getting Started
+# Title: 4.3 Getting Started
 # Updated: 2025-01-29
 #
 # Contributors:
@@ -315,100 +319,27 @@
     # Blake Caldwell <blake_caldwell@brown.edu>
     # Christopher Bailey <cjb@cfin.au.dk>
 -->
-<h1>Getting Started with the HNN GUI</h1>
+<h1>4.3 Getting Started with HNN and ERP Simulations</h1>
 <div id="video-container" class="text-align: center;" data-src="https://drive.google.com/file/d/1TwPdd1E5APjQQAeta5T8tcFM63OfU_gf/preview" style="padding: 10px 0px 30px 0px;">
 
 </div>
 <div class='markdown-cell'>
-    <h1>Getting Started with the HNN Python API</h1>
+    <h2>Using the HNN Python API</h2>
 
 </div>
 
 
 <!-- markdown cell --><div class='markdown-cell'>
-    <h2>Set Up Your HNN Environment</h2>
+    <h3>Import HNN and Instantiate a Model</h3>
 
 </div>
 
 
                 <!-- markdown cell -->
                 <div class='markdown-cell'>
-                    <p>We assume for this section that you have access to the latest stable
-version of the <code>hnn-core</code> software.</p>
-<p>If not, please follow the instructions on our <a
-href="https://jonescompneurolab.github.io/textbook/content/01_getting_started/installation.html">Installation
-page</a> to get started with the HNN Python API.</p>
-<p>Note that we provide instructions for running HNN "on the cloud" and
-for installing and running HNN on your local machine.</p>
-<p>While the cloud versions of HNN are relatively easy to get up and
-running, they come with certain limitations as described in the <a
-href="https://jonescompneurolab.github.io/textbook/content/01_getting_started/installation.html">Installation
-page</a>. As such, we recommend that you install HNN on your local
-machine using the <code>conda</code> installation method to follow along
-with this and subsequent walkthroughs.</p>
-<p>The <code>conda</code> installation method will install the latest
-<strong>stable</strong> version of <code>hnn-core</code> on your
-machine, including the Graphical User Interface (GUI) and other
-dependencies for running faster simulations using parallelism.</p>
-<p>Once you have completed the <code>conda</code> installation
-instructions, you can activate your conda environment with the following
-Command Line command:</p>
-<div class="sourceCode" id="cb1"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">conda</span> activate hnn-core-env</span></code></pre></div>
-
-                </div>
-
-
-<!-- markdown cell --><div class='markdown-cell'>
-    <h3>Following Along With the Textbook Tutorial</h3>
-
-</div>
-
-
-                <!-- markdown cell -->
-                <div class='markdown-cell'>
-                    <p>Note that any code blocks on the current or subsequent pages of the
-"Simulating ERPs" tutorial are <strong>cumulative</strong>. That is to
-say, these code blocks are meant to be run in sequential order, as they
-are drawn from a single <code>ipython</code> notebook file.</p>
-<p>By clicking the <code>Download Notebook</code> button at the top of
-this page, you can download the entire <code>.ipynb</code> file and run
-it interactively through Jupyter Notebook or through your preferred code
-editor (VS Code, Pycharm, etc.).</p>
-<p>Note that your code editor may install additional dependencies needed
-to open and run <code>.ipynb</code> files in the
-<code>hnn-core-env</code> conda environment.</p>
-<p>However, if you would like to launch a Jupyter Notebook server
-directly from the Command Line, you will need to install Jupyter's
-<code>notebook</code> dependency directly into
-<code>hnn-core-env</code>. To do so, run the following command from your
-active <code>hnn-core-env</code> conda environment:</p>
-<div class="sourceCode" id="cb1"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">conda</span> install <span class="at">-c</span> conda-forge notebook</span></code></pre></div>
-<p>After installation, you can launch the jupyter server with the
-following command:</p>
-<div class="sourceCode" id="cb2"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">jupyter</span> notebook</span></code></pre></div>
-<p>Alternatively, you can start an interactive ipython environment with
-the command below. This will allow you to run individual commands from
-your Command Line interface without needing to install the additional
-<code>notebook</code> dependency from Jupyter.</p>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">ipython</span></span></code></pre></div>
-
-                </div>
-
-
-<!-- markdown cell --><div class='markdown-cell'>
-    <h2>Import hnn_core and Visualize the Network</h2>
-
-</div>
-
-
-                <!-- markdown cell -->
-                <div class='markdown-cell'>
-                    <p>Now that you've set up your environment, we can finally start using
-HNN's Python API. The very first thing you'll want to do is import the
+                    <p>Once you've set up your <code>hnn-core</code> environment, you are
+ready to use HNN's Python API. The very first thing you'll want to do
+(after activating your environment) is to import the
 <code>hnn_core</code> package</p>
 <p>We'll also import one of the default models,
 <code>jones_2009_model</code>, which is the laminar SI model as
@@ -443,6 +374,12 @@ net_default.</p>
     <code class='language-python'>
         net_default = jones_2009_model()
     </code>
+</div>
+
+
+<!-- markdown cell --><div class='markdown-cell'>
+    <h3>Interacting with the Network Object</h3>
+
 </div>
 
 
@@ -566,7 +503,7 @@ us the unique cell types in the network</p>
 
 # loop through the dictionary keys and print them
 for key in net_default.cell_types.keys():
-    print(f"    {key}")
+    print(f"\t{key}")
                     </code>
                 </div>
 
@@ -639,7 +576,7 @@ print(f'Key: "{key}"')
 print("Value:")
 print(f"   Type:  {type(value)}")
 print(f"   Value: {value}")
-print("\n" + "-"*20 + "\n")
+print("\n" + "-" * 20 + "\n")
 
                 </code>
             </div>
@@ -681,6 +618,12 @@ upcoming sections</p>
 information about the "L5_pyramidal" cell type.</p>
 
                 </div>
+
+
+<!-- markdown cell --><div class='markdown-cell'>
+    <h3>Visualizing the Network and Cell objects</h3>
+
+</div>
 
 
                 <!-- markdown cell -->
@@ -765,7 +708,7 @@ _ = l5_pyr_celltype["cell_object"].plot_morphology()
         <!-- footer area -->
         <!----------------->
         <div class="footer-area">
-            <div class="previous-area" data-link="/textbook/dev/05_erps/erp_overview.html">
+            <div class="previous-area" data-link="/textbook/dev/05_erps/erp_following_along.html">
                 <div class="previous-icon">
                     <svg class="svg-arrow" width="25" height="25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path class="arrow-path" d="M15 5L9 12L15 19" />
@@ -773,13 +716,13 @@ _ = l5_pyr_celltype["cell_object"].plot_morphology()
                 </div>
                 <div class="previous-text">
                     <p>Previous</p>
-                    <a>4.1 ERP Overview Lecture</a>
+                    <a>4.2 Following Along</a>
                 </div>
             </div>
             <div class="next-area" data-link="/textbook/dev/05_erps/erp_simulation_workflow.html">
                 <div class="next-text">
                     <p>Next</p>
-                    <a>4.3 Simulation Workflow</a>
+                    <a>4.4 Simulation Workflow</a>
                 </div>
                 <div class="next-icon">
                     <svg class="svg-arrow" width="25" height="25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -71,10 +71,10 @@ h6 {
 }
 
 /*
-    Element: h1::after, h2::after
-    Description: block-level pseudo-elements for h1 and h2
+    Element: h1::after
+    Description: block-level pseudo-elements for h1
 */
-h1::after, h2::after {
+h1::after {
     content: "";
     display: block; 
     height: 2px;
@@ -1432,7 +1432,7 @@ body.dark-mode .output-cell:has(> .output-label) {
     overflow-x: hidden;
     max-height: calc(1em * 10);
     flex-grow: 1; 
-    white-space: pre-line;
+    white-space: pre-wrap;
     color: var(--text-light) !important;
     margin: 0px 0px 0px 10px;
     margin-top: 0px;
@@ -1441,9 +1441,6 @@ body.dark-mode .output-cell:has(> .output-label) {
     scrollbar-gutter: stable;
 }
 
-.output-code::-webkit-scrollbar {
-    display: always; 
-}
 
 body.dark-mode .output-code {
     color: #fff !important;
@@ -1456,6 +1453,55 @@ body.dark-mode .output-code {
     border-radius: 5px;
     padding: 10px;
 
+}
+
+/*
+# Scrollbar styling for non-Firefox browsers (most modern browsers) 
+# ------------------------------------------------------------ 
+*/
+
+/*  
+    setting a width forces the browser to use a custom scrollbar
+    instead of relying on the OS defaults. this allows us to 
+    prevent macOS from hiding the scrollbar automatically due to
+    the default OS settings
+*/
+.output-code::-webkit-scrollbar {
+    width: 8px;
+}
+
+.output-code::-webkit-scrollbar-track {
+    background: var(--lighter-gray) !important;
+}
+
+body.dark-mode .output-code::-webkit-scrollbar-track {
+    background: var(--terminal-gray) !important;
+}
+
+.output-code::-webkit-scrollbar-thumb {
+    background: var(--gentle-red) !important;
+    border-radius: 4px;
+}
+
+/* 
+    Description: scrollbar styling for Firefox (which doesn't support webkit scrollbar) 
+    Notes:
+        "@-moz-document url-prefix()" allows us to target Firefox specifically such
+            that these rules don't unintentionally affect browsers that also support
+            scrollbar-color/scrollbar-width
+        Most modern browsers support these properties as well, but Safari support is
+            more limited, so webkit-scrollbar is used as the primary implementation
+            and this Firefox-specific exception is provided below.
+*/
+@-moz-document url-prefix() {
+    .output-code {
+        scrollbar-width: thin;
+        scrollbar-color: var(--gentle-red) var(--lighter-gray);
+    }
+
+    body.dark-mode .output-code {
+        scrollbar-color: var(--gentle-red) var(--terminal-gray);
+    }
 }
 
 /*

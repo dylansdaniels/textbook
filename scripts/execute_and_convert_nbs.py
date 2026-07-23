@@ -1368,8 +1368,14 @@ def execute_and_convert_nbs_to_json(
     """
     # Setup
     # ----------------------------------------------------------------------------------
-    # Get all notebook file paths
-    all_nb_paths = sorted(content_path.glob("**/*.ipynb"))
+    # #################### [BUGFIX] DSD ####################
+    # Get all notebook file paths, excluding .ipynb checkpoint files
+    all_nb_paths = sorted(
+        path
+        for path in content_path.glob("**/*.ipynb")
+        if ".ipynb_checkpoints" not in path.parts
+    )
+    # #################### [END BUGFIX] ####################
 
     # get nb hashes from json
     nb_hashes = _load_nb_hashes(nb_hashes_path)
