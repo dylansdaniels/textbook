@@ -8,4 +8,4 @@
 
 # 4.6 Simulation Scaling and Smoothing
 
-[[erp_api_walkthrough.ipynb][Simulation Scaling and Smoothing]]
+[[erp_api_walkthrough.ipynb][Simulation Scaling and Smoothing in the API]]

@@ -286,7 +286,7 @@
 
 
 		<div class="notebook-download-wrapper">
-		    <a href='erp_api_walkthrough.ipynb' download>
+		    <a href='plot_simulate_gamma.ipynb' download>
 		        <button class="notebook-download">
 		            <svg xmlns="http://www.w3.org/2000/svg"
 		                width="20"
@@ -309,69 +309,64 @@
 
 
 <!--
-# Title: 4.5 Simulate the Default Network
-# Updated: 2026-07-15
+# Title: 6.2 API Tutorial of Gamma Rhythms
+# Updated: 2025-02-14
 #
 # Contributors:
-    # Dylan Daniels <dylan_s_daniels@alumni.brown.edu>
+    # Dylan Daniels
 -->
-<h1>4.5 Simulate the Default Network</h1>
-<div id="video-container" class="text-align: center;" data-src="https://drive.google.com/file/d/1H2zNHtOYVJQ_TPaTCYBeViFxkoZKmgrK/preview" style="padding: 10px 0px 30px 0px;">
+                <div class='markdown-cell'>
+                    <h1>6.2 API Tutorial of Gamma Rhythms</h1>
+<p>This example demonstrates how to simulate gamma rhythms via the well
+established pyramidal-interneuron-gamma mechanisms [1], as detailed in
+the <a href="">HNN GUI gamma tutorial</a>, using HNN-Core.</p>
+<p>We recommend you first review the GUI tutorial. The workflow below
+recreates weak gamma rhythms similar to Figures 4 and 5 of the GUI
+tutorial, and strong gamma rhythms similar to Figure 12 and 13 in the
+GUI tutorial.</p>
 
-</div>
+                </div>
+
+
+                <!-- code cell -->
+                <div class='code-cell'>
+                    <code class='language-python'>
+                        # Authors: Mainak Jas <mjas@mgh.harvard.edu>
+#          Sam Neymotin <samnemo@gmail.com>
+#          Christopher Bailey <bailey.cj@gmail.com>
+
+# sphinx_gallery_thumbnail_number = 2
+
+import os.path as op
+                    </code>
+                </div>
+
+
+<!-- markdown cell -->
 <div class='markdown-cell'>
-    <h2>Simulate the Default Network</h2>
+    <p>Let us import hnn_core</p>
 
 </div>
-
-
-                <!-- markdown cell -->
-                <div class='markdown-cell'>
-                    <p>Let's begin by importing all of the dependencies we will need for
-this section of the tutorial</p>
-
-                </div>
 
 
                 <!-- code cell -->
                 <div class='code-cell'>
                     <code class='language-python'>
-                        from urllib.request import urlretrieve
-
+                        import hnn_core
 import matplotlib.pyplot as plt
-from hnn_core import (
-    JoblibBackend,
-    MPIBackend,
-    read_dipole,
-    simulate_dipole,
-)
-from hnn_core.network_models import add_erp_drives_to_jones_model
-from hnn_core.viz import plot_dipole
+from hnn_core import simulate_dipole, read_params, jones_2009_model
+
+hnn_core_root = op.dirname(hnn_core.__file__)
                     </code>
                 </div>
 
 
-<!-- markdown cell --><div class='markdown-cell'>
-    <h3>Load Experimental Data</h3>
-
-</div>
-
-
                 <!-- markdown cell -->
                 <div class='markdown-cell'>
-                    <p>Following the typical experimental workflow outlined in the <a
-href="https://jonescompneurolab.github.io/textbook/content/05_erps/erp_simulation_workflow.html">Simulation
-Workflow</a> page, we will begin by importing some real experimental MEG
-data.</p>
-<p>As a reminder, the data we use in these tutorials are from the Jones
-et al. 2007 study, as detailed in the <a
-href="https://jonescompneurolab.github.io/textbook/content/05_erps/erp_overview.html">Introduction
-and ERP Overview</a> page.</p>
-<p>Using the code below, we can fetch the data for the treshold-level
-tacile evoked response directly from our lab's <code>hnn-data</code>
-GitHub repository. (If you prefer, you can also clone the
-<code>hnn-data</code> repository to your local machine and import the
-data from there)</p>
+                    <p>Read the parameter file and print the between-cell connectivity
+parameters. Note that these are different compared with the 'default'
+parameter set used in, e.g.,
+<code>sphx_glr_auto_examples_workflows_plot_simulate_alpha.py</code>.</p>
 
                 </div>
 
@@ -379,12 +374,13 @@ data from there)</p>
                 <!-- code cell -->
                 <div class='code-cell'>
                     <code class='language-python'>
-                        # link to the data in the `hnn-data` GitHub repository
-data_url = "https://raw.githubusercontent.com/jonescompneurolab/hnn-data/main/MEG_detection_data/yes_trial_S1_ERP_all_avg.txt"
-urlretrieve(
-    data_url,
-    "yes_trial_S1_ERP_all_avg.txt",
+                        params_fname = op.join(
+    hnn_core_root,
+    'param',
+    'gamma_L5weak_L2weak.json'
 )
+params = read_params(params_fname)
+print(params['gbar_L*'])
                     </code>
                 </div>
 
@@ -396,23 +392,32 @@ urlretrieve(
                     </div>
                     <div class='output-code'>
 
-        (&#x27;yes_trial_S1_ERP_all_avg.txt&#x27;, &lt;http.client.HTTPMessage at 0x7fc660548c20&gt;)
+        {
+    &quot;gbar_L2Basket_L2Basket&quot;: 0.01,
+    &quot;gbar_L2Basket_L2Pyr_gabaa&quot;: 0.007,
+    &quot;gbar_L2Basket_L2Pyr_gabab&quot;: 0.0,
+    &quot;gbar_L2Basket_L5Pyr&quot;: 0.0,
+    &quot;gbar_L2Pyr_L2Basket&quot;: 0.0012,
+    &quot;gbar_L2Pyr_L2Pyr_ampa&quot;: 0.0,
+    &quot;gbar_L2Pyr_L2Pyr_nmda&quot;: 0.0,
+    &quot;gbar_L2Pyr_L5Basket&quot;: 0.0,
+    &quot;gbar_L2Pyr_L5Pyr&quot;: 0.0,
+    &quot;gbar_L5Basket_L5Basket&quot;: 0.0075,
+    &quot;gbar_L5Basket_L5Pyr_gabaa&quot;: 0.08,
+    &quot;gbar_L5Basket_L5Pyr_gabab&quot;: 0.0,
+    &quot;gbar_L5Pyr_L5Basket&quot;: 0.00091,
+    &quot;gbar_L5Pyr_L5Pyr_ampa&quot;: 0.0,
+    &quot;gbar_L5Pyr_L5Pyr_nmda&quot;: 0.0
+}
+
                     </div>
                 </div>
 
 
                 <!-- markdown cell -->
                 <div class='markdown-cell'>
-                    <p>Once we've fetched the data, we can load it with the
-<code>read_dipole()</code> function and assign it to a variable; in this
-case, we assign it to the variable named
-<code>threshold_experimental_dpl</code>. This process will load the
-experimental data as a <code>Dipole</code> object that can be used with
-<code>hnn-core</code>.</p>
-<p>The <code>Dipole</code> object has various attributes that we will
-not explore in detail at this time. For now, we will focus on two
-specific data attributes: <code>times</code> and <code>data</code>.</p>
-<p>Let's examine these attributes in more detail.</p>
+                    <p>We'll next add a tonic Poisson-distributed excitation to pyramidal
+cells</p>
 
                 </div>
 
@@ -420,24 +425,50 @@ specific data attributes: <code>times</code> and <code>data</code>.</p>
                 <!-- code cell -->
                 <div class='code-cell'>
                     <code class='language-python'>
-                        # load the experimental data as a `Dipole` object and
-# assign it to a variable
-threshold_experimental_dpl = read_dipole(
-    "yes_trial_S1_ERP_all_avg.txt",
+                        net = jones_2009_model(params)
+
+weights_ampa = {
+    'L2_pyramidal': 0.0008,
+    'L5_pyramidal': 0.0075,
+}
+synaptic_delays = {
+    'L2_pyramidal': 0.1,
+    'L5_pyramidal': 1.0,
+}
+rate_constant = {
+    'L2_pyramidal': 140.0,
+    'L5_pyramidal': 40.0,
+}
+net.add_poisson_drive(
+    'poisson',
+    rate_constant=rate_constant,
+    weights_ampa=weights_ampa,
+    location='proximal',
+    synaptic_delays=synaptic_delays,
+    event_seed=1349
 )
+                    </code>
+                </div>
 
-# assign the `times` data attribute to a variable
-threshold_times = threshold_experimental_dpl.times
 
-# assign the `data` data attribute to a variable
-threshold_data = threshold_experimental_dpl.data
+                <!-- markdown cell -->
+                <div class='markdown-cell'>
+                    <p>And then we'll simulate the dipole moment in a single trial. (Note:
+the default value used by <code>simulate_dipole</code> is
+n_trials=params["N_trials"].)</p>
 
-print(
-    f"Object type: {type(threshold_experimental_dpl)}",
-    f"  Data type: {type(threshold_data)}",
-    f" Times type: {type(threshold_times)}",
-    sep="\n",
+                </div>
+
+
+                <!-- code cell -->
+                <div class='code-cell'>
+                    <code class='language-python'>
+                        dpls = simulate_dipole(
+    net,
+    tstop=250.,
 )
+scaling_factor = 30000
+dpls = [dpl.scale(scaling_factor) for dpl in dpls]  # scale in place
                     </code>
                 </div>
 
@@ -449,9 +480,40 @@ print(
                     </div>
                     <div class='output-code'>
 
-        Object type: &lt;class &#x27;hnn_core.dipole.Dipole&#x27;&gt;
-  Data type: &lt;class &#x27;dict&#x27;&gt;
- Times type: &lt;class &#x27;numpy.ndarray&#x27;&gt;
+        Joblib will run 1 trial(s) in parallel by distributing trials over 1 jobs.
+Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
+Building the NEURON model
+
+        [Done]
+Trial 1: 0.03 ms...
+
+        Trial 1: 10.0 ms...
+Trial 1: 20.0 ms...
+Trial 1: 30.0 ms...
+Trial 1: 40.0 ms...
+Trial 1: 50.0 ms...
+Trial 1: 60.0 ms...
+Trial 1: 70.0 ms...
+Trial 1: 80.0 ms...
+Trial 1: 90.0 ms...
+
+        Trial 1: 100.0 ms...
+Trial 1: 110.0 ms...
+Trial 1: 120.0 ms...
+
+        Trial 1: 130.0 ms...
+Trial 1: 140.0 ms...
+Trial 1: 150.0 ms...
+Trial 1: 160.0 ms...
+Trial 1: 170.0 ms...
+
+        Trial 1: 180.0 ms...
+Trial 1: 190.0 ms...
+Trial 1: 200.0 ms...
+Trial 1: 210.0 ms...
+Trial 1: 220.0 ms...
+Trial 1: 230.0 ms...
+Trial 1: 240.0 ms...
 
                     </div>
                 </div>
@@ -459,13 +521,11 @@ print(
 
                 <!-- markdown cell -->
                 <div class='markdown-cell'>
-                    <p>We can see that the <code>data</code> attribute is a dictionary,
-while the <code>times</code> attribute is an array. As the names imply,
-the current dipole data are stored in the <code>data</code> dictionary,
-while the timesteps are stored directly in the <code>times</code>
-attribute.</p>
-<p>Let's examine the <code>data</code> dictionary in more detail,
-printing its keys and value types.</p>
+                    <p>Take a look at how different cell types respond to the exogenous
+drive. Note the periodic firing pattern of all cell types. While the
+basket cells fire relatively synchronously, the pyramidal cell
+populations display a more varied pattern, in which only a fraction of
+cells reach firing threshold.</p>
 
                 </div>
 
@@ -473,65 +533,11 @@ printing its keys and value types.</p>
                 <!-- code cell -->
                 <div class='code-cell'>
                     <code class='language-python'>
-                        print("Examining the `data` dictionary:")
+                        _ = net.cell_response.plot_spikes_raster()
 
-for key, value in threshold_data.items():
-    print(f'   Key: "{key}"\n      Value type: {type(value)}')
+plt.show()
                     </code>
                 </div>
-
-
-                <!-- code cell output -->
-                <div class='output-cell'>
-                    <div class='output-label'>
-                        Out:
-                    </div>
-                    <div class='output-code'>
-
-        Examining the `data` dictionary:
-   Key: &quot;agg&quot;
-      Value type: &lt;class &#x27;numpy.ndarray&#x27;&gt;
-
-                    </div>
-                </div>
-
-
-                <!-- markdown cell -->
-                <div class='markdown-cell'>
-                    <p>We can see that the <code>data</code> dictionary has a single key
-named <code>agg</code> that points to an array.</p>
-<p>Since the source data <code>yes_trial_S1_ERP_all_avg.txt</code> has
-two columns (you can verify this by pasting the URL above in your
-browser and examining the data), the <code>read_dipole()</code> function
-assumes that one column represents the times (in miliseconds), and the
-other represents the aggregate current dipole (in nano-ampere meters,
-nAm).</p>
-<p>Therefore, the <code>agg</code> key in our <code>data</code>
-dictionary refers to the aggregate current dipole.</p>
-<p>If our source data had four columns, <code>read_dipole()</code> would
-assume that the columns correspond to: 1) times (ms) 2) aggregate
-current dipole (nAm) 3) L2/3 current dipole (nAm) 4) L5 current dipole
-(nAm)</p>
-<p>In the above case, the <code>data</code> dictionary would contain
-additional keys for the L2/3 and L5 current dipoles.</p>
-
-                </div>
-
-
-                <!-- markdown cell -->
-                <div class='markdown-cell'>
-                    <p>Now that we've explored the loaded data objects, let's go ahead and
-use the built-in <code>Dipole.plot()</code> method to view the data</p>
-
-                </div>
-
-
-<!-- code cell -->
-<div class='code-cell'>
-    <code class='language-python'>
-        _ = threshold_experimental_dpl.plot()
-    </code>
-</div>
 
 
                 <!-- code cell output -->
@@ -548,34 +554,90 @@ use the built-in <code>Dipole.plot()</code> method to view the data</p>
 
 <!-- code cell image -->
 <div class='output-cell'>
-    <img src='output_nb_erp_api_walkthrough/fig_03.png'/>
+    <img src='output_nb_plot_simulate_gamma/fig_01.png'/>
 </div>
 
 
                 <!-- markdown cell -->
                 <div class='markdown-cell'>
-                    <p>You can see that the built-in plot method is assuming that the units
-of time are in miliseconds, and that the units of the current dipole are
-in nAm. The data plotted are for the Aggregate dipole, which is the sum
-of the Layer 2/3 and Layer 5 dipoles.</p>
+                    <p>To confirm that the periodicity observed in the firing patterns
+correspond to a population oscillation in the gamma-range, we can plot
+the time-frequency representation together with the signal. Note that
+the network requires some time to reach steady state. Hence, we omit the
+first 50 ms in our analysis.</p>
 
                 </div>
 
 
-<!-- markdown cell --><div class='markdown-cell'>
-    <h3>Prepare the Default Network for Simulation</h3>
+                <!-- code cell -->
+                <div class='code-cell'>
+                    <code class='language-python'>
+                        tmin = 50
+trial_idx = 0  # pick first trial
 
+# plot dipole time course and time-frequency
+# representation in same figure
+import numpy as np
+import matplotlib.pyplot as plt
+
+fig, axes = plt.subplots(
+    nrows=2,
+    ncols=1,
+    sharex=True,
+    figsize=(6, 6),
+    constrained_layout=True,
+)
+
+dpls[trial_idx].plot(
+    tmin=tmin,
+    ax=axes[0],
+    show=False,
+)
+
+# Create an fixed-step tiling of frequencies 
+# from 20 to 100 Hz in steps of 1 Hz
+freqs = np.arange(20., 100., 1.)
+dpls[trial_idx].plot_tfr_morlet(
+    freqs,
+    n_cycles=7,
+    tmin=tmin,
+    ax=axes[1],
+    show=False,
+)
+
+# adjust the bounds of the x axis in the spectrogram
+axes[1].set_xlim(tmin, 250)
+
+plt.show()
+                    </code>
+                </div>
+
+
+                <!-- code cell output -->
+                <div class='output-cell'>
+                    <div class='output-label'>
+                        Out:
+                    </div>
+                    <div class='output-code'>
+
+        &lt;Figure size 600x600 with 3 Axes&gt;
+                    </div>
+                </div>
+
+
+<!-- code cell image -->
+<div class='output-cell'>
+    <img src='output_nb_plot_simulate_gamma/fig_02.png'/>
 </div>
 
 
                 <!-- markdown cell -->
                 <div class='markdown-cell'>
-                    <p>Remember that exogenous inputs (modelled as spike trains arriving at
-the proximal or distal locations in the network) are necessary to drive
-network activity.</p>
-<p>However, the <code>jones_2009_model()</code> does not have external
-driving inputs by default. We can verify this by confirming the
-<code>external drives</code> data attribute is empty</p>
+                    <p>Now, let us try to re-run the simulation with a tonic bias applied to
+the L5 Pyramidal cells. Notice that the oscillation waveform is more
+regular, with less noise due to the fact that the tonic depolarization
+dominates over the influence of the Poisson drive. By default, a tonic
+bias is applied to the entire duration of the simulation.</p>
 
                 </div>
 
@@ -583,170 +645,16 @@ driving inputs by default. We can verify this by confirming the
                 <!-- code cell -->
                 <div class='code-cell'>
                     <code class='language-python'>
-                        print("Check if the `jones_2009_model` includes external drives ...")
-if jones_2009_model().external_drives:
-    print("   Existing drives found!")
-else:
-    print("   No drives found; `jones_2009_model().external_drives` is empty")
-                    </code>
-                </div>
-
-
-                <!-- code cell output -->
-                <div class='output-cell'>
-                    <div class='output-label'>
-                        Out:
-                    </div>
-                    <div class='output-code'>
-
-        Check if the `jones_2009_model` includes external drives ...
-   No drives found; `jones_2009_model().external_drives` is empty
-
-                    </div>
-                </div>
-
-
-                <!-- markdown cell -->
-                <div class='markdown-cell'>
-                    <p>We can add the default drives for simulating ERPs automatically using
-the <code>add_erp_drives_to_jones_model()</code> function we imported
-from <code>hnn_core.network_models</code>. (You can also manually add
-individual drives, and we will cover how to do so in a future
-section.)</p>
-<p>Let's first check if there are an external drives already attached to
-our network object <code>net default</code>; if not, we'll add the
-drives using the aforementioned function.</p>
-<p>Lastly, we will inspect the drives attached to
-<code>net_default</code>. For simulating ERPs, we expect to see two
-proximal drives and one distal drive.</p>
-
-                </div>
-
-
-                <!-- code cell -->
-                <div class='code-cell'>
-                    <code class='language-python'>
-                        # if there are no drives attached to the Network, then add them
-if not net_default.external_drives:
-    print("\nNo existing drives found. Adding default external drives ... ")
-
-    # add the default external drives for ERP simulation
-    # note:
-    #   the drives are added to the object **in place**, meaning we don't
-    #   need to assign the output back to the `net_default` variable
-    add_erp_drives_to_jones_model(net_default)
-
-    print("The following drives were added:")
-else:
-    print("\nExisting drives found on the network object.")
-    print("\nPrinting existing drive names:")
-
-for key in net_default.external_drives.keys():
-    print(f"   {key}")
-                    </code>
-                </div>
-
-
-                <!-- code cell output -->
-                <div class='output-cell'>
-                    <div class='output-label'>
-                        Out:
-                    </div>
-                    <div class='output-code'>
-
-
-No existing drives found. Adding default external drives ... 
-The following drives were added:
-   evdist1
-   evprox1
-   evprox2
-
-                    </div>
-                </div>
-
-
-                <!-- markdown cell -->
-                <div class='markdown-cell'>
-                    <p>Next, let's check the arrival time of each drive. Remember that for
-ERPs, we expect an initial feedforward (proximal) input, followed by a
-feedback (distal) input, followed by a second feedforward (proximal)
-input.</p>
-<p>As discussed in the <a
-href="https://jonescompneurolab.github.io/textbook/content/05_erps/erp_overview.html">Introduction
-and ERP Overview</a> page, this sequence of driving inputs was based on
-studying evoked potentials in animals using invasive recordings, and
-served as our starting point simulating human ERPs with HNN.</p>
-<p>To get the mean arrival times, we will need to access a nested
-attribute of each <code>_NetworkDrive</code> object. Specifically, we
-will print the value of the <code>&amp;quot;mu&amp;quot;</code>
-parameter in the <code>&amp;quot;dynamics&amp;quot;</code> dictionary.
-Note that each <code>_NetworkDrive</code> object itself acts like a
-dictionary, and <code>&amp;quot;dynamics&amp;quot;</code> is one of the
-keys of that dictionary</p>
-
-                </div>
-
-
-                <!-- code cell -->
-                <div class='code-cell'>
-                    <code class='language-python'>
-                        # ----------------------------------------
-# inspecting a single drive object
-# ----------------------------------------
-# let's first inspect a single external drive object to understand
-# its structure
-
-# we can create a pointer to the "evdist1" object like so
-key = "evdist1"
-drive_object = net_default.external_drives[key]
-
-# as mentioned above, we'll be accessing the value of the "mu"
-# parameter in the "dynamics" dictionary.
-
-# we can create pointers to these objects to make the printouts
-# below more readable
-drive_dynamics = drive_object["dynamics"]
-mean_arrival = drive_dynamics["mu"]
-
-print(
-    "# Examining one drive object in detail",
-    "\n# " + "-" * 40 + "\n",
-    sep="",
+                        net.add_tonic_bias(
+    cell_type='L5_pyramidal',
+    amplitude=6.,
 )
-
-print(
-    "Examining the `_NetworkDrive` object",
-    f"    Drive type: {type(drive_object)}",
-    f"    Drive name: {drive_object['name']}",
-    f"    Drive keys:\n\t {str(list(drive_object.keys()))}",
-    "",
-    f'Examining ["dynamics"] for the "{key}" `_NetworkDrive` object',
-    f"    Type: {type(drive_dynamics)}",
-    f"    Keys:\n\t{list(drive_dynamics.keys())}",
-    "",
-    sep="\n",
+dpls = simulate_dipole(
+    net,
+    tstop=250.,
+    n_trials=1,
 )
-
-# ----------------------------------------
-# printing "mu" for each drive
-# ----------------------------------------
-
-# now let's loop through each drive and print the
-# value of "mu" (i.e., the mean arrival time)
-
-print(
-    '# Print each drive\'s "mu" parameter',
-    "\n# " + "-" * 40 + "\n",
-    sep="",
-)
-
-for key, drive_object in net_default.external_drives.items():
-    mean_arrival = drive_object["dynamics"]["mu"]
-
-    print(
-        f'Mean arrival time for "{key}": {mean_arrival} ms',
-        sep="\n",
-    )
+dpls = [dpl.scale(scaling_factor) for dpl in dpls]  # scale in place
                     </code>
                 </div>
 
@@ -758,217 +666,236 @@ for key, drive_object in net_default.external_drives.items():
                     </div>
                     <div class='output-code'>
 
-        # Examining one drive object in detail
-# ----------------------------------------
-
-Examining the `_NetworkDrive` object
-    Drive type: &lt;class &#x27;hnn_core.network._NetworkDrive&#x27;&gt;
-    Drive name: evdist1
-    Drive keys:
-     [&#x27;type&#x27;, &#x27;location&#x27;, &#x27;n_drive_cells&#x27;, &#x27;event_seed&#x27;, &#x27;conn_seed&#x27;, &#x27;dynamics&#x27;, &#x27;events&#x27;, &#x27;weights_ampa&#x27;, &#x27;weights_nmda&#x27;, &#x27;synaptic_delays&#x27;, &#x27;probability&#x27;, &#x27;name&#x27;, &#x27;target_types&#x27;, &#x27;cell_specific&#x27;]
-
-Examining [&quot;dynamics&quot;] for the &quot;evdist1&quot; `_NetworkDrive` object
-    Type: &lt;class &#x27;dict&#x27;&gt;
-    Keys:
-    [&#x27;mu&#x27;, &#x27;sigma&#x27;, &#x27;numspikes&#x27;]
-
-# Print each drive&#x27;s &quot;mu&quot; parameter
-# ----------------------------------------
-
-Mean arrival time for &quot;evdist1&quot;: 63.53 ms
-Mean arrival time for &quot;evprox1&quot;: 26.61 ms
-Mean arrival time for &quot;evprox2&quot;: 137.12 ms
-
-                    </div>
-                </div>
-
-
-                <!-- markdown cell -->
-                <div class='markdown-cell'>
-                    <p>We can see that the drives we added do follow the expected sequence:
-a proximal drive arriving first at ~27 ms, a distal drive arriving
-second at ~64 ms, and a second proximal drive arriving last at ~ 137
-ms.</p>
-<p>Now that we've added the external drives to the <code>Network</code>,
-we are nearly ready to run our simulation of the threshold-level
-ERP.</p>
-
-                </div>
-
-
-<!-- markdown cell --><div class='markdown-cell'>
-    <h3>Run the Default Simulation</h3>
-
-</div>
-
-
-                <!-- markdown cell -->
-                <div class='markdown-cell'>
-                    <p>Before running the simulation, we need to choose a backend. HNN-core
-supports both the Joblib backend (which can run independent simulation
-trials in parallel), and the MPI backend (which can distribute the
-computation of a single simulation trial across multiple processes)</p>
-<p>You can try running the simulation with both Joblib and MPI and
-compare the simulation speeds by changing the <code>use_MPI</code> flag
-below from False to True, or vice versa</p>
-<p>Additionally, you should set the number of cores to use based on your
-machine's resources. There are instructions on how to check the number
-of available cores on the <a
-href="https://jonescompneurolab.github.io/textbook/content/01_getting_started/installation.html">Installation</a>
-page.</p>
-
-                </div>
-
-
-                <!-- code cell -->
-                <div class='code-cell'>
-                    <code class='language-python'>
-                        # choose a backend, and select the number of cores
-# --------------------------------------------------
-# try changing the use_MPI flag and comparing
-# the simulation speeds
-use_MPI = True
-
-if use_MPI is False:
-    chosen_backend = JoblibBackend
-else:
-    chosen_backend = MPIBackend
-
-# when calling our `chosen_backend` below, we can
-# explicitly set the number of cores to use
-#
-# in general, more cores = faster simulations
-ncores = 4
-                    </code>
-                </div>
-
-
-                <!-- markdown cell -->
-                <div class='markdown-cell'>
-                    <p>The <code>simulate_dipole()</code> function below is the main
-function for generating simulated dipole signals from a
-<code>Network</code> object. It has two required arguments: 1. the
-<code>Network</code> object 2. the simulation duration (specified in
-ms)</p>
-<p>The function accepts additional simulation parameters, including the
-integration timestep, the number of trials, and more</p>
-<p>Once we've selected a backend, set the number of cores, and specified
-our required (and optional) simulation parameters, we're finally ready
-to run the default simulation for the threshold-level ERP</p>
-<p>Note the syntax used to simulate the <code>Network</code> below. We
-use a <code>with</code> statement to run the simulation using the
-selected parallel backend (stored in <code>chosen_backend</code> in this
-case). The <code>simulate_dipole()</code> function is called inside this
-block, and the resulting output is assigned to the variable
-<code>dipoles_list</code>.</p>
-<p>When we run the simulation below, <code>hnn-core</code> computes the
-cell and circuit activity, calculates the current dipoles, and returns a
-list of <code>Dipole</code> objects (one per each trial).</p>
-
-                </div>
-
-
-                <!-- code cell -->
-                <div class='code-cell'>
-                    <code class='language-python'>
-                        # set additional simulation parameters
-tstop = 170.0  # length of the simulation
-dt = 0.05  # integration timestep
-n_trials = 1  # number of trials
-
-# run the simulation
-with chosen_backend(ncores):
-    dipoles_list = simulate_dipole(
-        net=net_default,
-        tstop=tstop,
-        n_trials=n_trials,
-        dt=dt,
-    )
-                    </code>
-                </div>
-
-
-                <!-- code cell output -->
-                <div class='output-cell'>
-                    <div class='output-label'>
-                        Out:
-                    </div>
-                    <div class='output-code'>
-
-        MPI will run 1 trial(s) sequentially by distributing network neurons over 4 processes.
-
-        [1784844897.287950] [runnervmvrwv9:7362 :0]        ib_iface.c:1316 UCX  ERROR mana_0: iface 0x3da97120 failed to create UD QP TX wr:256 sge:6 inl:64 resp:0 RX wr:4096 sge:1 resp:0 failed: Operation not supported
-[1784844897.290235] [runnervmvrwv9:7362 :0]      ucp_worker.c:1415 UCX  ERROR uct_iface_open(ud_verbs/mana_0:1) failed: Input/output error
-[1784844897.290989] [runnervmvrwv9:7364 :0]        ib_iface.c:1316 UCX  ERROR mana_0: iface 0x320455f0 failed to create UD QP TX wr:256 sge:6 inl:64 resp:0 RX wr:4096 sge:1 resp:0 failed: Operation not supported
-[1784844897.291094] [runnervmvrwv9:7363 :0]        ib_iface.c:1316 UCX  ERROR mana_0: iface 0x5e6c120 failed to create UD QP TX wr:256 sge:6 inl:64 resp:0 RX wr:4096 sge:1 resp:0 failed: Operation not supported
-[1784844897.291209] [runnervmvrwv9:7365 :0]        ib_iface.c:1316 UCX  ERROR mana_0: iface 0x7b54110 failed to create UD QP TX wr:256 sge:6 inl:64 resp:0 RX wr:4096 sge:1 resp:0 failed: Operation not supported
-[1784844897.292293] [runnervmvrwv9:7364 :0]      ucp_worker.c:1415 UCX  ERROR uct_iface_open(ud_verbs/mana_0:1) failed: Input/output error
-[1784844897.292567] [runnervmvrwv9:7363 :0]      ucp_worker.c:1415 UCX  ERROR uct_iface_open(ud_verbs/mana_0:1) failed: Input/output error
-[1784844897.292780] [runnervmvrwv9:7365 :0]      ucp_worker.c:1415 UCX  ERROR uct_iface_open(ud_verbs/mana_0:1) failed: Input/output error
-numprocs=4
-[runnervmvrwv9:07362] pml_ucx.c:319  Error: Failed to create UCP worker
-[runnervmvrwv9:07364] pml_ucx.c:319  Error: Failed to create UCP worker
-[runnervmvrwv9:07365] pml_ucx.c:319  Error: Failed to create UCP worker
-[runnervmvrwv9:07363] pml_ucx.c:319  Error: Failed to create UCP worker
-
-        Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
+        Joblib will run 1 trial(s) in parallel by distributing trials over 1 jobs.
 Building the NEURON model
-Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
-Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
-Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
 
         [Done]
-Trial 1: 0.05 ms...
+Trial 1: 0.03 ms...
 
         Trial 1: 10.0 ms...
-
-        Trial 1: 20.0 ms...
+Trial 1: 20.0 ms...
 Trial 1: 30.0 ms...
-
-        Trial 1: 40.0 ms...
+Trial 1: 40.0 ms...
 
         Trial 1: 50.0 ms...
-
-        Trial 1: 60.0 ms...
+Trial 1: 60.0 ms...
 
         Trial 1: 70.0 ms...
-
-        Trial 1: 80.0 ms...
-
-        Trial 1: 90.0 ms...
+Trial 1: 80.0 ms...
+Trial 1: 90.0 ms...
 Trial 1: 100.0 ms...
 
         Trial 1: 110.0 ms...
-
-        Trial 1: 120.0 ms...
-
-        Trial 1: 130.0 ms...
-
-        Trial 1: 140.0 ms...
-
-        Trial 1: 150.0 ms...
+Trial 1: 120.0 ms...
+Trial 1: 130.0 ms...
+Trial 1: 140.0 ms...
+Trial 1: 150.0 ms...
 
         Trial 1: 160.0 ms...
+Trial 1: 170.0 ms...
+Trial 1: 180.0 ms...
+Trial 1: 190.0 ms...
+Trial 1: 200.0 ms...
+
+        Trial 1: 210.0 ms...
+Trial 1: 220.0 ms...
+Trial 1: 230.0 ms...
+Trial 1: 240.0 ms...
 
                     </div>
                 </div>
 
 
-<!-- markdown cell --><div class='markdown-cell'>
-    <h3>Plot Default Simulation with Data</h3>
+                <!-- code cell -->
+                <div class='code-cell'>
+                    <code class='language-python'>
+                        _ = dpls[trial_idx].plot()
 
+plt.show()
+                    </code>
+                </div>
+
+
+                <!-- code cell output -->
+                <div class='output-cell'>
+                    <div class='output-label'>
+                        Out:
+                    </div>
+                    <div class='output-code'>
+
+        &lt;Figure size 640x480 with 1 Axes&gt;
+                    </div>
+                </div>
+
+
+<!-- code cell image -->
+<div class='output-cell'>
+    <img src='output_nb_plot_simulate_gamma/fig_03.png'/>
 </div>
 
 
                 <!-- markdown cell -->
                 <div class='markdown-cell'>
-                    <p>The simulation we just ran yields a dipole signal in units of
-nanoampere-meters (nAm). Remember that source-localize MEG and EEG data
-yield dipole signals in these same units of nAm. By representing the
-simulation and the experimental data in the same units, HNN enables a
-one-to-one comparison between the two signals.</p>
-<p>Next, let's plot the experimental data alongside the simulated dipole
-output and compare the two signals directly.</p>
+                    <p>Notice that the Layer 5 pyramidal neurons now fire nearly
+synchronously, leading to a synchronous activation of the inhibitory
+basket neurons, resulting in a low-latency IPSP back onto the pyramidal
+cells. The duration of the IPSP is ~20 ms, after which the combined
+effect of the tonic bias and Poisson drive is to bring the pyramidal
+cells back to firing threshold, creating a ~50 Hz PING rhythm. This type
+of synchronous rhythm is sometimes referred to as “strong” PING.</p>
+
+                </div>
+
+
+                <!-- code cell -->
+                <div class='code-cell'>
+                    <code class='language-python'>
+                        _ = net.cell_response.plot_spikes_raster()
+
+plt.show()
+                    </code>
+                </div>
+
+
+                <!-- code cell output -->
+                <div class='output-cell'>
+                    <div class='output-label'>
+                        Out:
+                    </div>
+                    <div class='output-code'>
+
+        &lt;Figure size 640x480 with 1 Axes&gt;
+                    </div>
+                </div>
+
+
+<!-- code cell image -->
+<div class='output-cell'>
+    <img src='output_nb_plot_simulate_gamma/fig_04.png'/>
+</div>
+
+
+                <!-- markdown cell -->
+                <div class='markdown-cell'>
+                    <p>Although the simulated dipole signal demonstrates clear periodicity,
+its frequency is lower compared with the "weak" PING simulation
+above.</p>
+
+                </div>
+
+
+                <!-- code cell -->
+                <div class='code-cell'>
+                    <code class='language-python'>
+                        from hnn_core.viz import plot_psd
+_ = plot_psd(
+    dpls[trial_idx],
+    fmin=20.,
+    fmax=100.,
+    tmin=tmin,
+)
+
+plt.show()
+                    </code>
+                </div>
+
+
+                <!-- code cell output -->
+                <div class='output-cell'>
+                    <div class='output-label'>
+                        Out:
+                    </div>
+                    <div class='output-code'>
+
+        &lt;Figure size 640x480 with 1 Axes&gt;
+                    </div>
+                </div>
+
+
+<!-- code cell image -->
+<div class='output-cell'>
+    <img src='output_nb_plot_simulate_gamma/fig_05.png'/>
+</div>
+
+
+                <!-- markdown cell -->
+                <div class='markdown-cell'>
+                    <p>Finally, we demonstrate the mechanistic link between PING and the
+GABAA decay time constant (<code>tau2</code>). Using the same
+network/drive configuration as before, we decrease <code>tau2</code>
+from 5 to 2 ms.</p>
+
+                </div>
+
+
+                <!-- code cell -->
+                <div class='code-cell'>
+                    <code class='language-python'>
+                        net.cell_types['L5_pyramidal']['cell_object'].synapses['gabaa']['tau2'] = 2
+
+dpls = simulate_dipole(
+    net,
+    tstop=250.,
+    n_trials=1,
+)
+dpls = [dpl.scale(scaling_factor) for dpl in dpls]  # scale in place
+                    </code>
+                </div>
+
+
+                <!-- code cell output -->
+                <div class='output-cell'>
+                    <div class='output-label'>
+                        Out:
+                    </div>
+                    <div class='output-code'>
+
+        Joblib will run 1 trial(s) in parallel by distributing trials over 1 jobs.
+Building the NEURON model
+
+        [Done]
+Trial 1: 0.03 ms...
+
+        Trial 1: 10.0 ms...
+Trial 1: 20.0 ms...
+
+        Trial 1: 30.0 ms...
+Trial 1: 40.0 ms...
+Trial 1: 50.0 ms...
+Trial 1: 60.0 ms...
+
+        Trial 1: 70.0 ms...
+Trial 1: 80.0 ms...
+
+        Trial 1: 90.0 ms...
+Trial 1: 100.0 ms...
+Trial 1: 110.0 ms...
+Trial 1: 120.0 ms...
+Trial 1: 130.0 ms...
+Trial 1: 140.0 ms...
+Trial 1: 150.0 ms...
+
+        Trial 1: 160.0 ms...
+Trial 1: 170.0 ms...
+Trial 1: 180.0 ms...
+Trial 1: 190.0 ms...
+
+        Trial 1: 200.0 ms...
+Trial 1: 210.0 ms...
+
+        Trial 1: 220.0 ms...
+Trial 1: 230.0 ms...
+Trial 1: 240.0 ms...
+
+                    </div>
+                </div>
+
+
+                <!-- markdown cell -->
+                <div class='markdown-cell'>
+                    <p>This change will shorten the effective refactory period between L5
+pyramidal cell spikes and increase the PING frequency from ~50 to ~65
+Hz, as seen in the plots below</p>
 
                 </div>
 
@@ -977,29 +904,35 @@ output and compare the two signals directly.</p>
                 <div class='code-cell'>
                     <code class='language-python'>
                         fig, axes = plt.subplots(
-    nrows=2,
+    nrows=3,
     ncols=1,
     sharex=True,
     figsize=(6, 6),
     constrained_layout=True,
 )
 
-_ = plot_dipole(
-    dipoles_list,
+dpls[trial_idx].plot(
     ax=axes[0],
-    layer="agg",
-    color="#0066FF",
     show=False,
 )
 
-_ = threshold_experimental_dpl.plot(
+net.cell_response.plot_spikes_raster(
     ax=axes[1],
     show=False,
 )
 
-axes[0].set_title("Simulated Dipole")
-axes[1].set_title("Experimental Dipole");
+dpls[trial_idx].plot_tfr_morlet(
+    freqs,
+    n_cycles=7,
+    tmin=tmin,
+    ax=axes[2],
+    show=False,
+)
 
+# adjust the bounds of the x axis in the spectrogram
+axes[2].set_xlim(tmin, 250)
+
+plt.show()
                     </code>
                 </div>
 
@@ -1011,35 +944,29 @@ axes[1].set_title("Experimental Dipole");
                     </div>
                     <div class='output-code'>
 
-        &lt;Figure size 600x600 with 2 Axes&gt;
+        &lt;Figure size 600x600 with 4 Axes&gt;
                     </div>
                 </div>
 
 
 <!-- code cell image -->
 <div class='output-cell'>
-    <img src='output_nb_erp_api_walkthrough/fig_04.png'/>
+    <img src='output_nb_plot_simulate_gamma/fig_06.png'/>
 </div>
 
 
-                <!-- markdown cell -->
-                <div class='markdown-cell'>
-                    <p>You should note that the simulated dipole signal and the loaded data
-look quite different in both their shapes and their magnitudes.</p>
-<p>These discrepancies are due to the fact that
-<code>simulate_dipole()</code> returns a list of <strong>raw</strong>
-dipole signals. There are some post-processing steps we need to follow
-before we can truly compare our simulated and experimental dipoles, and
-we will discuss these steps in the next section.</p>
+                <!-- markdown cell -->                <div class='markdown-cell'>
+                    <h2>References</h2>
+<p>[1] Lee, S. &amp; Jones, S. R. Distinguishing mechanisms of gamma
+frequency oscillations in human current source signals using a
+computational model of a laminar neocortical network. Frontiers in human
+neuroscience (2013)</p>
 
                 </div>
-
-
-<!-- markdown cell -->
         <!-- footer area -->
         <!----------------->
         <div class="footer-area">
-            <div class="previous-area" data-link="/textbook/content/05_erps/erp_simulation_workflow.html">
+            <div class="previous-area" data-link="/textbook/content/07_gamma/gamma_in_gui.html">
                 <div class="previous-icon">
                     <svg class="svg-arrow" width="25" height="25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path class="arrow-path" d="M15 5L9 12L15 19" />
@@ -1047,13 +974,13 @@ we will discuss these steps in the next section.</p>
                 </div>
                 <div class="previous-text">
                     <p>Previous</p>
-                    <a>4.4 Simulation Workflow</a>
+                    <a>6.1 GUI Tutorial of Gamma Rhythms</a>
                 </div>
             </div>
-            <div class="next-area" data-link="/textbook/content/05_erps/erp_scaling_smoothing.html">
+            <div class="next-area" data-link="/textbook/content/08_using_hnn_api/plot_firing_pattern.html">
                 <div class="next-text">
                     <p>Next</p>
-                    <a>4.6 Simulation Scaling and Smoothing</a>
+                    <a>7.1 Plot Firing Pattern</a>
                 </div>
                 <div class="next-icon">
                     <svg class="svg-arrow" width="25" height="25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
