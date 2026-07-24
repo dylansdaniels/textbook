@@ -396,7 +396,7 @@ urlretrieve(
                     </div>
                     <div class='output-code'>
 
-        (&#x27;yes_trial_S1_ERP_all_avg.txt&#x27;, &lt;http.client.HTTPMessage at 0x7fc660548c20&gt;)
+        (&#x27;yes_trial_S1_ERP_all_avg.txt&#x27;, &lt;http.client.HTTPMessage at 0x7efe33fabb60&gt;)
                     </div>
                 </div>
 
@@ -897,19 +897,7 @@ with chosen_backend(ncores):
 
         MPI will run 1 trial(s) sequentially by distributing network neurons over 4 processes.
 
-        [1784844897.287950] [runnervmvrwv9:7362 :0]        ib_iface.c:1316 UCX  ERROR mana_0: iface 0x3da97120 failed to create UD QP TX wr:256 sge:6 inl:64 resp:0 RX wr:4096 sge:1 resp:0 failed: Operation not supported
-[1784844897.290235] [runnervmvrwv9:7362 :0]      ucp_worker.c:1415 UCX  ERROR uct_iface_open(ud_verbs/mana_0:1) failed: Input/output error
-[1784844897.290989] [runnervmvrwv9:7364 :0]        ib_iface.c:1316 UCX  ERROR mana_0: iface 0x320455f0 failed to create UD QP TX wr:256 sge:6 inl:64 resp:0 RX wr:4096 sge:1 resp:0 failed: Operation not supported
-[1784844897.291094] [runnervmvrwv9:7363 :0]        ib_iface.c:1316 UCX  ERROR mana_0: iface 0x5e6c120 failed to create UD QP TX wr:256 sge:6 inl:64 resp:0 RX wr:4096 sge:1 resp:0 failed: Operation not supported
-[1784844897.291209] [runnervmvrwv9:7365 :0]        ib_iface.c:1316 UCX  ERROR mana_0: iface 0x7b54110 failed to create UD QP TX wr:256 sge:6 inl:64 resp:0 RX wr:4096 sge:1 resp:0 failed: Operation not supported
-[1784844897.292293] [runnervmvrwv9:7364 :0]      ucp_worker.c:1415 UCX  ERROR uct_iface_open(ud_verbs/mana_0:1) failed: Input/output error
-[1784844897.292567] [runnervmvrwv9:7363 :0]      ucp_worker.c:1415 UCX  ERROR uct_iface_open(ud_verbs/mana_0:1) failed: Input/output error
-[1784844897.292780] [runnervmvrwv9:7365 :0]      ucp_worker.c:1415 UCX  ERROR uct_iface_open(ud_verbs/mana_0:1) failed: Input/output error
-numprocs=4
-[runnervmvrwv9:07362] pml_ucx.c:319  Error: Failed to create UCP worker
-[runnervmvrwv9:07364] pml_ucx.c:319  Error: Failed to create UCP worker
-[runnervmvrwv9:07365] pml_ucx.c:319  Error: Failed to create UCP worker
-[runnervmvrwv9:07363] pml_ucx.c:319  Error: Failed to create UCP worker
+        numprocs=4
 
         Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
 Building the NEURON model
@@ -923,7 +911,8 @@ Trial 1: 0.05 ms...
         Trial 1: 10.0 ms...
 
         Trial 1: 20.0 ms...
-Trial 1: 30.0 ms...
+
+        Trial 1: 30.0 ms...
 
         Trial 1: 40.0 ms...
 
@@ -936,7 +925,8 @@ Trial 1: 30.0 ms...
         Trial 1: 80.0 ms...
 
         Trial 1: 90.0 ms...
-Trial 1: 100.0 ms...
+
+        Trial 1: 100.0 ms...
 
         Trial 1: 110.0 ms...
 

@@ -424,25 +424,13 @@ with MPIBackend(n_procs=4, mpi_cmd='mpiexec'):
 
         MPI will run 1 trial(s) sequentially by distributing network neurons over 4 processes.
 
-        [1784845257.008919] [runnervmvrwv9:10361:0]        ib_iface.c:1316 UCX  ERROR mana_0: iface 0x1c9621e0 failed to create UD QP TX wr:256 sge:6 inl:64 resp:0 RX wr:4096 sge:1 resp:0 failed: Operation not supported
-[1784845257.009221] [runnervmvrwv9:10361:0]      ucp_worker.c:1415 UCX  ERROR uct_iface_open(ud_verbs/mana_0:1) failed: Input/output error
-[1784845257.012227] [runnervmvrwv9:10360:0]        ib_iface.c:1316 UCX  ERROR mana_0: iface 0x5836130 failed to create UD QP TX wr:256 sge:6 inl:64 resp:0 RX wr:4096 sge:1 resp:0 failed: Operation not supported
-[1784845257.012463] [runnervmvrwv9:10360:0]      ucp_worker.c:1415 UCX  ERROR uct_iface_open(ud_verbs/mana_0:1) failed: Input/output error
-[1784845257.013195] [runnervmvrwv9:10358:0]        ib_iface.c:1316 UCX  ERROR mana_0: iface 0x39be8130 failed to create UD QP TX wr:256 sge:6 inl:64 resp:0 RX wr:4096 sge:1 resp:0 failed: Operation not supported
-[1784845257.013723] [runnervmvrwv9:10358:0]      ucp_worker.c:1415 UCX  ERROR uct_iface_open(ud_verbs/mana_0:1) failed: Input/output error
-[1784845257.013793] [runnervmvrwv9:10359:0]        ib_iface.c:1316 UCX  ERROR mana_0: iface 0xae8d600 failed to create UD QP TX wr:256 sge:6 inl:64 resp:0 RX wr:4096 sge:1 resp:0 failed: Operation not supported
-[1784845257.014074] [runnervmvrwv9:10359:0]      ucp_worker.c:1415 UCX  ERROR uct_iface_open(ud_verbs/mana_0:1) failed: Input/output error
-numprocs=4
-[runnervmvrwv9:10361] pml_ucx.c:319  Error: Failed to create UCP worker
-[runnervmvrwv9:10360] pml_ucx.c:319  Error: Failed to create UCP worker
-[runnervmvrwv9:10358] pml_ucx.c:319  Error: Failed to create UCP worker
-[runnervmvrwv9:10359] pml_ucx.c:319  Error: Failed to create UCP worker
+        numprocs=4
 
         Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
 Building the NEURON model
 Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
-Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.soLoading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
-
+Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
+Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
 
         [Done]
 Trial 1: 0.03 ms...
