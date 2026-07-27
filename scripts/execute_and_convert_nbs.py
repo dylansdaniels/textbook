@@ -214,19 +214,19 @@ def _structure_json(contents):
 
         parent_stack.append(section_info)
 
-    def remove_blank_subsections(node):
-        if isinstance(node, dict):
-            subs = node.get("sub-sections")
+    def remove_blank_subsections(section):
+        if isinstance(section, dict):
+            subs = section.get("sub-sections")
 
             if subs is not None:
                 if not subs:
-                    del node["sub-sections"]
+                    del section["sub-sections"]
                 else:
                     for sub in subs:
                         remove_blank_subsections(sub)
 
-        elif isinstance(node, list):
-            for item in node:
+        elif isinstance(section, list):
+            for item in section:
                 remove_blank_subsections(item)
 
     remove_blank_subsections(hierarchy)

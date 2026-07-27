@@ -54,7 +54,6 @@ def _read_nb_json_output_html_contents(
         return agg_html
 
     else:
-        # #################### [DEV] DSD ####################
         # bugfix nb_path -> nb_json_output_dir
         # otherwise, the error when the json is not found will point to the
         # content directory when doing a dev build, which is misleadig
@@ -64,7 +63,6 @@ def _read_nb_json_output_html_contents(
             "of the execution types enabled, in order to execute the notebook. Exiting "
             "build process."
         )
-        # #################### [END DEV] ####################
 
 
 def _add_ordering_to_footer(input_footer, page_idx, flat_index):
@@ -442,12 +440,6 @@ def generate_page_html(
         input_dir_path = page["absolute_input_md_path"].parents[0]
         abs_out_html_path = page["absolute_output_html_path"]
         abs_out_dir_path = page["absolute_output_html_path"].parents[0]
-
-        # #################### [DEV] DSD ####################
-        # Limit to single .md page for testing
-        # if "05_erps_getting_started.md" not in str(input_md_path):
-        #     continue
-        # #################### [END DEV] ####################
 
         # Create the output directory for the final HTML page (if necessary)
         # ------------------------------------------------------------------------------
