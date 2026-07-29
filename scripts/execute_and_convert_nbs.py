@@ -289,6 +289,7 @@ def _extract_html_from_nb(
     def _aggregate_outputs(
         html_output,
         accumulated_outputs,
+        add_output_classes,
     ):
         """
         If there are accumulated outputs, append them to html_output and reset.
@@ -300,13 +301,43 @@ def _extract_html_from_nb(
                     <div class='output-label'>
                         Out:
                     </div>
-                    <div class='output-code'>
+                    <div class='output-code{add_output_classes}'>
                         {accumulated_outputs}
                     </div>
                 </div>
             """)
             html_output.append(cell_output_html)
         return ""
+
+    def _process_cell_source(cell_source):
+        all_celltype_flags = {
+            "code_cell": {},
+            "output_cell": {
+                "mod_shrink_output": False,
+            },
+            "markdown_cell": {},
+        }
+
+        # "# noqa" is a ruff ignore command that we want to
+        # hide that from our published notebooks
+        if "# noqa" in cell_source:
+            cell_source = cell_source.replace("# noqa", "")
+
+        for celltype, celltype_flags in all_celltype_flags.items():
+            for flag in celltype_flags.keys():
+                if flag in cell_source:
+                    cell_source = cell_source.replace(f"# {flag}", "")
+                    all_celltype_flags[celltype][flag] = True
+
+        return cell_source, all_celltype_flags
+
+    def _build_class_string(class_flags):
+        updated_css_classes = "".join(
+            f" {class_name}"
+            for class_name, indicator in class_flags.items()
+            if indicator is True
+        )
+        return updated_css_classes
 
     for cell in nb["cells"]:
         # ------------------------------
@@ -316,11 +347,15 @@ def _extract_html_from_nb(
             # ==============================
             # add code cell contents
             # ==============================
+            code_contents, flags = _process_cell_source(cell["source"])
+            add_code_classes = _build_class_string(flags["code_cell"])
+            add_output_classes = _build_class_string(flags["output_cell"])
+
             code_cell_html = textwrap.dedent(f"""
                 <!-- code cell -->
-                <div class='code-cell'>
+                <div class='code-cell{add_code_classes}'>
                     <code class='language-python'>
-                        {cell["source"]}
+                        {code_contents}
                     </code>
                 </div>
             """)
@@ -363,6 +398,7 @@ def _extract_html_from_nb(
                     aggregated_output = _aggregate_outputs(
                         html_output,
                         aggregated_output,
+                        add_output_classes,
                     )
 
                     img_data = output["data"]["image/png"]
@@ -372,7 +408,7 @@ def _extract_html_from_nb(
                     if use_base64:
                         output_base64_html = textwrap.dedent(f"""
                             <!-- code cell image -->
-                            <div class='output-cell'>
+                            <div class='output-cell{add_output_classes}'>
                                 <img src='data:image/png;base64,{img_data}'/>
                             </div>
                         """)
@@ -389,7 +425,7 @@ def _extract_html_from_nb(
                         relative_img_path = img_path.relative_to(img_path.parents[1])
                         output_img_html = textwrap.dedent(f"""
                             <!-- code cell image -->
-                            <div class='output-cell'>
+                            <div class='output-cell{add_output_classes}'>
                                 <img src='{relative_img_path}'/>
                             </div>
                         """)
@@ -406,7 +442,7 @@ def _extract_html_from_nb(
                     )
                     output_error_html = textwrap.dedent(f"""
                         <!-- code cell error -->
-                        <div class='output-cell error'>
+                        <div class='output-cell{add_output_classes} error'>
                             <pre>
                                 {error_message}
                             </pre>
@@ -422,6 +458,7 @@ def _extract_html_from_nb(
             aggregated_output = _aggregate_outputs(
                 html_output,
                 aggregated_output,
+                add_output_classes,
             )
 
         # ------------------------------
@@ -430,6 +467,9 @@ def _extract_html_from_nb(
         elif cell["cell_type"] == "markdown":
             # escape < and > characters
             markdown_content = html.escape(cell["source"])
+            markdown_content, flags = _process_cell_source(markdown_content)
+            add_md_classes = _build_class_string(flags["markdown_cell"])
+
 
             html_content = pypandoc.convert_text(
                 markdown_content,
@@ -445,7 +485,7 @@ def _extract_html_from_nb(
             )
             markdown_html_output = textwrap.dedent(f"""
                 <!-- markdown cell -->
-                <div class='markdown-cell'>
+                <div class='markdown-cell{add_md_classes}'>
                     {html_content}
                 </div>
             """)
@@ -1461,6 +1501,9 @@ def execute_and_convert_nbs_to_json(
         updated_hashes,
         nb_hashes_path,
     )
+
+
+# %%
 
 
 # # AES TODO
