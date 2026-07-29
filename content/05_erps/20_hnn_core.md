@@ -10,4 +10,4 @@
     # Christopher Bailey <cjb@cfin.au.dk>
 -->
 
-[[plot_simulate_evoked.ipynb][Test]]
+[[plot_simulate_evoked.ipynb]]
