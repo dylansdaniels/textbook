@@ -1,5 +1,5 @@
 <!--
-# Title: 4.2 API Tutorial of ERPs Simulation
+# Title: 4.20 API Tutorial of ERPs Simulation
 # Updated: 2025-01-29
 #
 # Contributors:
@@ -10,4 +10,4 @@
     # Christopher Bailey <cjb@cfin.au.dk>
 -->
 
-[[plot_simulate_evoked.ipynb]]
+[[plot_simulate_evoked.ipynb][Test]]
