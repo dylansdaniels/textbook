@@ -1,13 +1,13 @@
 # %%
-from copy import deepcopy
 import base64
 import hashlib
 import html
 import json
-from pathlib import Path
 import re
 import textwrap
 import warnings
+from copy import deepcopy
+from pathlib import Path
 
 import nbformat
 import pypandoc
@@ -146,6 +146,7 @@ def _convert_nb_html_to_json(
 
     return contents
 
+
 def _get_section_outputs(nb_outputs, section_header):
     items = list(nb_outputs.items())
 
@@ -174,6 +175,7 @@ def _get_section_outputs(nb_outputs, section_header):
         result[title] = data
 
     return result
+
 
 def _structure_json(contents):
     """
@@ -469,7 +471,6 @@ def _extract_html_from_nb(
             markdown_content = html.escape(cell["source"])
             markdown_content, flags = _process_cell_source(markdown_content)
             add_md_classes = _build_class_string(flags["markdown_cell"])
-
 
             html_content = pypandoc.convert_text(
                 markdown_content,
