@@ -105,6 +105,7 @@
 		    <div class="submenu">
 
 				<a href="/textbook/dev/04_using_hnn_gui/gui_quickstart.html">3.1 GUI Quickstart</a>
+				<a href="/textbook/dev/04_using_hnn_gui/optimization_in_gui.html">3.2 Optimization in the GUI</a>
 			</div>
 		</div>
 		<div class="sidebar-list">
@@ -416,7 +417,6 @@ import matplotlib.pyplot as plt
 import hnn_core
 from hnn_core import read_network_configuration, simulate_dipole
 from hnn_core.network import pick_connection
-from hnn_core.parallel_backends import JoblibBackend, MPIBackend
 from hnn_core.viz import plot_dipole
                     </code>
                 </div>
@@ -516,10 +516,12 @@ try:
     n_procs = psutil.cpu_count(logical=False) - 1
     use_mpi = True
     print('Using MPIBackend with %d processes' % n_procs)
+    from hnn_core.parallel_backends import MPIBackend
 except ImportError:
     n_procs = 1
     use_mpi = False
     print('MPI is not available; using JoblibBackend instead')
+    from hnn_core.parallel_backends import JoblibBackend
                     </code>
                 </div>
 
@@ -531,7 +533,7 @@ except ImportError:
                     </div>
                     <div class='output-code'>
 
-        Using MPIBackend with 11 processes
+        Using MPIBackend with 7 processes
 
                     </div>
                 </div>
@@ -787,8 +789,8 @@ in exactly the same way.</p>
             <!-- code cell -->
             <div class='code-cell'>
                 <code class='language-python'>
-                    def run_simulation(net, tstop=tstop, n_trials=1):
-"""Run a simulation and return its scaled aggregate dipole.
+                    def run_simulation(net, tstop=tstop):
+"""Run a simulation (single trial) and return its scaled aggregate dipole.
 
 This is the API equivalent of clicking `Run` in the GUI's `Simulation`
 tab. Note that, unlike the GUI, there is no need to give each
@@ -797,7 +799,7 @@ Python variable.
 """
 backend = MPIBackend(n_procs=n_procs) if use_mpi else JoblibBackend(n_jobs=1)
 with backend:
-    dpl = simulate_dipole(net, tstop=tstop, n_trials=n_trials)[trial_idx]
+    dpl = simulate_dipole(net, tstop=tstop)[trial_idx]
 return dpl.scale(scaling_factor)
                 </code>
             </div>
@@ -845,20 +847,9 @@ plt.show()
                     </div>
                     <div class='output-code'>
 
-        MPI will run 1 trial(s) sequentially by distributing network neurons over 11 processes.
-numprocs=11
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
+        MPI will run 1 trial(s) sequentially by distributing network neurons over 7 processes.
+numprocs=7
 Building the NEURON model
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
 [Done]
 Trial 1: 0.03 ms...
 Trial 1: 10.0 ms...
@@ -1004,7 +995,7 @@ Jones 2013) for further discussion).</p>
 # -----------------------------------------------------------------------
 fig, axes = plt.subplots(2, 1, sharex=True, figsize=(6, 5), constrained_layout=True)
 net.cell_response.plot_spikes_hist(ax=axes[0], spike_types=['extpois'], show=False)
-net.cell_response.plot_spikes_raster(trial_idx=trial_idx, ax=axes[1], show=False)
+net.cell_response.plot_spikes_raster(ax=axes[1], show=False)
 plt.show()
 
 # -----------------------------------------------------------------------
@@ -1130,7 +1121,7 @@ def plot_dipole_and_spectrogram(dpl, sim_name, tmin=tmin, tmax=None):
     plt.show()
 
 
-def plot_drive_and_spikes(net, sim_name, trial_idx=trial_idx):
+def plot_drive_and_spikes(net, sim_name):
     """The GUI's `Drive-Spikes (2x1)` visualization template."""
     drive_names = _drive_names(net)
     if len(drive_names) == 0:
@@ -1143,6 +1134,7 @@ def plot_drive_and_spikes(net, sim_name, trial_idx=trial_idx):
             ax=axes[0], spike_types=drive_names,
             invert_spike_types=_distal_drive_names(net, drive_names),
             show=False)
+    # trial_idx is a global variable defined at the top of this notebook to be the first trial, i.e. index 0
     net.cell_response.plot_spikes_raster(trial_idx=trial_idx, ax=axes[-1],
                                          show=False)
     fig.suptitle(sim_name)
@@ -1207,20 +1199,9 @@ dpl_l5 = run_simulation(net_l5)
                     </div>
                     <div class='output-code'>
 
-        MPI will run 1 trial(s) sequentially by distributing network neurons over 11 processes.
-numprocs=11
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
+        MPI will run 1 trial(s) sequentially by distributing network neurons over 7 processes.
+numprocs=7
 Building the NEURON model
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
 [Done]
 Trial 1: 0.03 ms...
 Trial 1: 10.0 ms...
@@ -1407,20 +1388,9 @@ plot_psd_by_layer(dpl_tonic_weak, 'gamma_L5weak_tonic_01')
                     </div>
                     <div class='output-code'>
 
-        MPI will run 1 trial(s) sequentially by distributing network neurons over 11 processes.
-numprocs=11
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
+        MPI will run 1 trial(s) sequentially by distributing network neurons over 7 processes.
+numprocs=7
 Building the NEURON model
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
 [Done]
 Trial 1: 0.03 ms...
 Trial 1: 10.0 ms...
@@ -1550,20 +1520,9 @@ plot_psd_by_layer(dpl_tonic_strong, 'gamma_L5weak_tonic_02')
                     </div>
                     <div class='output-code'>
 
-        MPI will run 1 trial(s) sequentially by distributing network neurons over 11 processes.
-numprocs=11
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
+        MPI will run 1 trial(s) sequentially by distributing network neurons over 7 processes.
+numprocs=7
 Building the NEURON model
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
 [Done]
 Trial 1: 0.03 ms...
 Trial 1: 10.0 ms...
@@ -1732,20 +1691,9 @@ plot_psd_by_layer(dpl_weak_conn, 'gamma_L5weak_tonic_03')
                     </div>
                     <div class='output-code'>
 
-        MPI will run 1 trial(s) sequentially by distributing network neurons over 11 processes.
-numprocs=11
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
+        MPI will run 1 trial(s) sequentially by distributing network neurons over 7 processes.
+numprocs=7
 Building the NEURON model
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
 [Done]
 Trial 1: 0.03 ms...
 Trial 1: 10.0 ms...
@@ -1907,19 +1855,8 @@ plot_dipole_and_spectrogram(dpl_no_inh, 'gamma_L5weak_only_noinh')
                     </div>
                     <div class='output-code'>
 
-        MPI will run 1 trial(s) sequentially by distributing network neurons over 11 processes.
-numprocs=11
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
+        MPI will run 1 trial(s) sequentially by distributing network neurons over 7 processes.
+numprocs=7
 Building the NEURON model
 [Done]
 Trial 1: 0.03 ms...
@@ -2095,19 +2032,8 @@ plot_psd_by_layer(dpl_gabaa, 'gamma_L5weak_only_fasterinh')
                     </div>
                     <div class='output-code'>
 
-        MPI will run 1 trial(s) sequentially by distributing network neurons over 11 processes.
-numprocs=11
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
+        MPI will run 1 trial(s) sequentially by distributing network neurons over 7 processes.
+numprocs=7
 Building the NEURON model
 [Done]
 Trial 1: 0.03 ms...
@@ -2322,19 +2248,8 @@ plot_dipole_and_spectrogram(dpl_ping, 'gamma_L5ping_L2ping')
                     </div>
                     <div class='output-code'>
 
-        MPI will run 1 trial(s) sequentially by distributing network neurons over 11 processes.
-numprocs=11
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
+        MPI will run 1 trial(s) sequentially by distributing network neurons over 7 processes.
+numprocs=7
 Building the NEURON model
 [Done]
 Trial 1: 0.03 ms...
@@ -2534,20 +2449,9 @@ plot_dipole_and_spectrogram(dpl_rhythmic, 'gamma_rhythmic_drive')
                     </div>
                     <div class='output-code'>
 
-        MPI will run 1 trial(s) sequentially by distributing network neurons over 11 processes.
-numprocs=11
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
+        MPI will run 1 trial(s) sequentially by distributing network neurons over 7 processes.
+numprocs=7
 Building the NEURON model
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
 [Done]
 Trial 1: 0.03 ms...
 Trial 1: 10.0 ms...
@@ -2757,20 +2661,9 @@ plot_dipole_and_spectrogram(dpl_noisy, 'gamma_rhythmic_more_noise')
                     </div>
                     <div class='output-code'>
 
-        MPI will run 1 trial(s) sequentially by distributing network neurons over 11 processes.
-numprocs=11
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
+        MPI will run 1 trial(s) sequentially by distributing network neurons over 7 processes.
+numprocs=7
 Building the NEURON model
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /Users/austinsoplata/rep/brn/hnn-core/hnn_core/mod/arm64/.libs/libnrnmech.so
 [Done]
 Trial 1: 0.03 ms...
 Trial 1: 10.0 ms...
@@ -2907,24 +2800,25 @@ make parameter adjustments based on your own hypotheses.</p>
                 <!-- markdown cell -->                <div class='markdown-cell'>
                     <h2>References</h2>
 <p>Buzsáki, György, and Xiao-Jing Wang. 2012. “Mechanisms of Gamma
-Oscillations.” Annual Review of Neuroscience 35 (1): 203–25.
-https://doi.org/10.1146/annurev-neuro-062111-150444.</p>
+Oscillations.” Annual Review of Neuroscience 35 (1): 203–25. <a
+href="https://doi.org/10.1146/annurev-neuro-062111-150444">https://doi.org/10.1146/annurev-neuro-062111-150444</a>.</p>
 <p>Cardin, Jessica A., Marie Carlén, Konstantinos Meletis, Ulf Knoblich,
 Feng Zhang, Karl Deisseroth, Li-Huei Tsai, and Christopher I. Moore.
 2009. “Driving Fast-Spiking Cells Induces Gamma Rhythm and Controls
-Sensory Responses.” Nature 459 (7247): 663–67.
-https://doi.org/10.1038/nature08002.</p>
+Sensory Responses.” Nature 459 (7247): 663–67. <a
+href="https://doi.org/10.1038/nature08002">https://doi.org/10.1038/nature08002</a>.</p>
 <p>Lee, Shane, and Stephanie R. Jones. 2013. “Distinguishing Mechanisms
 of Gamma Frequency Oscillations in Human Current Source Signals Using a
 Computational Model of a Laminar Neocortical Network.” Frontiers in
-Human Neuroscience 7 (December).
-https://doi.org/10.3389/fnhum.2013.00869.</p>
+Human Neuroscience 7 (December). <a
+href="https://doi.org/10.3389/fnhum.2013.00869">https://doi.org/10.3389/fnhum.2013.00869</a>.</p>
 <p>Vierling-Claassen, Dorea, Jessica Cardin, Christopher I. Moore, and
 Stephanie R. Jones. 2010. “Computational Modeling of Distinct
 Neocortical Oscillations Driven by Cell-Type Selective Optogenetic
 Drive: Separable Resonant Circuits Controlled by Low-Threshold Spiking
 and Fast-Spiking Interneurons.” Frontiers in Human Neuroscience 4
-(November). https://doi.org/10.3389/fnhum.2010.00198.</p>
+(November). <a
+href="https://doi.org/10.3389/fnhum.2010.00198">https://doi.org/10.3389/fnhum.2010.00198</a>.</p>
 
                 </div>
         <!-- footer area -->
