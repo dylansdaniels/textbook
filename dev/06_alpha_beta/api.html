@@ -577,7 +577,7 @@ drive_colors = {'bursty1': 'r', 'bursty2': 'g'}
 # parallelizes across trials only, and therefore does not speed up the
 # single-trial simulations we run below.
 try:
-    import mpi4py  # noqa: F401
+    import mpi4py  : F401
     import psutil
     n_procs = psutil.cpu_count(logical=False) - 1
     use_mpi = True
