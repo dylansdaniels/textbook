@@ -410,18 +410,17 @@ def _extract_html_from_nb(
         This limits the displayed height of the output of the cell that
         originally contained the `# mod_shrink_output` keyword
         """
-        all_celltype_flags = {
-            "code_cell": {
-                "mod_code_cell": False,
-            },
-            "output_cell": {
-                "mod_shrink_output": False,
-                "mod_output_cell": False,
-            },
-            "markdown_cell": {
-                "mod_markdown_cell": False,
-            },
-        }
+
+        # instantiate `all_celltype_flags` from "notebook_css_flags.json"
+        try:
+            with open(Path(__file__).parent / "notebook_css_flags.json", "r") as f:
+                all_celltype_flags = json.load(f)
+        except Exception:
+            warnings.warn(
+                'Unable to load "notebook_css_flags.json"'
+                "\nCustom CSS tags will not be applied to notebook cells"
+            )
+            all_celltype_flags = {}
 
         # "# noqa" is a ruff ignore command that we want to
         # hide from our published notebooks
@@ -1527,6 +1526,14 @@ def execute_and_convert_nbs_to_json(
         for path in content_path.glob("**/*.ipynb")
         if ".ipynb_checkpoints" not in path.parts
     )
+
+    # [DEBUG] only execute the specified notebook
+    # debug_notebook = "erp_api_walkthrough.ipynb"
+    # all_nb_paths = [
+    #     p for p in all_nb_paths if p.name == debug_notebook
+    # ]
+    # [END DEBUG]
+
     # #################### [END BUGFIX] ####################
 
     # get nb hashes from json
