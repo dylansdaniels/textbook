@@ -320,8 +320,8 @@ def _extract_html_from_nb(
         The present function allows keywords representing pre-specified CSS classes
         to be included in the body of cells as Python comments. For a given
         `cell_source`, this function searches the body for any keywords defined in
-        the `all_celltype_flags` dictionary, which is instantiated at the top
-        of this function
+        the `all_celltype_flags` dictionary, which is loaded from the json file
+        `notebook_css_flags.json` in the `scripts` folder
 
         `all_celltype_flags` is comprised of three primary `cell_type` keys. The
         primary key indicates the ultimate destination of the CSS class (either
@@ -379,12 +379,7 @@ def _extract_html_from_nb(
 
         Example
         -------
-        A user can add a pre-specified CSS flag to a code cell to control the
-        appearance of its output.
-
-
-
-        Including the keyword comment in the cell source then changes the
+        Including the keyword comment in the cell source changes the
         corresponding value to `True` and removes the keyword comment from the cell:
             >>> cell_source = "# mod_shrink_output\nprint(simulation_output)"
             >>> cell_source, all_celltype_flags = _process_cell_source(cell_source)
@@ -411,7 +406,6 @@ def _extract_html_from_nb(
         originally contained the `# mod_shrink_output` keyword
         """
 
-        # instantiate `all_celltype_flags` from "notebook_css_flags.json"
         try:
             with open(Path(__file__).parent / "notebook_css_flags.json", "r") as f:
                 all_celltype_flags = json.load(f)
@@ -1519,7 +1513,6 @@ def execute_and_convert_nbs_to_json(
     """
     # Setup
     # ----------------------------------------------------------------------------------
-    # #################### [BUGFIX] DSD ####################
     # Get all notebook file paths, excluding .ipynb checkpoint files
     all_nb_paths = sorted(
         path
@@ -1533,8 +1526,6 @@ def execute_and_convert_nbs_to_json(
     #     p for p in all_nb_paths if p.name == debug_notebook
     # ]
     # [END DEBUG]
-
-    # #################### [END BUGFIX] ####################
 
     # get nb hashes from json
     nb_hashes = _load_nb_hashes(nb_hashes_path)
