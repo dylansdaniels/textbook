@@ -246,10 +246,12 @@ p .code-text {
 */
 #video-container iframe {
     display: block;
+    max-width: 800px;
     width: 100%;
     aspect-ratio: 4 / 3;
     height: auto;
     border: none;
+    margin: 0 auto;
 }
 
 /*
