@@ -285,6 +285,7 @@
         </div>
     </div>
 
+    <div id="main-scroll-container">
     <div id="main">
     <div id="content-wrapper">
     <div id="content">
@@ -344,13 +345,15 @@
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <code class='language-python'>
-                        import matplotlib.pyplot as plt
+                    <div class='code-scroll-wrapper'>
+                        <code class='language-python'>
+                            import matplotlib.pyplot as plt
 
 from hnn_core import neymotin_2020_model, simulate_dipole
 from hnn_core.viz import plot_connectivity_matrix, plot_cell_connectivity, plot_drive_strength, plot_dipole
 from hnn_core.network import pick_connection
-                    </code>
+                        </code>
+                    </div>
                 </div>
 
 
@@ -369,9 +372,11 @@ drives without the drives API shown previously).</p>
 
 <!-- code cell -->
 <div class='code-cell'>
-    <code class='language-python'>
-        net_erp = neymotin_2020_model(add_drives_from_params=True)
-    </code>
+    <div class='code-scroll-wrapper'>
+        <code class='language-python'>
+            net_erp = neymotin_2020_model(add_drives_from_params=True)
+        </code>
+    </div>
 </div>
 
 
@@ -394,8 +399,9 @@ We can search for specific connections using
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <code class='language-python'>
-                        print(len(net_erp.connectivity))
+                    <div class='code-scroll-wrapper'>
+                        <code class='language-python'>
+                            print(len(net_erp.connectivity))
 
 conn_indices = pick_connection(
     net=net_erp, src_gids='L5_basket', target_gids='L5_pyramidal',
@@ -409,7 +415,8 @@ plot_connectivity_matrix(net_erp, conn_idx, show=False)
 src_gid = net_erp.connectivity[conn_idx]['src_gids'].copy().pop()
 fig = plot_cell_connectivity(net_erp, conn_idx, src_gid, show=False)
 plt.show()
-                    </code>
+                        </code>
+                    </div>
                 </div>
 
 
@@ -469,11 +476,13 @@ href="https://jonescompneurolab.github.io/hnn-core/stable/generated/hnn_core.Cel
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <code class='language-python'>
-                        dpl_erp = simulate_dipole(net_erp, tstop=170., n_trials=1)
+                    <div class='code-scroll-wrapper'>
+                        <code class='language-python'>
+                            dpl_erp = simulate_dipole(net_erp, tstop=170., n_trials=1)
 net_erp.cell_response.plot_spikes_raster(show=False)
 plt.show()
-                    </code>
+                        </code>
+                    </div>
                 </div>
 
 
@@ -490,26 +499,24 @@ Building the NEURON model
 
         [Done]
 Trial 1: 0.03 ms...
-
-        Trial 1: 10.0 ms...
+Trial 1: 10.0 ms...
 
         Trial 1: 20.0 ms...
 Trial 1: 30.0 ms...
 Trial 1: 40.0 ms...
+Trial 1: 50.0 ms...
 
-        Trial 1: 50.0 ms...
-Trial 1: 60.0 ms...
+        Trial 1: 60.0 ms...
 Trial 1: 70.0 ms...
-Trial 1: 80.0 ms...
 
-        Trial 1: 90.0 ms...
+        Trial 1: 80.0 ms...
+Trial 1: 90.0 ms...
 Trial 1: 100.0 ms...
-
-        Trial 1: 110.0 ms...
+Trial 1: 110.0 ms...
 Trial 1: 120.0 ms...
-Trial 1: 130.0 ms...
 
-        Trial 1: 140.0 ms...
+        Trial 1: 130.0 ms...
+Trial 1: 140.0 ms...
 Trial 1: 150.0 ms...
 Trial 1: 160.0 ms...
 
@@ -544,8 +551,9 @@ IDs (gids) directly.</p>
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <code class='language-python'>
-                        def get_network(probability=1.0):
+                    <div class='code-scroll-wrapper'>
+                        <code class='language-python'>
+                            def get_network(probability=1.0):
     net = neymotin_2020_model(add_drives_from_params=True)
     net.clear_connectivity()
 
@@ -572,7 +580,8 @@ IDs (gids) directly.</p>
 
 net_all = get_network()
 dpl_all = simulate_dipole(net_all, tstop=170., n_trials=1)
-                    </code>
+                        </code>
+                    </div>
                 </div>
 
 
@@ -590,18 +599,16 @@ Building the NEURON model
 Trial 1: 0.03 ms...
 
         Trial 1: 10.0 ms...
-
-        Trial 1: 20.0 ms...
+Trial 1: 20.0 ms...
 Trial 1: 30.0 ms...
 Trial 1: 40.0 ms...
+Trial 1: 50.0 ms...
 
-        Trial 1: 50.0 ms...
-Trial 1: 60.0 ms...
+        Trial 1: 60.0 ms...
+Trial 1: 70.0 ms...
 
-        Trial 1: 70.0 ms...
-Trial 1: 80.0 ms...
-
-        Trial 1: 90.0 ms...
+        Trial 1: 80.0 ms...
+Trial 1: 90.0 ms...
 Trial 1: 100.0 ms...
 Trial 1: 110.0 ms...
 
@@ -627,10 +634,12 @@ other.</p>
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <code class='language-python'>
-                        net_sparse = get_network(probability=0.1)
+                    <div class='code-scroll-wrapper'>
+                        <code class='language-python'>
+                            net_sparse = get_network(probability=0.1)
 dpl_sparse = simulate_dipole(net_sparse, tstop=170., n_trials=1)
-                    </code>
+                        </code>
+                    </div>
                 </div>
 
 
@@ -646,27 +655,27 @@ Building the NEURON model
 
         [Done]
 Trial 1: 0.03 ms...
-
-        Trial 1: 10.0 ms...
+Trial 1: 10.0 ms...
 
         Trial 1: 20.0 ms...
 Trial 1: 30.0 ms...
 Trial 1: 40.0 ms...
-
-        Trial 1: 50.0 ms...
+Trial 1: 50.0 ms...
 Trial 1: 60.0 ms...
 
         Trial 1: 70.0 ms...
 Trial 1: 80.0 ms...
 Trial 1: 90.0 ms...
-Trial 1: 100.0 ms...
+
+        Trial 1: 100.0 ms...
 Trial 1: 110.0 ms...
 Trial 1: 120.0 ms...
 Trial 1: 130.0 ms...
 
         Trial 1: 140.0 ms...
 Trial 1: 150.0 ms...
-Trial 1: 160.0 ms...
+
+        Trial 1: 160.0 ms...
 
                     </div>
                 </div>
@@ -685,11 +694,13 @@ more spiking in the L5 pyramidal cells.</p>
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <code class='language-python'>
-                        net_all.cell_response.plot_spikes_raster(show=False)
+                    <div class='code-scroll-wrapper'>
+                        <code class='language-python'>
+                            net_all.cell_response.plot_spikes_raster(show=False)
 net_sparse.cell_response.plot_spikes_raster(show=False)
 plt.show()
-                    </code>
+                        </code>
+                    </div>
                 </div>
 
 
@@ -739,15 +750,17 @@ populations.</p>
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <code class='language-python'>
-                        conn_indices = pick_connection(
+                    <div class='code-scroll-wrapper'>
+                        <code class='language-python'>
+                            conn_indices = pick_connection(
     net=net_sparse, src_gids='L2_basket', target_gids='L2_basket',
     loc='soma', receptor='gabaa')
 
 conn_idx = conn_indices[0]
 plot_connectivity_matrix(net_sparse, conn_idx, show=False)
 plt.show()
-                    </code>
+                        </code>
+                    </div>
                 </div>
 
 
@@ -779,11 +792,13 @@ distance from the source cell.</p>
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <code class='language-python'>
-                        src_gid = net_sparse.connectivity[conn_idx]['src_gids'].copy().pop()
+                    <div class='code-scroll-wrapper'>
+                        <code class='language-python'>
+                            src_gid = net_sparse.connectivity[conn_idx]['src_gids'].copy().pop()
 plot_cell_connectivity(net_sparse, conn_idx, src_gid=src_gid, show=False)
 plt.show()
-                    </code>
+                        </code>
+                    </div>
                 </div>
 
 
@@ -815,15 +830,17 @@ types.</p>
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <code class='language-python'>
-                        # This can be done in a relative way, enabling you to compare the proportion
+                    <div class='code-scroll-wrapper'>
+                        <code class='language-python'>
+                            # This can be done in a relative way, enabling you to compare the proportion
 # coming from each drive:
 plot_drive_strength(net_erp, show=False)
 
 # Alternatively, you can compare the total amount of each drive in conductance:
 plot_drive_strength(net_erp, normalize=False, show=False)
 plt.show()
-                    </code>
+                        </code>
+                    </div>
                 </div>
 
 
@@ -875,8 +892,9 @@ impacts the aggregate current dipole.</p>
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <code class='language-python'>
-                        fig, axes = plt.subplots(2, 1, sharex=True, figsize=(6, 6),
+                    <div class='code-scroll-wrapper'>
+                        <code class='language-python'>
+                            fig, axes = plt.subplots(2, 1, sharex=True, figsize=(6, 6),
                          constrained_layout=True)
 
 window_len = 30  # ms
@@ -890,7 +908,8 @@ axes[0].legend(['Default', 'Custom All', 'Custom Sparse'])
 net_erp.cell_response.plot_spikes_hist(
     ax=axes[1], spike_types=['evprox', 'evdist'], show=False)
 plt.show()
-                    </code>
+                        </code>
+                    </div>
                 </div>
 
 
@@ -938,7 +957,8 @@ plt.show()
         </div> <!-- close footer -->
     </div> <!-- close content -->
     </div> <!-- close content wrapper -->
-</div> <!-- close main --><!------------------------ #
+</div> <!-- close main -->
+</div> <!-- close main scroll container --><!------------------------ #
 # Code syntax highlighting #
 # ------------------------->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
