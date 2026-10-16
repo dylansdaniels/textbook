@@ -321,6 +321,30 @@
 # Contributors:
     # Dylan Daniels
 -->
+<div class="callout callout-build-warning">
+  <table class="callout-table">
+    <tr>
+      <td class="emoji-cell">
+        <svg class="exclamation-icon" viewBox="0 0 16 16" width="20" height="20">
+            <path d="M15.35 12.81 9 2.08a1.22 1.22 0 0 0-2 0L.65 12.81a1.14 1.14 0 0 0 1 1.69h12.66a1.14 1.14 0 0 0 1.04-1.69zm-13.66.55L8 2.64l6.31 10.72z"/>
+            <path d="M7.32 5.45h1.25V10H7.32z"/>
+            <ellipse cx="7.95" cy="11.9" rx=".67" ry=".7"/>
+        </svg>
+      </td>
+      <td class="text-cell">
+        <p class="callout-build-warning-title">
+            <strong>Warning</strong>: Automated execution failed during the most
+            recent build for <strong>"animating_hnn_simulations_notebook.ipynb"</strong>.
+        </p>
+        <p class="callout-build-warning-body">
+            This page is currently displaying output cached from a previous
+            successful build: version <strong>NA</strong>
+        </p>
+      </td>
+      <td class="emoji-cell"> </td>
+    </tr>
+  </table>
+</div>
                 <div class='markdown-cell'>
                     <h1>7.4: Animating HNN simulations</h1>
 <p>This example demonstrates how to animate HNN simulations.</p>
@@ -346,15 +370,13 @@ class to use for creating the animation.</p>
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <div class='code-scroll-wrapper'>
-                        <code class='language-python'>
-                            import matplotlib.pyplot as plt  # Needed for display of plotter in Jupyter cells
+                    <code class='language-python'>
+                        import matplotlib.pyplot as plt  # Needed for display of plotter in Jupyter cells
 
 from hnn_core import neymotin_2020_model, simulate_dipole
 from hnn_core.network_models import add_erp_drives_to_jones_model
 from hnn_core.viz import NetworkPlotter
-                        </code>
-                    </div>
+                    </code>
                 </div>
 
 
@@ -369,15 +391,13 @@ simulations.</p>
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <div class='code-scroll-wrapper'>
-                        <code class='language-python'>
-                            net = neymotin_2020_model(mesh_shape=(3, 3))
+                    <code class='language-python'>
+                        net = neymotin_2020_model(mesh_shape=(3, 3))
 
 # Note that we move the cells further apart to allow better visualization of
 # the network (default inplane_distance=1.0 µm).
 net.set_cell_positions(inplane_distance=300)
-                        </code>
-                    </div>
+                    </code>
                 </div>
 
 
@@ -392,11 +412,9 @@ class can be used to visualize the 3D structure of the network.</p>
 
 <!-- code cell -->
 <div class='code-cell'>
-    <div class='code-scroll-wrapper'>
-        <code class='language-python'>
-            net_plot = NetworkPlotter(net)
-        </code>
-    </div>
+    <code class='language-python'>
+        net_plot = NetworkPlotter(net)
+    </code>
 </div>
 
 
@@ -428,13 +446,11 @@ azimuth and elevation parameters.</p>
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <div class='code-scroll-wrapper'>
-                        <code class='language-python'>
-                            net_plot.azim = 45
+                    <code class='language-python'>
+                        net_plot.azim = 45
 net_plot.elev = 40
 net_plot.fig
-                        </code>
-                    </div>
+                    </code>
                 </div>
 
 
@@ -471,13 +487,11 @@ voltages in all sections of all cells in the network.</p>
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <div class='code-scroll-wrapper'>
-                        <code class='language-python'>
-                            add_erp_drives_to_jones_model(net)
+                    <code class='language-python'>
+                        add_erp_drives_to_jones_model(net)
 dpl = simulate_dipole(net, tstop=170, record_vsec='all')
 net_plot = NetworkPlotter(net)  # Reinitialize plotter with simulated network
-                        </code>
-                    </div>
+                    </code>
                 </div>
 
 
@@ -489,25 +503,22 @@ net_plot = NetworkPlotter(net)  # Reinitialize plotter with simulated network
                     <div class='output-code'>
 
         Joblib will run 1 trial(s) in parallel by distributing trials over 1 jobs.
-Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
+Loading custom mechanism files from /opt/anaconda3/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/arm64/.libs/libnrnmech.so
 Building the NEURON model
 [Done]
 Trial 1: 0.03 ms...
 Trial 1: 10.0 ms...
-
-        Trial 1: 20.0 ms...
+Trial 1: 20.0 ms...
 Trial 1: 30.0 ms...
 Trial 1: 40.0 ms...
 Trial 1: 50.0 ms...
 Trial 1: 60.0 ms...
-
-        Trial 1: 70.0 ms...
+Trial 1: 70.0 ms...
 Trial 1: 80.0 ms...
 Trial 1: 90.0 ms...
 Trial 1: 100.0 ms...
 Trial 1: 110.0 ms...
-
-        Trial 1: 120.0 ms...
+Trial 1: 120.0 ms...
 Trial 1: 130.0 ms...
 Trial 1: 140.0 ms...
 Trial 1: 150.0 ms...
@@ -535,16 +546,14 @@ plot to better visualize the network.</p>
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <div class='code-scroll-wrapper'>
-                        <code class='language-python'>
-                            # # If you want to save the animation to a file, then uncomment the code in this cell.
+                    <code class='language-python'>
+                        # # If you want to save the animation to a file, then uncomment the code in this cell.
 # net_plot.xlim = (400, 1600)
 # net_plot.ylim = (400, 1600)
 # net_plot.zlim = (-500, 1600)
 # net_plot.azim = 225
 # net_plot.export_movie('animation_demo.gif', dpi=100, fps=30, interval=100)
-                        </code>
-                    </div>
+                    </code>
                 </div>
         <!-- footer area -->
         <!----------------->

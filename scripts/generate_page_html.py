@@ -1,3 +1,4 @@
+import html
 import re
 import textwrap
 from copy import deepcopy
@@ -11,6 +12,37 @@ from .execute_and_convert_nbs import (
     _get_section_outputs,
     load_nb_json_output,
 )
+
+
+def _build_fallback_warning_html(nb_name, last_executed_version):
+    """Generate callout banner for failed notebook build"""
+    escaped_name = html.escape(nb_name)
+    return textwrap.dedent(f"""
+        <div class="callout callout-build-warning">
+          <table class="callout-table">
+            <tr>
+              <td class="emoji-cell">
+                <svg class="exclamation-icon" viewBox="0 0 16 16" width="20" height="20">
+                    <path d="M15.35 12.81 9 2.08a1.22 1.22 0 0 0-2 0L.65 12.81a1.14 1.14 0 0 0 1 1.69h12.66a1.14 1.14 0 0 0 1.04-1.69zm-13.66.55L8 2.64l6.31 10.72z"/>
+                    <path d="M7.32 5.45h1.25V10H7.32z"/>
+                    <ellipse cx="7.95" cy="11.9" rx=".67" ry=".7"/>
+                </svg>
+              </td>
+              <td class="text-cell">
+                <p class="callout-build-warning-title">
+                    <strong>Warning</strong>: Automated execution failed during the most
+                    recent build for <strong>"{escaped_name}"</strong>.
+                </p>
+                <p class="callout-build-warning-body">
+                    This page is currently displaying output cached from a previous
+                    successful build: version <strong>{last_executed_version}</strong>
+                </p>
+              </td>
+              <td class="emoji-cell"> </td>
+            </tr>
+          </table>
+        </div>
+    """).strip()
 
 
 def _read_nb_json_output_html_contents(
@@ -36,9 +68,15 @@ def _read_nb_json_output_html_contents(
         notebook at `nb_path`.
     """
     # Has content if the file is found, otherwise returns None
-    nb_outputs_if_any = load_nb_json_output(nb_path, nb_json_output_dir)
+    nb_outputs_if_any = load_nb_json_output(
+        nb_path,
+        nb_json_output_dir,
+    )
     if nb_outputs_if_any:
-        full_nb_outputs = nb_outputs_if_any.get(nb_path.name, {})
+        full_nb_outputs = nb_outputs_if_any.get(
+            nb_path.name,
+            {},
+        )
         agg_html = ""
         if section_header is not None:
             section_nb_outputs = _get_section_outputs(
@@ -51,6 +89,21 @@ def _read_nb_json_output_html_contents(
         for section, content in nb_outputs.items():
             if isinstance(content, dict) and "html" in content:
                 agg_html += content["html"]
+        # Check execution status metadata and prepend warning banner if failed
+        last_successful = nb_outputs_if_any.get(
+            "last_execution_successful",
+            True,
+        )
+        last_executed_version = nb_outputs_if_any.get(
+            "last_hnn_version_used",
+            True,
+        )
+        if not last_successful:
+            warning_banner = _build_fallback_warning_html(
+                nb_path.name,
+                last_executed_version,
+            )
+            agg_html = warning_banner + "\n" + agg_html
         return agg_html
 
     else:

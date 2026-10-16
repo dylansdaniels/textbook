@@ -1556,10 +1556,8 @@ def execute_and_convert_nbs_to_json(
     )
 
     # [DEBUG] only execute the specified notebook
-    # debug_notebook = "erp_api_walkthrough.ipynb"
-    # all_nb_paths = [
-    #     p for p in all_nb_paths if p.name == debug_notebook
-    # ]
+    debug_notebook = "erp_api_walkthrough.ipynb"
+    all_nb_paths = [p for p in all_nb_paths if p.name == debug_notebook]
     # [END DEBUG]
 
     # get nb hashes from json
@@ -1601,35 +1599,49 @@ def execute_and_convert_nbs_to_json(
             )
         )
 
-        # Fallback when execution fails
+        # Fallbacks for if execution fails
         # ------------------------------------------------------------------------------
         json_path = nb_json_output_dir / f"{nb_path.stem}.json"
 
         if execution_initiated and not execution_successful:
+            print(
+                f"::warning file={nb_path.name}::Notebook '{nb_path.name}' "
+                f"failed execution! FALLBACK TRIGGERED.",
+                file=sys.stderr,
+                flush=True,
+            )
+
+            # If JSON exists, load it, mark execution as failed, and save back to disk
             if json_path.exists():
-                # GitHub Actions warnings
                 print(
-                    f"::warning file={nb_path.name}::Notebook '{nb_path.name}'"
-                    " failed execution!\n"
-                    f"FALLBACK USED: Reusing previous output JSON from '{json_path}'.",
-                    file=sys.stderr,
+                    f"[FALLBACK USED]: Reusing previous JSON for '{nb_path.name}' "
+                    f"at '{json_path}' with failure flag.",
                     flush=True,
                 )
-                print(
-                    f"\n[FALLBACK TRIGGERED]: '{nb_path.name}' failed to execute.\n"
-                    f"--> Preserving existing pre-built JSON: '{json_path}'\n",
-                    flush=True,
+                existing_json = load_nb_json_output(
+                    nb_path,
+                    nb_json_output_dir,
                 )
-                # skip over converting loaded_nb and skip updating updated_hashes
+                if existing_json is not None:
+                    # set the failure flag explicitly
+                    existing_json["last_execution_successful"] = False
+                    _write_nb_json_output(
+                        existing_json,
+                        nb_path,
+                        nb_json_output_dir,
+                        execution_initiated=execution_initiated,
+                        execution_successful=False,
+                        is_dev_build=is_dev_build,
+                        hnn_commit_hash=hnn_commit_hash,
+                    )
                 continue
-            else:
-                print(
-                    f"::error file={nb_path.name}::Notebook '{nb_path.name}' "
-                    "failed execution and NO PREVIOUS JSON output exists at "
-                    f"'{json_path}'.",
-                    file=sys.stderr,
-                    flush=True,
-                )
+
+            # If NO previous JSON exists, fall back to converting partial outputs
+            print(
+                f"[FALLBACK USED]: No pre-existing JSON found for '{nb_path.name}'. "
+                f"Converting partial execution output.",
+                flush=True,
+            )
 
         # extract the html from the nb, including saving any images if needed
         nb_html_content = _extract_html_from_nb(
@@ -1676,7 +1688,6 @@ def execute_and_convert_nbs_to_json(
         updated_hashes,
         nb_hashes_path,
     )
-
 
 # run_test = False
 

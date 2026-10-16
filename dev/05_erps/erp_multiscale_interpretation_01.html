@@ -330,6 +330,30 @@
 API Walkthrough
 </h5>
 <div class="collapsible-content">
+<div class="callout callout-build-warning">
+  <table class="callout-table">
+    <tr>
+      <td class="emoji-cell">
+        <svg class="exclamation-icon" viewBox="0 0 16 16" width="20" height="20">
+            <path d="M15.35 12.81 9 2.08a1.22 1.22 0 0 0-2 0L.65 12.81a1.14 1.14 0 0 0 1 1.69h12.66a1.14 1.14 0 0 0 1.04-1.69zm-13.66.55L8 2.64l6.31 10.72z"/>
+            <path d="M7.32 5.45h1.25V10H7.32z"/>
+            <ellipse cx="7.95" cy="11.9" rx=".67" ry=".7"/>
+        </svg>
+      </td>
+      <td class="text-cell">
+        <p class="callout-build-warning-title">
+            <strong>Warning</strong>: Automated execution failed during the most
+            recent build for <strong>"erp_api_walkthrough.ipynb"</strong>.
+        </p>
+        <p class="callout-build-warning-body">
+            This page is currently displaying output cached from a previous
+            successful build: version <strong>0.6.2.dev0</strong>
+        </p>
+      </td>
+      <td class="emoji-cell"> </td>
+    </tr>
+  </table>
+</div>
 <div class='markdown-cell'>
     <h2>Multiscale Interpretation, Part 1</h2>
 
@@ -429,58 +453,6 @@ net_default_gui = read_network_configuration("gui_default.json")
                         </code>
                     </div>
                 </div>
-
-
-                        <!-- code cell error -->
-                        <div class='output-cell error'>
-                            <pre>
-                                [31m---------------------------------------------------------------------------[39m
-[31mValueError[39m                                Traceback (most recent call last)
-[36mCell[39m[36m [39m[32mIn[29][39m[32m, line 3[39m
-[32m      1[39m [38;5;28;01mfrom[39;00m hnn_core [38;5;28;01mimport[39;00m read_network_configuration  [38;5;66;03m# noqa[39;00m
-[32m      2[39m 
-[32m----> [39m[32m3[39m net_default_gui = read_network_configuration([33m"gui_default.json"[39m)
-
-[36mFile [39m[32m/usr/share/miniconda/envs/textbook-dev-env/lib/python3.12/site-packages/hnn_core/hnn_io.py:643[39m, in [36mread_network_configuration[39m[34m(fname, read_drives, read_external_biases)[39m
-[32m    637[39m     [38;5;28;01mraise[39;00m [38;5;167;01mValueError[39;00m(
-[32m    638[39m         [33mf[39m[33m"[39m[33mmodel_variant is [39m[38;5;132;01m{[39;00mcheck_var[38;5;132;01m}[39;00m[33m but has to be one of [39m[33m"[39m
-[32m    639[39m         [33mf[39m[33m"[39m[38;5;132;01m{[39;00m[38;5;28mlist[39m(MODEL_VARIANT_MAPPING.keys())[38;5;132;01m}[39;00m[33m. Please check model_variant in your .json file.[39m[33m"[39m
-[32m    640[39m     )
-[32m    642[39m [38;5;66;03m# Finally, convert the data to a Network object[39;00m
-[32m--> [39m[32m643[39m net = [30;43mdict_to_network[39;49m[30;43m([39;49m[30;43mnet_data[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mread_drives[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mread_external_biases[39;49m[30;43m)[39;49m
-[32m    644[39m _check_global_synaptic_gains_uniformity(net)
-[32m    646[39m [38;5;28;01mreturn[39;00m net
-
-[36mFile [39m[32m/usr/share/miniconda/envs/textbook-dev-env/lib/python3.12/site-packages/hnn_core/hnn_io.py:527[39m, in [36mdict_to_network[39m[34m(net_data, read_drives, read_external_biases)[39m
-[32m    524[39m mesh_shape = (net_data[[33m"[39m[33mN_pyr_x[39m[33m"[39m], net_data[[33m"[39m[33mN_pyr_y[39m[33m"[39m])
-[32m    526[39m [38;5;66;03m# Instantiating network[39;00m
-[32m--> [39m[32m527[39m net = [30;43mNetwork[39;49m[30;43m([39;49m
-[32m    528[39m [30;43m    [39;49m[30;43mparams[39;49m[30;43m,[39;49m
-[32m    529[39m [30;43m    [39;49m[30;43mmesh_shape[39;49m[30;43m=[39;49m[30;43mmesh_shape[39;49m[30;43m,[39;49m
-[32m    530[39m [30;43m    [39;49m[30;43mlegacy_mode[39;49m[30;43m=[39;49m[30;43mnet_data[39;49m[30;43m[[39;49m[30;43m"[39;49m[30;43mlegacy_mode[39;49m[30;43m"[39;49m[30;43m][39;49m[30;43m,[39;49m
-[32m    531[39m [30;43m    [39;49m[30;43mpos_dict[39;49m[30;43m=[39;49m[30;43m_read_pos_dict[39;49m[30;43m([39;49m[30;43mnet_data[39;49m[30;43m[[39;49m[30;43m"[39;49m[30;43mpos_dict[39;49m[30;43m"[39;49m[30;43m][39;49m[30;43m)[39;49m[30;43m,[39;49m
-[32m    532[39m [30;43m    [39;49m[30;43mcell_types[39;49m[30;43m=[39;49m[30;43m_read_cell_types[39;49m[30;43m([39;49m
-[32m    533[39m [30;43m        [39;49m[30;43mnet_data[39;49m[30;43m[[39;49m[30;43m"[39;49m[30;43mcell_types[39;49m[30;43m"[39;49m[30;43m][39;49m[30;43m,[39;49m
-[32m    534[39m [30;43m        [39;49m[30;43mnet_data[39;49m[30;43m.[39;49m[30;43mget[39;49m[30;43m([39;49m[30;43m"[39;49m[30;43mmodel_variant[39;49m[30;43m"[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43;01mNone[39;49;00m[30;43m)[39;49m[30;43m,[39;49m
-[32m    535[39m [30;43m    [39;49m[30;43m)[39;49m[30;43m,[39;49m
-[32m    536[39m [30;43m[39;49m[30;43m)[39;49m
-[32m    538[39m [38;5;66;03m# Setting attributes[39;00m
-[32m    539[39m [38;5;66;03m# Set gid ranges[39;00m
-[32m    540[39m gid_ranges_data = [38;5;28mdict[39m()
-
-[36mFile [39m[32m/usr/share/miniconda/envs/textbook-dev-env/lib/python3.12/site-packages/hnn_core/network.py:572[39m, in [36mNetwork.__init__[39m[34m(self, params, add_drives_from_params, legacy_mode, mesh_shape, pos_dict, cell_types)[39m
-[32m    570[39m [38;5;28;01mfor[39;00m ct [38;5;129;01min[39;00m cell_types.keys():
-[32m    571[39m     [38;5;28;01mif[39;00m [33m"[39m[33mzdist_origin[39m[33m"[39m [38;5;129;01mnot[39;00m [38;5;129;01min[39;00m cell_types[ct][[33m"[39m[33mcell_metadata[39m[33m"[39m].keys():
-[32m--> [39m[32m572[39m         [38;5;28;01mraise[39;00m [38;5;167;01mValueError[39;00m(
-[32m    573[39m             [33m"[39m[33mzdist_origin must be defined for each cell type in [39m[33m"[39m
-[32m    574[39m             [33m"[39m[33myour custom [39m[33m'[39m[33mcell_types[39m[33m'[39m[33m metadata[39m[33m"[39m
-[32m    575[39m         )
-[32m    576[39m _validate_type(pos_dict, [38;5;28mdict[39m, [33m"[39m[33mpos_dict[39m[33m"[39m)
-[32m    577[39m _validate_type(cell_types, [38;5;28mdict[39m, [33m"[39m[33mcell_types[39m[33m"[39m)
-
-[31mValueError[39m: zdist_origin must be defined for each cell type in your custom 'cell_types' metadata
-                            </pre>
-                        </div>
 
 
                 <!-- markdown cell -->
