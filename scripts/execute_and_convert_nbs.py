@@ -4,6 +4,7 @@ import hashlib
 import html
 import json
 import re
+import sys
 import textwrap
 import warnings
 from copy import deepcopy
@@ -13,6 +14,7 @@ import nbformat
 import pypandoc
 from hnn_core import __version__ as hnn_version
 from nbconvert.preprocessors import (
+    CellExecutionError,
     ClearOutputPreprocessor,
     ExecutePreprocessor,
 )
@@ -906,14 +908,45 @@ def _execute_nb(nb_path, timeout=600):
         timeout=timeout,
         kernel_name="python3",
     )
-    ep.preprocess(
-        loaded_nb,
-        {"metadata": {"path": nb_path.parents[0]}},
-    )
 
-    execution_successful = _is_nb_fully_executed(
-        loaded_nb,
-    )
+    try:
+        ep.preprocess(
+            loaded_nb,
+            {"metadata": {"path": nb_path.parents[0]}},
+        )
+        execution_successful = _is_nb_fully_executed(
+            loaded_nb,
+        )
+    except CellExecutionError as e:
+        execution_successful = False
+        print(
+            f"\n::warning file={nb_path.name}::Execution failed for notebook '"
+            f"{nb_path.name}'. Fallback will be attempted.\n",
+            file=sys.stderr,
+            flush=True,
+        )
+        print(
+            f"--- FAILED NOTEBOOK TRACEBACK START ({nb_path.name}) ---",
+            file=sys.stderr,
+        )
+        print(
+            e,
+            file=sys.stderr,
+            flush=True,
+        )
+        print(
+            f"--- FAILED NOTEBOOK TRACEBACK END ({nb_path.name}) ---\n",
+            file=sys.stderr,
+        )
+    except Exception as e:
+        execution_successful = False
+        print(
+            f"\n::error file={nb_path.name}::Unexpected error executing '"
+            f"{nb_path.name}': {e}\n",
+            file=sys.stderr,
+            flush=True,
+        )
+
     if execution_successful:
         print(f"Execution: Notebook {nb_path.name} execution has been successful.")
 
@@ -1568,6 +1601,36 @@ def execute_and_convert_nbs_to_json(
             )
         )
 
+        # Fallback when execution fails
+        # ------------------------------------------------------------------------------
+        json_path = nb_json_output_dir / f"{nb_path.stem}.json"
+
+        if execution_initiated and not execution_successful:
+            if json_path.exists():
+                # GitHub Actions warnings
+                print(
+                    f"::warning file={nb_path.name}::Notebook '{nb_path.name}'"
+                    " failed execution!\n"
+                    f"FALLBACK USED: Reusing previous output JSON from '{json_path}'.",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                print(
+                    f"\n[FALLBACK TRIGGERED]: '{nb_path.name}' failed to execute.\n"
+                    f"--> Preserving existing pre-built JSON: '{json_path}'\n",
+                    flush=True,
+                )
+                # skip over converting loaded_nb and skip updating updated_hashes
+                continue
+            else:
+                print(
+                    f"::error file={nb_path.name}::Notebook '{nb_path.name}' "
+                    "failed execution and NO PREVIOUS JSON output exists at "
+                    f"'{json_path}'.",
+                    file=sys.stderr,
+                    flush=True,
+                )
+
         # extract the html from the nb, including saving any images if needed
         nb_html_content = _extract_html_from_nb(
             loaded_nb,
@@ -1613,6 +1676,7 @@ def execute_and_convert_nbs_to_json(
         updated_hashes,
         nb_hashes_path,
     )
+
 
 # run_test = False
 
