@@ -325,30 +325,6 @@
     # Blake Caldwell <blake_caldwell@brown.edu>
     # Christopher Bailey <cjb@cfin.au.dk>
 -->
-<div class="callout callout-build-warning">
-  <table class="callout-table">
-    <tr>
-      <td class="emoji-cell">
-        <svg class="exclamation-icon" viewBox="0 0 16 16" width="20" height="20">
-            <path d="M15.35 12.81 9 2.08a1.22 1.22 0 0 0-2 0L.65 12.81a1.14 1.14 0 0 0 1 1.69h12.66a1.14 1.14 0 0 0 1.04-1.69zm-13.66.55L8 2.64l6.31 10.72z"/>
-            <path d="M7.32 5.45h1.25V10H7.32z"/>
-            <ellipse cx="7.95" cy="11.9" rx=".67" ry=".7"/>
-        </svg>
-      </td>
-      <td class="text-cell">
-        <p class="callout-build-warning-title">
-            <strong>Warning</strong>: Automated execution failed during the most
-            recent build for <strong>"parallelism_mpi_notebook.ipynb"</strong>.
-        </p>
-        <p class="callout-build-warning-body">
-            This page is currently displaying output cached from a previous
-            successful build: version <strong>NA</strong>
-        </p>
-      </td>
-      <td class="emoji-cell"> </td>
-    </tr>
-  </table>
-</div>
                 <div class='markdown-cell'>
                     <h1>7.8: Parallelism: Using the MPI backend</h1>
 <p>This example demonstrates how to use the MPI backend for simulating
@@ -398,9 +374,10 @@ directions provided.</strong></p>
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <code class='language-python'>
-                        try:
-    import mpi4py  # noqa: F401
+                    <div class='code-scroll-wrapper'>
+                        <code class='language-python'>
+                            try:
+    import mpi4py  : F401
 except ModuleNotFoundError:
     raise ModuleNotFoundError(
         "MPI parallelism for HNN-Core has not been installed correctly. "
@@ -411,7 +388,8 @@ except ModuleNotFoundError:
         "The easiest way to install HNN-Core with MPI support is to use the `conda Package Installation` method described in the link above."
     ) from None
 
-                    </code>
+                        </code>
+                    </div>
                 </div>
 
 
@@ -425,9 +403,11 @@ except ModuleNotFoundError:
 
 <!-- code cell -->
 <div class='code-cell'>
-    <code class='language-python'>
-        from hnn_core import MPIBackend
-    </code>
+    <div class='code-scroll-wrapper'>
+        <code class='language-python'>
+            from hnn_core import MPIBackend
+        </code>
+    </div>
 </div>
 
 
@@ -441,12 +421,14 @@ except ModuleNotFoundError:
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <code class='language-python'>
-                        import matplotlib.pyplot as plt
+                    <div class='code-scroll-wrapper'>
+                        <code class='language-python'>
+                            import matplotlib.pyplot as plt
 
 from hnn_core import simulate_dipole, neymotin_2020_model
 from hnn_core.viz import plot_dipole
-                    </code>
+                        </code>
+                    </div>
                 </div>
 
 
@@ -462,15 +444,17 @@ drive:</p>
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <code class='language-python'>
-                        net = neymotin_2020_model()
+                    <div class='code-scroll-wrapper'>
+                        <code class='language-python'>
+                            net = neymotin_2020_model()
 
 weights_ampa = {'L2_pyramidal': 5.4e-5, 'L5_pyramidal': 5.4e-5}
 net.add_bursty_drive(
     'bursty', tstart=50., burst_rate=10, burst_std=20., numspikes=2,
     spike_isi=10, n_drive_cells=10, location='distal',
     weights_ampa=weights_ampa, event_seed=278)
-                    </code>
+                        </code>
+                    </div>
                 </div>
 
 
@@ -486,10 +470,12 @@ processors (cores) specified by <code>n_procs</code> using MPI.</p>
 
             <!-- code cell -->
             <div class='code-cell'>
-                <code class='language-python'>
-                    with MPIBackend(n_procs=4, mpi_cmd='mpiexec'):
+                <div class='code-scroll-wrapper'>
+                    <code class='language-python'>
+                        with MPIBackend(n_procs=4, mpi_cmd='mpiexec'):
 dpls = simulate_dipole(net, tstop=210., n_trials=1)
-                </code>
+                    </code>
+                </div>
             </div>
 
 
@@ -501,34 +487,58 @@ dpls = simulate_dipole(net, tstop=210., n_trials=1)
                     <div class='output-code'>
 
         MPI will run 1 trial(s) sequentially by distributing network neurons over 4 processes.
-numprocs=4
-Loading custom mechanism files from /opt/anaconda3/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/arm64/.libs/libnrnmech.so
+
+        numprocs=4
+
+        Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
 Building the NEURON model
-Loading custom mechanism files from /opt/anaconda3/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /opt/anaconda3/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/arm64/.libs/libnrnmech.so
-Loading custom mechanism files from /opt/anaconda3/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/arm64/.libs/libnrnmech.so
-[Done]
-Trial 1: 0.03 ms...
-Trial 1: 10.0 ms...
-Trial 1: 20.0 ms...
-Trial 1: 30.0 ms...
-Trial 1: 40.0 ms...
-Trial 1: 50.0 ms...
-Trial 1: 60.0 ms...
-Trial 1: 70.0 ms...
-Trial 1: 80.0 ms...
-Trial 1: 90.0 ms...
-Trial 1: 100.0 ms...
-Trial 1: 110.0 ms...
-Trial 1: 120.0 ms...
-Trial 1: 130.0 ms...
-Trial 1: 140.0 ms...
-Trial 1: 150.0 ms...
-Trial 1: 160.0 ms...
-Trial 1: 170.0 ms...
-Trial 1: 180.0 ms...
-Trial 1: 190.0 ms...
-Trial 1: 200.0 ms...
+Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
+Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
+Loading custom mechanism files from /usr/share/miniconda/envs/textbook-stable-env/lib/python3.12/site-packages/hnn_core/mod/x86_64/libnrnmech.so
+
+        [Done]
+
+        Trial 1: 0.03 ms...
+
+        Trial 1: 10.0 ms...
+
+        Trial 1: 20.0 ms...
+
+        Trial 1: 30.0 ms...
+
+        Trial 1: 40.0 ms...
+
+        Trial 1: 50.0 ms...
+
+        Trial 1: 60.0 ms...
+
+        Trial 1: 70.0 ms...
+
+        Trial 1: 80.0 ms...
+
+        Trial 1: 90.0 ms...
+
+        Trial 1: 100.0 ms...
+
+        Trial 1: 110.0 ms...
+
+        Trial 1: 120.0 ms...
+
+        Trial 1: 130.0 ms...
+
+        Trial 1: 140.0 ms...
+
+        Trial 1: 150.0 ms...
+
+        Trial 1: 160.0 ms...
+
+        Trial 1: 170.0 ms...
+
+        Trial 1: 180.0 ms...
+
+        Trial 1: 190.0 ms...
+
+        Trial 1: 200.0 ms...
 
                     </div>
                 </div>
@@ -545,10 +555,12 @@ approximately 4 times faster!</p>
 
                 <!-- code cell -->
                 <div class='code-cell'>
-                    <code class='language-python'>
-                        plot_dipole(dpls, show=False)
+                    <div class='code-scroll-wrapper'>
+                        <code class='language-python'>
+                            plot_dipole(dpls, show=False)
 plt.show()
-                    </code>
+                        </code>
+                    </div>
                 </div>
 
 
