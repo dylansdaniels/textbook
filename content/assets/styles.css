@@ -2005,11 +2005,12 @@ body.dark-mode .collapsible-default.active {
 }
 
 body.dark-mode .collapsible-default .collapsible-header {
-    border: 2px solid var(--light-purple);
+    border: 2px solid var(--light-gray);
     background: var(--sidebar-gray);
 }
 
-.collapsible-default .collapsible-header.active{
+.collapsible-default .collapsible-header.active, 
+body.dark-mode .collapsible-default .collapsible-header.active {
     border: 0px;
     padding-left: 0px;
     padding-right: 30px;
