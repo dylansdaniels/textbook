@@ -1,5 +1,5 @@
 <!--
-# Title: 4.4 Simulate the Default Network
+# Title: 4.4 Simulate an ERP using the Default Parameters
 # Updated: 2026-07-15
 #
 # Contributors:
