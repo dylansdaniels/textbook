@@ -2235,6 +2235,176 @@ body.dark-mode code.workshop-button:hover {
 
 /* 
 # ------------------------------------------------------------
+# Interactive pre-computed slider widgets
+# ------------------------------------------------------------ 
+*/
+
+/* 
+    Element: .hnn-slider
+    Description: Container for interactive pre-computed Observable Plot slider widgets
+*/
+.hnn-slider {
+    --accent: var(--hnn-purple, #474095);
+    --track: #dee2e6;
+    --thumb: 16px;
+    max-width: 720px;
+    margin: 24px auto 36px;
+    font-family: "Fira Sans", sans-serif;
+    color: var(--text-light, #222);
+}
+
+body.dark-mode .hnn-slider {
+    color: #e1e4e8;
+    --track: #444;
+}
+
+.hnn-slider-title {
+    font-size: 1.15em;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 6px;
+}
+
+.hnn-slider-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5em;
+    font-size: 0.9em;
+    margin-bottom: 8px;
+}
+
+.hnn-slider-legend span::before {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 3px;
+    margin-right: 6px;
+    vertical-align: middle;
+    background: var(--swatch);
+}
+
+.hnn-slider-plot svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.hnn-slider-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 34px;
+    padding-bottom: 24px;
+}
+
+.hnn-slider-controls label {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.hnn-slider-track {
+    position: relative;
+    flex: 1;
+}
+
+.hnn-slider-track input[type="range"] {
+    display: block;
+    width: 100%;
+    height: var(--thumb);
+    margin: 0;
+    background: transparent;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+.hnn-slider-track input[type="range"]::-webkit-slider-runnable-track {
+    height: 5px;
+    border-radius: 3px;
+    background: linear-gradient(to right, var(--accent) calc(var(--fill, 0) * 100%), var(--track) 0);
+}
+
+.hnn-slider-track input[type="range"]::-moz-range-track {
+    height: 5px;
+    border-radius: 3px;
+    background: linear-gradient(to right, var(--accent) calc(var(--fill, 0) * 100%), var(--track) 0);
+}
+
+.hnn-slider-track input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: var(--thumb);
+    height: var(--thumb);
+    margin-top: calc(2.5px - var(--thumb) / 2);
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.hnn-slider-track input[type="range"]::-moz-range-thumb {
+    width: var(--thumb);
+    height: var(--thumb);
+    border: none;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.hnn-slider-track output {
+    position: absolute;
+    bottom: calc(100% + 7px);
+    left: calc(var(--thumb) / 2 + var(--fill, 0) * (100% - var(--thumb)));
+    transform: translateX(-50%);
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+
+.hnn-slider-track output::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border: 5px solid transparent;
+    border-top-color: var(--accent);
+}
+
+.hnn-slider-ticks {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    font-size: 11px;
+    color: #666;
+}
+
+body.dark-mode .hnn-slider-ticks {
+    color: #aaa;
+}
+
+.hnn-slider-ticks span {
+    position: absolute;
+    top: 4px;
+    left: calc(var(--thumb) / 2 + var(--at) * (100% - var(--thumb)));
+    transform: translateX(-50%);
+    padding-top: 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+.hnn-slider-ticks span::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    height: 4px;
+    border-left: 1px solid currentColor;
+}
+
+/* 
+# ------------------------------------------------------------
 # Responsiveness
 # ------------------------------------------------------------ 
 */

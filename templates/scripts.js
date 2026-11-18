@@ -951,3 +951,182 @@ const surveyLinks = document.querySelectorAll(".survey-row > a");
 surveyLinks.forEach(link => {
     link.href = surveyUrl;
 });
+
+// ----------------------------------------
+// Interactive pre-computed slider widgets
+// ----------------------------------------
+// Notes:
+// To embed an interactive slider widget in a markdown file, insert
+// the following code pointing to the pre-computed JS payload
+// located in the same content subfolder:
+//     ```
+//     <div class="hnn-slider" data-src="scaling_widget.js"></div>
+//     ```
+document.querySelectorAll('.hnn-slider').forEach(el => {
+    const src = el.dataset.src;
+    if (!src) return;
+
+    // Resolve relative paths against the corresponding content/ directory
+    // so widgets work seamlessly in both content/ and dev/ builds
+    const baseHref = window.location.href.replace(/\/dev(\/|$)/, '/content$1');
+    const resolvedUrl = new URL(src, baseHref).href;
+
+    const renderWidget = spec => {
+        const s = spec.slider;
+        const vals = s.values;
+
+        const ticksHtml = vals
+            .map((v, idx) => {
+                const pct = vals.length > 1 ? idx / (vals.length - 1) : 0;
+                return `<span style="--at: ${pct};">${v}</span>`;
+            })
+            .join('');
+
+        el.innerHTML = `
+            <div class="hnn-slider-legend">
+                <span style="--swatch: #1f77b4;">Simulation Dipole</span>
+                <span style="--swatch: #ff7f0e;">Experimental Dipole</span>
+            </div>
+            <div class="hnn-slider-plot"></div>
+            <div class="hnn-slider-controls">
+                <label>${s.label}</label>
+                <div class="hnn-slider-track">
+                    <input type="range" min="0" max="${vals.length - 1}" step="1" value="2">
+                    <output></output>
+                    <div class="hnn-slider-ticks">${ticksHtml}</div>
+                </div>
+            </div>
+        `;
+
+        const plotEl = el.querySelector('.hnn-slider-plot');
+        const trackEl = el.querySelector('.hnn-slider-track');
+        const inputEl = el.querySelector('input');
+        const outputEl = el.querySelector('output');
+
+        // Build SVG scaffold once using D3
+        const width = 720;
+        const height = 360;
+        const margin = { top: 20, right: 20, bottom: 42, left: 60 };
+        const innerW = width - margin.left - margin.right;
+        const innerH = height - margin.top - margin.bottom;
+
+        const svg = d3.select(plotEl)
+            .append('svg')
+            .attr('viewBox', `0 0 ${width} ${height}`)
+            .style('font-family', '"Fira Sans", sans-serif')
+            .style('font-size', '12px');
+
+        const g = svg.append('g')
+            .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        const xScale = d3.scaleLinear()
+            .domain(d3.extent(spec.x))
+            .range([0, innerW]);
+
+        const yScale = d3.scaleLinear().range([innerH, 0]);
+
+        g.append('g')
+            .attr('transform', `translate(0,${innerH})`)
+            .call(d3.axisBottom(xScale));
+
+        // Static vertical y-axis spine (no horizontal end-caps, never disappears)
+        g.append('line')
+            .attr('x1', 0)
+            .attr('x2', 0)
+            .attr('y1', 0)
+            .attr('y2', innerH)
+            .attr('stroke', 'currentColor');
+
+        const yAxisG = g.append('g');
+
+        // Axis labels
+        svg.append('text')
+            .attr('x', margin.left + innerW / 2)
+            .attr('y', height - 6)
+            .attr('text-anchor', 'middle')
+            .attr('fill', 'currentColor')
+            .text(spec.xlab);
+
+        const yLabelEl = svg.append('text')
+            .attr('transform', `translate(14, ${margin.top + innerH / 2}) rotate(-90)`)
+            .attr('text-anchor', 'middle')
+            .style('font-variant-numeric', 'tabular-nums')
+            .attr('fill', 'currentColor');
+
+        // Static zero reference rule pinned at the vertical midpoint
+        g.append('line')
+            .attr('x1', 0)
+            .attr('x2', innerW)
+            .attr('y1', innerH / 2)
+            .attr('y2', innerH / 2)
+            .attr('stroke', '#aaa')
+            .attr('stroke-dasharray', '4,4');
+
+        const lineGen = d3.line()
+            .x((_, i) => xScale(spec.x[i]))
+            .y(d => yScale(d));
+
+        const expPath = g.append('path')
+            .datum(spec.experimental_data)
+            .attr('fill', 'none')
+            .attr('stroke', '#ff7f0e')
+            .attr('stroke-width', 2);
+
+        const simPath = g.append('path')
+            .attr('fill', 'none')
+            .attr('stroke', '#1f77b4')
+            .attr('stroke-width', 2.25);
+
+        const render = (animate = true) => {
+            const idx = parseInt(inputEl.value, 10);
+            const scaleVal = vals[idx];
+            const fill = vals.length > 1 ? idx / (vals.length - 1) : 0;
+
+            trackEl.style.setProperty('--fill', fill);
+            outputEl.textContent = `${scaleVal}`;
+            yLabelEl.text(`${spec.ylab} x ${scaleVal}`);
+
+            const simY = spec.y[String(scaleVal)] || [];
+            const allY = spec.experimental_data.concat(simY);
+
+            // Keep y = 0 pinned at the exact vertical midpoint by using a symmetric domain
+            const maxAbs = d3.max(allY, d => Math.abs(d)) || 1;
+            const paddedMax = maxAbs * 1.05;
+            yScale.domain([-paddedMax, paddedMax]);
+
+            const t = animate
+                ? svg.transition().duration(200).ease(d3.easeCubicOut)
+                : svg;
+
+            yAxisG.transition(t)
+                .call(d3.axisLeft(yScale).ticks(6))
+                .selection()
+                .select('.domain')
+                .remove();
+
+            expPath.transition(t).attr('d', lineGen);
+            simPath.datum(simY).transition(t).attr('d', lineGen);
+        };
+
+        inputEl.addEventListener('input', () => render(true));
+        render(false);
+    };
+
+    window.HNN_WIDGET_DATA = window.HNN_WIDGET_DATA || {};
+    if (window.HNN_WIDGET_DATA[src]) {
+        renderWidget(window.HNN_WIDGET_DATA[src]);
+        return;
+    }
+
+    const script = document.createElement('script');
+    script.src = resolvedUrl;
+    script.onload = () => {
+        if (window.HNN_WIDGET_DATA[src]) {
+            renderWidget(window.HNN_WIDGET_DATA[src]);
+        }
+    };
+    script.onerror = () => {
+        console.error(`Failed to load widget payload from ${resolvedUrl}`);
+    };
+    document.head.appendChild(script);
+});
