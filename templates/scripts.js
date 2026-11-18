@@ -955,178 +955,169 @@ surveyLinks.forEach(link => {
 // ----------------------------------------
 // Interactive pre-computed slider widgets
 // ----------------------------------------
-// Notes:
-// To embed an interactive slider widget in a markdown file, insert
-// the following code pointing to the pre-computed JS payload
-// located in the same content subfolder:
-//     ```
+// Usage in markdown:
 //     <div class="hnn-slider" data-src="scaling_widget.js"></div>
-//     ```
-document.querySelectorAll('.hnn-slider').forEach(el => {
-    const src = el.dataset.src;
-    if (!src) return;
+(() => {
+    const cache = (window.HNN_WIDGET_DATA = window.HNN_WIDGET_DATA || {});
 
-    // Resolve relative paths against the corresponding content/ directory
-    // so widgets work seamlessly in both content/ and dev/ builds
-    const baseHref = window.location.href.replace(/\/dev(\/|$)/, '/content$1');
-    const resolvedUrl = new URL(src, baseHref).href;
+    const loadPayload = src => new Promise((resolve, reject) => {
+        if (cache[src]) return resolve(cache[src]);
+        // Resolve against content/ so widgets work in both content/ and dev/ builds
+        const baseHref = window.location.href.replace(/\/dev(\/|$)/, '/content$1');
+        const url = new URL(src, baseHref).href;
+        const s = document.createElement('script');
+        s.src = url;
+        s.onload = () => cache[src]
+            ? resolve(cache[src])
+            : reject(new Error(`${url} did not register "${src}"`));
+        s.onerror = () => reject(new Error(`Failed to load ${url}`));
+        document.head.appendChild(s);
+    });
 
-    const renderWidget = spec => {
-        const s = spec.slider;
-        const vals = s.values;
+    const renderSliderWidget = (el, spec) => {
+        const W = spec.width ?? 720;
+        const H = spec.height ?? 360;
+        const m = { top: 20, right: 20, bottom: 42, left: 60, ...(spec.margin || {}) };
+        const iw = W - m.left - m.right;
+        const ih = H - m.top - m.bottom;
 
-        const ticksHtml = vals
-            .map((v, idx) => {
-                const pct = vals.length > 1 ? idx / (vals.length - 1) : 0;
-                return `<span style="--at: ${pct};">${v}</span>`;
-            })
-            .join('');
+        const yCfg = spec.y || {};
+        const slider = spec.slider;
+        const vals = slider.values;
+        const tickLabels = slider.tick_labels || vals.map(String);
+        const last = Math.max(vals.length - 1, 1);
 
+        const series = spec.series.map((s, i) => ({
+            ...s,
+            color: s.color || d3.schemeTableau10[i % 10],
+            dynamic: Array.isArray(s.data[0]),
+        }));
+
+        // ---- DOM scaffold (all text via textContent) ----
         el.innerHTML = `
-            <div class="hnn-slider-legend">
-                <span style="--swatch: #1f77b4;">Simulation Dipole</span>
-                <span style="--swatch: #ff7f0e;">Experimental Dipole</span>
-            </div>
+            <div class="hnn-slider-title"></div>
+            <div class="hnn-slider-legend"></div>
             <div class="hnn-slider-plot"></div>
             <div class="hnn-slider-controls">
-                <label>${s.label}</label>
+                <label></label>
                 <div class="hnn-slider-track">
-                    <input type="range" min="0" max="${vals.length - 1}" step="1" value="2">
-                    <output></output>
-                    <div class="hnn-slider-ticks">${ticksHtml}</div>
+                    <input type="range" step="1">
+                    <output aria-live="polite"></output>
+                    <div class="hnn-slider-ticks"></div>
                 </div>
-            </div>
-        `;
+            </div>`;
 
-        const plotEl = el.querySelector('.hnn-slider-plot');
+        const titleEl = el.querySelector('.hnn-slider-title');
+        spec.title ? (titleEl.textContent = spec.title) : titleEl.remove();
+
+        const legendEl = el.querySelector('.hnn-slider-legend');
+        series.forEach(s => {
+            const span = document.createElement('span');
+            span.textContent = s.label;
+            span.style.setProperty('--swatch', s.color);
+            legendEl.appendChild(span);
+        });
+
         const trackEl = el.querySelector('.hnn-slider-track');
         const inputEl = el.querySelector('input');
         const outputEl = el.querySelector('output');
+        el.querySelector('label').textContent = slider.label;
+        inputEl.min = 0;
+        inputEl.max = vals.length - 1;
+        inputEl.value = slider.initial ?? 0;
+        inputEl.setAttribute('aria-label', slider.label);
 
-        // Build SVG scaffold once using D3
-        const width = 720;
-        const height = 360;
-        const margin = { top: 20, right: 20, bottom: 42, left: 60 };
-        const innerW = width - margin.left - margin.right;
-        const innerH = height - margin.top - margin.bottom;
+        const ticksEl = el.querySelector('.hnn-slider-ticks');
+        tickLabels.forEach((t, i) => {
+            const span = document.createElement('span');
+            span.style.setProperty('--at', vals.length > 1 ? i / last : 0);
+            span.textContent = t;
+            ticksEl.appendChild(span);
+        });
 
-        const svg = d3.select(plotEl)
+        // ---- Plot scaffold ----
+        const svg = d3.select(el.querySelector('.hnn-slider-plot'))
             .append('svg')
-            .attr('viewBox', `0 0 ${width} ${height}`)
+            .attr('viewBox', `0 0 ${W} ${H}`)
             .style('font-family', '"Fira Sans", sans-serif')
             .style('font-size', '12px');
+        const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
 
-        const g = svg.append('g')
-            .attr('transform', `translate(${margin.left},${margin.top})`);
+        const xScale = d3.scaleLinear().domain(d3.extent(spec.x.values)).range([0, iw]);
+        const yScale = d3.scaleLinear().range([ih, 0]);
 
-        const xScale = d3.scaleLinear()
-            .domain(d3.extent(spec.x))
-            .range([0, innerW]);
-
-        const yScale = d3.scaleLinear().range([innerH, 0]);
-
-        g.append('g')
-            .attr('transform', `translate(0,${innerH})`)
-            .call(d3.axisBottom(xScale));
-
-        // Static vertical y-axis spine (no horizontal end-caps, never disappears)
-        g.append('line')
-            .attr('x1', 0)
-            .attr('x2', 0)
-            .attr('y1', 0)
-            .attr('y2', innerH)
-            .attr('stroke', 'currentColor');
-
+        g.append('g').attr('transform', `translate(0,${ih})`).call(d3.axisBottom(xScale));
+        g.append('line').attr('y2', ih).attr('stroke', 'currentColor'); // y spine
         const yAxisG = g.append('g');
 
-        // Axis labels
         svg.append('text')
-            .attr('x', margin.left + innerW / 2)
-            .attr('y', height - 6)
-            .attr('text-anchor', 'middle')
-            .attr('fill', 'currentColor')
-            .text(spec.xlab);
+            .attr('x', m.left + iw / 2).attr('y', H - 6)
+            .attr('text-anchor', 'middle').attr('fill', 'currentColor')
+            .text(spec.x.label);
 
         const yLabelEl = svg.append('text')
-            .attr('transform', `translate(14, ${margin.top + innerH / 2}) rotate(-90)`)
-            .attr('text-anchor', 'middle')
-            .style('font-variant-numeric', 'tabular-nums')
-            .attr('fill', 'currentColor');
+            .attr('transform', `translate(14,${m.top + ih / 2}) rotate(-90)`)
+            .attr('text-anchor', 'middle').attr('fill', 'currentColor');
 
-        // Static zero reference rule pinned at the vertical midpoint
-        g.append('line')
-            .attr('x1', 0)
-            .attr('x2', innerW)
-            .attr('y1', innerH / 2)
-            .attr('y2', innerH / 2)
-            .attr('stroke', '#aaa')
-            .attr('stroke-dasharray', '4,4');
+        const zeroLine = yCfg.zero_line === false ? null : g.append('line')
+            .attr('x2', iw).attr('stroke', '#aaa').attr('stroke-dasharray', '4,4');
 
         const lineGen = d3.line()
-            .x((_, i) => xScale(spec.x[i]))
+            .x((_, i) => xScale(spec.x.values[i]))
             .y(d => yScale(d));
 
-        const expPath = g.append('path')
-            .datum(spec.experimental_data)
-            .attr('fill', 'none')
-            .attr('stroke', '#ff7f0e')
-            .attr('stroke-width', 2);
+        series.forEach((s, i) => {
+            s.path = g.append('path')
+                .attr('fill', 'none')
+                .attr('stroke', s.color)
+                .attr('stroke-width', s.width ?? 2);
+        });
 
-        const simPath = g.append('path')
-            .attr('fill', 'none')
-            .attr('stroke', '#1f77b4')
-            .attr('stroke-width', 2.25);
+        const yTemplate = yCfg.label_template || '{label}';
 
-        const render = (animate = true) => {
+        const render = animate => {
             const idx = parseInt(inputEl.value, 10);
-            const scaleVal = vals[idx];
-            const fill = vals.length > 1 ? idx / (vals.length - 1) : 0;
-
+            const fill = vals.length > 1 ? idx / last : 0;
             trackEl.style.setProperty('--fill', fill);
-            outputEl.textContent = `${scaleVal}`;
-            yLabelEl.text(`${spec.ylab} x ${scaleVal}`);
+            outputEl.textContent = tickLabels[idx];
+            yLabelEl.text(yTemplate
+                .replace('{label}', yCfg.label ?? '')
+                .replace('{value}', tickLabels[idx]));
 
-            const simY = spec.y[String(scaleVal)] || [];
-            const allY = spec.experimental_data.concat(simY);
+            const current = series.map(s => (s.dynamic ? s.data[idx] : s.data));
 
-            // Keep y = 0 pinned at the exact vertical midpoint by using a symmetric domain
-            const maxAbs = d3.max(allY, d => Math.abs(d)) || 1;
-            const paddedMax = maxAbs * 1.05;
-            yScale.domain([-paddedMax, paddedMax]);
+            let domain = yCfg.domain;
+            if (!domain) {
+                if (yCfg.symmetric !== false) {
+                    const maxAbs = (d3.max(current, a => d3.max(a, Math.abs)) || 1) * 1.05;
+                    domain = [-maxAbs, maxAbs];
+                } else {
+                    domain = d3.extent(current.flat());
+                }
+            }
+            yScale.domain(domain);
 
-            const t = animate
-                ? svg.transition().duration(200).ease(d3.easeCubicOut)
-                : svg;
-
-            yAxisG.transition(t)
-                .call(d3.axisLeft(yScale).ticks(6))
-                .selection()
-                .select('.domain')
-                .remove();
-
-            expPath.transition(t).attr('d', lineGen);
-            simPath.datum(simY).transition(t).attr('d', lineGen);
+            const t = animate ? svg.transition().duration(200).ease(d3.easeCubicOut) : svg;
+            yAxisG.transition(t).call(d3.axisLeft(yScale).ticks(6))
+                .selection().select('.domain').remove();
+            if (zeroLine) {
+                zeroLine.transition(t).attr('y1', yScale(0)).attr('y2', yScale(0));
+            }
+            series.forEach((s, i) => s.path.datum(current[i]).transition(t).attr('d', lineGen));
         };
 
         inputEl.addEventListener('input', () => render(true));
         render(false);
     };
 
-    window.HNN_WIDGET_DATA = window.HNN_WIDGET_DATA || {};
-    if (window.HNN_WIDGET_DATA[src]) {
-        renderWidget(window.HNN_WIDGET_DATA[src]);
-        return;
-    }
-
-    const script = document.createElement('script');
-    script.src = resolvedUrl;
-    script.onload = () => {
-        if (window.HNN_WIDGET_DATA[src]) {
-            renderWidget(window.HNN_WIDGET_DATA[src]);
-        }
-    };
-    script.onerror = () => {
-        console.error(`Failed to load widget payload from ${resolvedUrl}`);
-    };
-    document.head.appendChild(script);
-});
+    document.querySelectorAll('.hnn-slider').forEach(el => {
+        const src = el.dataset.src;
+        if (!src) return;
+        loadPayload(src)
+            .then(spec => renderSliderWidget(el, spec))
+            .catch(err => {
+                console.error(err);
+                el.textContent = 'Interactive figure failed to load.';
+            });
+    });
+})();
