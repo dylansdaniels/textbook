@@ -962,6 +962,7 @@ surveyLinks.forEach(link => {
 
     const loadPayload = src => new Promise((resolve, reject) => {
         if (cache[src]) return resolve(cache[src]);
+
         // Resolve against content/ so widgets work in both content/ and dev/ builds
         const baseHref = window.location.href.replace(/\/dev(\/|$)/, '/content$1');
         const url = new URL(src, baseHref).href;
@@ -983,9 +984,8 @@ surveyLinks.forEach(link => {
 
         const yCfg = spec.y || {};
         const slider = spec.slider;
-        const vals = slider.values;
-        const tickLabels = slider.tick_labels || vals.map(String);
-        const last = Math.max(vals.length - 1, 1);
+        const tickLabels = slider.tick_labels;
+        const last = Math.max(tickLabels.length - 1, 1);
 
         const series = spec.series.map((s, i) => ({
             ...s,
@@ -1023,14 +1023,14 @@ surveyLinks.forEach(link => {
         const outputEl = el.querySelector('output');
         el.querySelector('label').textContent = slider.label;
         inputEl.min = 0;
-        inputEl.max = vals.length - 1;
+        inputEl.max = tickLabels.length - 1;
         inputEl.value = slider.initial ?? 0;
         inputEl.setAttribute('aria-label', slider.label);
 
         const ticksEl = el.querySelector('.hnn-slider-ticks');
         tickLabels.forEach((t, i) => {
             const span = document.createElement('span');
-            span.style.setProperty('--at', vals.length > 1 ? i / last : 0);
+            span.style.setProperty('--at', tickLabels.length > 1 ? i / last : 0);
             span.textContent = t;
             ticksEl.appendChild(span);
         });
@@ -1038,72 +1038,59 @@ surveyLinks.forEach(link => {
         // ---- Plot scaffold ----
         const svg = d3.select(el.querySelector('.hnn-slider-plot'))
             .append('svg')
-            .attr('viewBox', `0 0 ${W} ${H}`)
-            .style('font-family', '"Fira Sans", sans-serif')
-            .style('font-size', '12px');
+            .attr('viewBox', `0 0 ${W} ${H}`);
         const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
 
         const xScale = d3.scaleLinear().domain(d3.extent(spec.x.values)).range([0, iw]);
         const yScale = d3.scaleLinear().range([ih, 0]);
 
-        g.append('g').attr('transform', `translate(0,${ih})`).call(d3.axisBottom(xScale));
-        g.append('line').attr('y2', ih).attr('stroke', 'currentColor'); // y spine
-        const yAxisG = g.append('g');
+        g.append('g')
+            .attr('class', 'hnn-x-axis')
+            .attr('transform', `translate(0,${ih})`)
+            .call(d3.axisBottom(xScale));
+        g.append('line')
+            .attr('class', 'hnn-spine')
+            .attr('y2', ih);
+        const yAxisG = g.append('g').attr('class', 'hnn-y-axis');
 
         svg.append('text')
+            .attr('class', 'hnn-axis-label')
             .attr('x', m.left + iw / 2).attr('y', H - 6)
-            .attr('text-anchor', 'middle').attr('fill', 'currentColor')
             .text(spec.x.label);
 
         const yLabelEl = svg.append('text')
-            .attr('transform', `translate(14,${m.top + ih / 2}) rotate(-90)`)
-            .attr('text-anchor', 'middle').attr('fill', 'currentColor');
+            .attr('class', 'hnn-axis-label')
+            .attr('transform', `translate(14,${m.top + ih / 2}) rotate(-90)`);
 
         const zeroLine = yCfg.zero_line === false ? null : g.append('line')
-            .attr('x2', iw).attr('stroke', '#aaa').attr('stroke-dasharray', '4,4');
+            .attr('class', 'hnn-zero')
+            .attr('x2', iw);
 
         const lineGen = d3.line()
             .x((_, i) => xScale(spec.x.values[i]))
             .y(d => yScale(d));
 
-        series.forEach((s, i) => {
+        series.forEach(s => {
             s.path = g.append('path')
-                .attr('fill', 'none')
+                .attr('class', 'hnn-line')
                 .attr('stroke', s.color)
                 .attr('stroke-width', s.width ?? 2);
         });
 
-        const yTemplate = yCfg.label_template || '{label}';
-
         const render = animate => {
             const idx = parseInt(inputEl.value, 10);
-            const fill = vals.length > 1 ? idx / last : 0;
+            const fill = tickLabels.length > 1 ? idx / last : 0;
             trackEl.style.setProperty('--fill', fill);
             outputEl.textContent = tickLabels[idx];
-            yLabelEl.text(yTemplate
-                .replace('{label}', yCfg.label ?? '')
-                .replace('{value}', tickLabels[idx]));
-
-            const current = series.map(s => (s.dynamic ? s.data[idx] : s.data));
-
-            let domain = yCfg.domain;
-            if (!domain) {
-                if (yCfg.symmetric !== false) {
-                    const maxAbs = (d3.max(current, a => d3.max(a, Math.abs)) || 1) * 1.05;
-                    domain = [-maxAbs, maxAbs];
-                } else {
-                    domain = d3.extent(current.flat());
-                }
-            }
-            yScale.domain(domain);
+            yLabelEl.text(yCfg.labels[idx]);
+            yScale.domain(yCfg.domains[idx]);
 
             const t = animate ? svg.transition().duration(200).ease(d3.easeCubicOut) : svg;
-            yAxisG.transition(t).call(d3.axisLeft(yScale).ticks(6))
-                .selection().select('.domain').remove();
+            yAxisG.transition(t).call(d3.axisLeft(yScale).ticks(6));
             if (zeroLine) {
                 zeroLine.transition(t).attr('y1', yScale(0)).attr('y2', yScale(0));
             }
-            series.forEach((s, i) => s.path.datum(current[i]).transition(t).attr('d', lineGen));
+            series.forEach(s => s.path.datum(s.dynamic ? s.data[idx] : s.data).transition(t).attr('d', lineGen));
         };
 
         inputEl.addEventListener('input', () => render(true));

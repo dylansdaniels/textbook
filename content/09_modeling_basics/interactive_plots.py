@@ -85,6 +85,7 @@ def build_slider_payload(
 
     # make sure every line matches the time points and the slider
     prepared_series = []
+    series_arrays = []
     for s in series:
         data = np.asarray(
             s["data"],
@@ -98,6 +99,7 @@ def build_slider_payload(
             raise ValueError(
                 f"{s['label']}: {data.shape[-1]} points != {n_points} x values",
             )
+        series_arrays.append(data)
         prepared_series.append(
             {
                 **s,
@@ -111,6 +113,34 @@ def build_slider_payload(
     if tick_labels is not None and len(tick_labels) != n_frames:
         raise ValueError("tick_labels length must match slider_values")
 
+    # fill in the slider labels if none were given
+    if tick_labels is None:
+        tick_labels = [str(v) for v in slider_values]
+
+    # determine the y axis label at each slider position
+    y_labels = [
+        ylabel_template.format(
+            label=ylabel,
+            value=tick,
+        )
+        for tick in tick_labels
+    ]
+
+    # determine the y axis range at each slider position
+    if y_domain is not None:
+        y_domains = [list(y_domain) for _ in range(n_frames)]
+    else:
+        y_domains = []
+        for idx in range(n_frames):
+            combined = np.concatenate(
+                [arr[idx] if arr.ndim == 2 else arr for arr in series_arrays],
+            )
+            if symmetric_y:
+                max_abs = (float(np.max(np.abs(combined))) or 1.0) * 1.05
+                y_domains.append([-max_abs, max_abs])
+            else:
+                y_domains.append([float(np.min(combined)), float(np.max(combined))])
+
     payload = {
         "title": title,
         "width": width,
@@ -120,16 +150,13 @@ def build_slider_payload(
             "values": x_values,
         },
         "y": {
-            "label": ylabel,
-            "label_template": ylabel_template,
-            "symmetric": symmetric_y,
+            "labels": y_labels,
             "zero_line": zero_line,
-            "domain": y_domain,
+            "domains": y_domains,
         },
         "slider": {
             "name": slider_name,
             "label": slider_label,
-            "values": list(slider_values),
             "tick_labels": tick_labels,
             "initial": initial,
         },
@@ -188,6 +215,7 @@ def write_widget_js(
         f'window.HNN_WIDGET_DATA["{out_path.name}"] = {json_payload};\n',
         encoding="utf-8",
     )
+
 
 # %% [code]
 # fetch MEG data

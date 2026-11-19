@@ -2287,6 +2287,7 @@ body.dark-mode .hnn-slider {
     display: block;
     width: 100%;
     height: auto;
+    font-size: 12px;
 }
 
 .hnn-slider-controls {
@@ -2401,6 +2402,35 @@ body.dark-mode .hnn-slider-ticks {
     left: 50%;
     height: 4px;
     border-left: 1px solid currentColor;
+}
+
+.hnn-slider-plot .hnn-spine {
+    stroke: currentColor;
+}
+
+.hnn-slider-plot .hnn-y-axis .domain {
+    display: none;
+}
+
+.hnn-slider-plot .hnn-axis-label {
+    fill: currentColor;
+    text-anchor: middle;
+    font-variant-numeric: tabular-nums;
+}
+
+.hnn-slider-plot .hnn-zero {
+    stroke: #aaa;
+    stroke-dasharray: 4, 4;
+}
+
+.hnn-slider-plot .hnn-x-axis,
+.hnn-slider-plot .hnn-y-axis {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.hnn-slider-plot .hnn-line {
+    fill: none;
 }
 
 /* 
