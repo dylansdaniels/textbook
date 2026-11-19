@@ -2243,7 +2243,8 @@ body.dark-mode code.workshop-button:hover {
     Element: .hnn-slider
     Description: Container for interactive pre-computed Observable Plot slider widgets
 */
-.hnn-slider {
+.hnn-slider,
+.hnn-dipole-spikes {
     --accent: var(--hnn-purple, #474095);
     --track: #dee2e6;
     --thumb: 16px;
@@ -2253,7 +2254,8 @@ body.dark-mode code.workshop-button:hover {
     color: var(--text-light, #222);
 }
 
-body.dark-mode .hnn-slider {
+body.dark-mode .hnn-slider,
+body.dark-mode .hnn-dipole-spikes {
     color: #e1e4e8;
     --track: #444;
 }
@@ -2431,6 +2433,25 @@ body.dark-mode .hnn-slider-ticks {
 
 .hnn-slider-plot .hnn-line {
     fill: none;
+}
+
+/* 
+    Element: .hnn-panel-title
+    Description: Title text above the top panel of a two-panel figure
+*/
+.hnn-slider-plot .hnn-panel-title {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* 
+    Element: .hnn-annotation
+    Description: Text label drawn inside a plot (e.g., the RMSE value)
+*/
+.hnn-slider-plot .hnn-annotation {
+    fill: currentColor;
+    text-anchor: end;
+    font-size: 14px;
 }
 
 /* 

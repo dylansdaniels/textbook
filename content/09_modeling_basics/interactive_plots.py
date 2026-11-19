@@ -2,6 +2,7 @@
 # imports
 import json
 from copy import deepcopy
+from itertools import product
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from urllib.request import urlretrieve
@@ -14,11 +15,12 @@ from hnn_core import (
     read_dipole,
     simulate_dipole,
 )
+from hnn_core.dipole import _rmse
 from hnn_core.network_models import add_erp_drives_to_jones_model
+from matplotlib.colors import to_hex
 
 # %% [code]
 # helper functions
-
 
 def resample(
     original_times,
@@ -216,6 +218,144 @@ def write_widget_js(
         encoding="utf-8",
     )
 
+def count_drive_spikes(
+    cell_response,
+    drive_groups,
+):
+    """Count the spikes from each group of drives in each time bin."""
+    spike_times = np.concatenate(cell_response.spike_times)
+    spike_types = np.concatenate(cell_response.spike_types).astype(str)
+    bin_edges = np.linspace(
+        0,
+        cell_response.times[-1],
+        50,
+    )
+
+    # count the spikes in each time bin for each group of drives
+    counts = {}
+    for label, prefixes in drive_groups.items():
+        in_group = np.zeros(
+            len(spike_types),
+            dtype=bool,
+        )
+        for prefix in prefixes:
+            in_group |= np.char.startswith(
+                spike_types,
+                prefix,
+            )
+        group_counts, _ = np.histogram(
+            spike_times[in_group],
+            bin_edges,
+        )
+        counts[label] = group_counts
+
+    histogram = {
+        "bin_edges": bin_edges,
+        "counts": counts,
+    }
+
+    return histogram
+
+
+def build_drive_dipole_payload(
+    *,
+    bin_edges,
+    drive_counts,
+    drive_colors,
+    inverted_groups,
+    dipole_times,
+    simulated,
+    experimental,
+    rmse_labels,
+    sliders,
+    xdomain,
+    xlabel="Time (ms)",
+    hist_title="External Drive Spike Arrival Times",
+    hist_ylabel="Counts",
+    dipole_ylabel="Dipole (nAm)",
+    simulated_label="Simulation",
+    simulated_color="#1f77b4",
+    experimental_label="Experimental data",
+    experimental_color="#ff7f0e",
+    width=720,
+    height=640,
+):
+    """Collect everything the two-panel figure needs into one package."""
+    bin_edges = np.asarray(bin_edges, float)
+    simulated = np.asarray(simulated, float)
+    experimental = np.asarray(experimental, float)
+    n_first = len(sliders[0]["tick_labels"])
+    n_second = len(sliders[1]["tick_labels"])
+    n_bins = len(bin_edges) - 1
+
+    # make sure the data fits the two sliders and the time points
+    groups = []
+    for label, counts in drive_counts.items():
+        counts = np.asarray(counts)
+        if counts.shape != (n_first, n_second, n_bins):
+            raise ValueError(f"{label}: counts shape {counts.shape} does not fit")
+        groups.append(
+            {
+                "label": label,
+                "color": to_hex(drive_colors[label]),
+                "inverted": label in inverted_groups,
+                "counts": counts.tolist(),
+            },
+        )
+    if simulated.shape != (n_first, n_second, len(dipole_times)):
+        raise ValueError(f"simulated shape {simulated.shape} does not fit")
+    if len(experimental) != len(dipole_times):
+        raise ValueError("experimental data must match the time points")
+    if np.asarray(rmse_labels).shape != (n_first, n_second):
+        raise ValueError("rmse_labels must have one entry per slider pair")
+    for slider in sliders:
+        if not 0 <= slider.get("initial", 0) < len(slider["tick_labels"]):
+            raise ValueError(f"{slider['label']}: initial is out of range")
+
+    # use one y-axis range for every slider position so the axes don't jump
+    hist_max = max(np.max(group["counts"]) for group in groups)
+    hist_top = (float(hist_max) or 1.0) * 1.05
+    dipole_max = max(
+        float(np.max(np.abs(simulated))),
+        float(np.max(np.abs(experimental))),
+    )
+    dipole_top = (dipole_max or 1.0) * 1.05
+
+    payload = {
+        "width": width,
+        "height": height,
+        "x": {
+            "label": xlabel,
+            "domain": list(xdomain),
+        },
+        "sliders": sliders,
+        "hist": {
+            "title": hist_title,
+            "ylabel": hist_ylabel,
+            "bin_edges": bin_edges.tolist(),
+            "domain": [0, hist_top],
+            "groups": groups,
+        },
+        "dipole": {
+            "ylabel": dipole_ylabel,
+            "times": np.asarray(dipole_times, float).tolist(),
+            "domain": [-dipole_top, dipole_top],
+            "simulated": {
+                "label": simulated_label,
+                "color": simulated_color,
+                "frames": simulated.tolist(),
+            },
+            "experimental": {
+                "label": experimental_label,
+                "color": experimental_color,
+                "data": experimental.tolist(),
+            },
+            "rmse": np.asarray(rmse_labels).tolist(),
+        },
+    }
+
+    return payload
+
 
 # %% [code]
 # fetch MEG data
@@ -341,6 +481,135 @@ if save_js:
         payload,
         out_dir / "scaling_widget.js",
         sig=5,
+    )
+
+# %% [code]
+# --------------------------------------------------
+# Interactive plot for adjusting drive mu and sigma
+# --------------------------------------------------
+
+save_js = True
+
+drive_name = "evdist1"
+dipole_scaling = 3000
+dipole_smoothing = 30
+
+mean_values = [
+    10,
+    20,
+    30,
+    40,
+    50,
+]
+std_values = [
+    1,
+    2,
+    4,
+    8,
+    16,
+]
+drive_groups = {
+    "Proximal": ["evprox"],
+    "Distal": ["evdist"],
+}
+
+sim_net = neymotin_2020_model()
+add_erp_drives_to_jones_model(sim_net)
+
+# run one simulation for every pair of mean and standard deviation
+flat_counts = {label: [] for label in drive_groups}
+flat_dipoles = []
+rmse_labels = []
+
+with MPIBackend(ncores):
+    for mean, std in product(
+        mean_values,
+        std_values,
+    ):
+        # change when the drive arrives and how spread out its spikes are
+        drive_net = deepcopy(sim_net)
+        drive_net.external_drives[drive_name]["dynamics"]["mu"] = mean
+        drive_net.external_drives[drive_name]["dynamics"]["sigma"] = std
+
+        dipoles = simulate_dipole(
+            net=drive_net,
+            tstop=tstop,
+            n_trials=n_trials,
+            dt=dt,
+        )
+        dipole = dipoles[0].scale(dipole_scaling)
+
+        # count the drive spikes in each time bin
+        histogram = count_drive_spikes(
+            drive_net.cell_response,
+            drive_groups,
+        )
+        for label in drive_groups:
+            flat_counts[label].append(histogram["counts"][label])
+
+        # compare to the experimental data, then use fewer time points
+        rmse = _rmse(
+            dipole,
+            threshold_experimental_dpl,
+            0.0,
+            tstop,
+        )
+        rmse_labels.append(f"RMSE: {rmse:.4f}")
+        flat_dipoles.append(
+            resample(
+                dipole.times,
+                dipole.data["agg"],
+                threshold_times,
+            ),
+        )
+
+# arrange the results as mean x standard deviation
+n_means = len(mean_values)
+n_stds = len(std_values)
+
+drive_counts = {
+    label: np.asarray(counts).reshape(n_means, n_stds, -1)
+    for label, counts in flat_counts.items()
+}
+simulated = np.asarray(flat_dipoles).reshape(n_means, n_stds, -1)
+rmse_labels = np.asarray(rmse_labels).reshape(n_means, n_stds).tolist()
+
+payload = build_drive_dipole_payload(
+    bin_edges=histogram["bin_edges"],
+    drive_counts=drive_counts,
+    drive_colors={
+        "Proximal": "r",
+        "Distal": "g",
+    },
+    inverted_groups=["Distal"],
+    dipole_times=threshold_times,
+    simulated=simulated,
+    experimental=threshold_data,
+    rmse_labels=rmse_labels,
+    sliders=[
+        {
+            "label": "Mean arrival time",
+            "tick_labels": [str(v) for v in mean_values],
+            "initial": 2,
+        },
+        {
+            "label": "Std. deviation",
+            "tick_labels": [str(v) for v in std_values],
+            "initial": 2,
+        },
+    ],
+    xdomain=[0, tstop],
+)
+
+if save_js:
+    # fall back to the current folder when run as a notebook
+    out_dir = Path.cwd()
+    if "__file__" in globals():
+        out_dir = Path(__file__).parent
+
+    write_widget_js(
+        payload,
+        out_dir / "drive_dipole_widget.js",
     )
 
 # %% [code]

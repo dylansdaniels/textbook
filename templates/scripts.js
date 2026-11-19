@@ -975,6 +975,196 @@ surveyLinks.forEach(link => {
         document.head.appendChild(s);
     });
 
+    // Builds one labelled slider and returns a function that reports its position
+    const buildSliderControls = (parent, slider, onChange) => {
+        const controls = document.createElement('div');
+        controls.className = 'hnn-slider-controls';
+        controls.innerHTML = `
+            <label></label>
+            <div class="hnn-slider-track">
+                <input type="range" step="1">
+                <output aria-live="polite"></output>
+                <div class="hnn-slider-ticks"></div>
+            </div>`;
+        parent.appendChild(controls);
+
+        const tickLabels = slider.tick_labels;
+        const last = Math.max(tickLabels.length - 1, 1);
+        const trackEl = controls.querySelector('.hnn-slider-track');
+        const inputEl = controls.querySelector('input');
+        const outputEl = controls.querySelector('output');
+        const ticksEl = controls.querySelector('.hnn-slider-ticks');
+
+        controls.querySelector('label').textContent = slider.label;
+        inputEl.min = 0;
+        inputEl.max = tickLabels.length - 1;
+        inputEl.value = slider.initial ?? 0;
+        inputEl.setAttribute('aria-label', slider.label);
+
+        tickLabels.forEach((t, i) => {
+            const span = document.createElement('span');
+            span.style.setProperty('--at', tickLabels.length > 1 ? i / last : 0);
+            span.textContent = t;
+            ticksEl.appendChild(span);
+        });
+
+        const getIndex = () => parseInt(inputEl.value, 10);
+        const refresh = () => {
+            const idx = getIndex();
+            trackEl.style.setProperty('--fill', tickLabels.length > 1 ? idx / last : 0);
+            outputEl.textContent = tickLabels[idx];
+        };
+
+        inputEl.addEventListener('input', () => {
+            refresh();
+            onChange();
+        });
+        refresh();
+
+        return getIndex;
+    };
+
+    const renderDriveDipoleWidget = (el, spec) => {
+        const W = spec.width ?? 720;
+        const H = spec.height ?? 640;
+        const m = { top: 30, right: 55, bottom: 42, left: 60 };
+        const gap = 40;
+        const iw = W - m.left - m.right;
+        const ih = H - m.top - m.bottom - gap;
+        const histH = ih * 0.25;   // top panel is 1 part,
+        const dipoleH = ih * 0.75; // bottom panel is 3 parts
+        const hist = spec.hist;
+        const dipole = spec.dipole;
+        const edges = hist.bin_edges;
+        const hasInverted = hist.groups.some(g => g.inverted);
+
+        // ---- DOM scaffold ----
+        el.innerHTML = `
+            <div class="hnn-slider-legend"></div>
+            <div class="hnn-slider-plot"></div>`;
+
+        const legendEl = el.querySelector('.hnn-slider-legend');
+        [...hist.groups, dipole.simulated, dipole.experimental].forEach(item => {
+            const span = document.createElement('span');
+            span.textContent = item.label;
+            span.style.setProperty('--swatch', item.color);
+            legendEl.appendChild(span);
+        });
+
+        // Sliders are added below the plot; render() is only called on user input
+        const getIndexFns = spec.sliders.map(
+            slider => buildSliderControls(el, slider, () => render(true)),
+        );
+
+        // ---- Plot scaffold ----
+        const svg = d3.select(el.querySelector('.hnn-slider-plot'))
+            .append('svg')
+            .attr('viewBox', `0 0 ${W} ${H}`);
+        const histG = svg.append('g')
+            .attr('transform', `translate(${m.left},${m.top})`);
+        const dipoleG = svg.append('g')
+            .attr('transform', `translate(${m.left},${m.top + histH + gap})`);
+
+        // Both panels share the x scale; y ranges are fixed across slider positions
+        const xScale = d3.scaleLinear().domain(spec.x.domain).range([0, iw]);
+        const histY = d3.scaleLinear().domain(hist.domain).range([histH, 0]);
+        const histYInv = d3.scaleLinear().domain(hist.domain).range([0, histH]);
+        const dipoleY = d3.scaleLinear().domain(dipole.domain).range([dipoleH, 0]);
+
+        // ---- Histogram panel ----
+        histG.append('g').attr('class', 'hnn-x-axis')
+            .attr('transform', `translate(0,${histH})`)
+            .call(d3.axisBottom(xScale));
+        histG.append('g').attr('class', 'hnn-y-axis')
+            .call(d3.axisLeft(histY).ticks(3));
+        histG.append('line').attr('class', 'hnn-spine').attr('y2', histH);
+
+        // Inverted drives hang from the top and read against the right-hand axis
+        if (hasInverted) {
+            histG.append('g').attr('class', 'hnn-y-axis')
+                .attr('transform', `translate(${iw},0)`)
+                .call(d3.axisRight(histYInv).ticks(3));
+            histG.append('line').attr('class', 'hnn-spine')
+                .attr('x1', iw).attr('x2', iw).attr('y2', histH);
+        }
+
+        hist.groups.forEach(group => {
+            group.rects = histG.append('g')
+                .selectAll('rect')
+                .data(d3.range(edges.length - 1))
+                .join('rect')
+                .attr('fill', group.color)
+                .attr('x', k => xScale(edges[k]))
+                .attr('width', k => xScale(edges[k + 1]) - xScale(edges[k]));
+        });
+
+        // ---- Dipole panel ----
+        dipoleG.append('g').attr('class', 'hnn-x-axis')
+            .attr('transform', `translate(0,${dipoleH})`)
+            .call(d3.axisBottom(xScale));
+        dipoleG.append('g').attr('class', 'hnn-y-axis')
+            .call(d3.axisLeft(dipoleY).ticks(6));
+        dipoleG.append('line').attr('class', 'hnn-spine').attr('y2', dipoleH);
+        dipoleG.append('line').attr('class', 'hnn-zero')
+            .attr('x2', iw)
+            .attr('y1', dipoleY(0))
+            .attr('y2', dipoleY(0));
+
+        const lineGen = d3.line()
+            .x((_, i) => xScale(dipole.times[i]))
+            .y(d => dipoleY(d));
+
+        dipoleG.append('path')
+            .datum(dipole.experimental.data)
+            .attr('class', 'hnn-line')
+            .attr('stroke', dipole.experimental.color)
+            .attr('stroke-width', 2)
+            .attr('d', lineGen);
+
+        const simPath = dipoleG.append('path')
+            .attr('class', 'hnn-line')
+            .attr('stroke', dipole.simulated.color)
+            .attr('stroke-width', 2);
+
+        const rmseEl = dipoleG.append('text')
+            .attr('class', 'hnn-annotation')
+            .attr('x', iw * 0.95)
+            .attr('y', dipoleH * 0.95);
+
+        // ---- Titles and axis labels ----
+        svg.append('text').attr('class', 'hnn-axis-label hnn-panel-title')
+            .attr('x', m.left + iw / 2).attr('y', m.top - 10)
+            .text(hist.title);
+        svg.append('text').attr('class', 'hnn-axis-label')
+            .attr('transform', `translate(14,${m.top + histH / 2}) rotate(-90)`)
+            .text(hist.ylabel);
+        svg.append('text').attr('class', 'hnn-axis-label')
+            .attr('transform', `translate(14,${m.top + histH + gap + dipoleH / 2}) rotate(-90)`)
+            .text(dipole.ylabel);
+        svg.append('text').attr('class', 'hnn-axis-label')
+            .attr('x', m.left + iw / 2).attr('y', H - 6)
+            .text(spec.x.label);
+
+        const render = animate => {
+            const [i, j] = getIndexFns.map(getIndex => getIndex());
+            const t = svg.transition().duration(animate ? 200 : 0).ease(d3.easeCubicOut);
+
+            hist.groups.forEach(group => {
+                const counts = group.counts[i][j];
+                group.rects.transition(t)
+                    .attr('y', k => (group.inverted ? 0 : histY(counts[k])))
+                    .attr('height', k => (
+                        group.inverted ? histYInv(counts[k]) : histH - histY(counts[k])
+                    ));
+            });
+
+            simPath.datum(dipole.simulated.frames[i][j]).transition(t).attr('d', lineGen);
+            rmseEl.text(dipole.rmse[i][j]);
+        };
+
+        render(false);
+    };
+
     const renderSliderWidget = (el, spec) => {
         const W = spec.width ?? 720;
         const H = spec.height ?? 360;
@@ -1107,4 +1297,16 @@ surveyLinks.forEach(link => {
                 el.textContent = 'Interactive figure failed to load.';
             });
     });
+
+    document.querySelectorAll('.hnn-dipole-spikes').forEach(el => {
+        const src = el.dataset.src;
+        if (!src) return;
+        loadPayload(src)
+            .then(spec => renderDriveDipoleWidget(el, spec))
+            .catch(err => {
+                console.error(err);
+                el.textContent = 'Interactive figure failed to load.';
+            });
+    });
+
 })();
