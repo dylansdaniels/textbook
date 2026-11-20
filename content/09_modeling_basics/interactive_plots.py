@@ -22,6 +22,7 @@ from matplotlib.colors import to_hex
 # %% [code]
 # helper functions
 
+
 def resample(
     original_times,
     data,
@@ -218,6 +219,7 @@ def write_widget_js(
         encoding="utf-8",
     )
 
+
 def count_drive_spikes(
     cell_response,
     drive_groups,
@@ -259,13 +261,14 @@ def count_drive_spikes(
 
 def build_drive_dipole_payload(
     *,
-    bin_edges,
+    hist_bin_edges,
     drive_counts,
     drive_colors,
     inverted_groups,
     dipole_times,
     simulated,
     experimental,
+    scaling,
     rmse_labels,
     sliders,
     xdomain,
@@ -280,19 +283,42 @@ def build_drive_dipole_payload(
     width=720,
     height=640,
 ):
-    """Collect everything the two-panel figure needs into one package."""
-    bin_edges = np.asarray(bin_edges, float)
+    # set up
+    # ------------------------------
+    # cast histogram bin_edges to an array
+    hist_bin_edges = np.asarray(hist_bin_edges, float)
+
+    # get histogram bin counts
+    hist_n_bins = len(hist_bin_edges) - 1
+
+    # cast dipoles to arrays
     simulated = np.asarray(simulated, float)
     experimental = np.asarray(experimental, float)
-    n_first = len(sliders[0]["tick_labels"])
-    n_second = len(sliders[1]["tick_labels"])
-    n_bins = len(bin_edges) - 1
 
-    # make sure the data fits the two sliders and the time points
+    # get the two slider lengths
+    slider_1, slider_2 = sliders
+    len_slider_1 = len(slider_1["tick_labels"])
+    len_slider_2 = len(slider_2["tick_labels"])
+
+    # `drive_counts` maps each *grouped* drive label ("Proximal", "Distal") to an array
+    # whose dimensions are (len_slider_1, len_slider_2, n_hist_bins)
+    #
+    # for example: if slider 1 (i) has 5 positions and slider 2 (j) has 4 positions,
+    # `counts` must have shape (i=5, j=4, n_hist_bins). `counts[i, j]` returns the bins
+    # (spike counts) for slider 1 at index `i` and slider 2 at index `j`
+    #
+    # this 3D grid is *always* necessary because the "front end" (javascript) does not
+    # know whether one, both, or neither slider parameters will affect the histogram
+    # output of the simulation, and so the histogram data are needed for every
+    # slider permutation
     groups = []
     for label, counts in drive_counts.items():
         counts = np.asarray(counts)
-        if counts.shape != (n_first, n_second, n_bins):
+        if counts.shape != (
+            len_slider_1,
+            len_slider_2,
+            hist_n_bins,
+        ):
             raise ValueError(f"{label}: counts shape {counts.shape} does not fit")
         groups.append(
             {
@@ -302,16 +328,25 @@ def build_drive_dipole_payload(
                 "counts": counts.tolist(),
             },
         )
-    if simulated.shape != (n_first, n_second, len(dipole_times)):
+
+    # sanity checks
+    # ------------------------------
+    if simulated.shape != (
+        len_slider_1,
+        len_slider_2,
+        len(dipole_times),
+    ):
         raise ValueError(f"simulated shape {simulated.shape} does not fit")
     if len(experimental) != len(dipole_times):
         raise ValueError("experimental data must match the time points")
-    if np.asarray(rmse_labels).shape != (n_first, n_second):
+    if np.asarray(rmse_labels).shape != (len_slider_1, len_slider_2):
         raise ValueError("rmse_labels must have one entry per slider pair")
     for slider in sliders:
         if not 0 <= slider.get("initial", 0) < len(slider["tick_labels"]):
             raise ValueError(f"{slider['label']}: initial is out of range")
 
+    # prepare payload
+    # ------------------------------
     # use one y-axis range for every slider position so the axes don't jump
     hist_max = max(np.max(group["counts"]) for group in groups)
     hist_top = (float(hist_max) or 1.0) * 1.05
@@ -320,6 +355,8 @@ def build_drive_dipole_payload(
         float(np.max(np.abs(experimental))),
     )
     dipole_top = (dipole_max or 1.0) * 1.05
+
+    dipole_ylabel += f" x {scaling}"
 
     payload = {
         "width": width,
@@ -332,7 +369,7 @@ def build_drive_dipole_payload(
         "hist": {
             "title": hist_title,
             "ylabel": hist_ylabel,
-            "bin_edges": bin_edges.tolist(),
+            "bin_edges": hist_bin_edges.tolist(),
             "domain": [0, hist_top],
             "groups": groups,
         },
@@ -495,19 +532,20 @@ dipole_scaling = 3000
 dipole_smoothing = 30
 
 mean_values = [
-    10,
-    20,
-    30,
-    40,
-    50,
+    49,
+    56,
+    63,
+    70,
+    77,
 ]
 std_values = [
     1,
     2,
+    3,
     4,
-    8,
-    16,
+    5,
 ]
+
 drive_groups = {
     "Proximal": ["evprox"],
     "Distal": ["evdist"],
@@ -526,7 +564,6 @@ with MPIBackend(ncores):
         mean_values,
         std_values,
     ):
-        # change when the drive arrives and how spread out its spikes are
         drive_net = deepcopy(sim_net)
         drive_net.external_drives[drive_name]["dynamics"]["mu"] = mean
         drive_net.external_drives[drive_name]["dynamics"]["sigma"] = std
@@ -537,7 +574,7 @@ with MPIBackend(ncores):
             n_trials=n_trials,
             dt=dt,
         )
-        dipole = dipoles[0].scale(dipole_scaling)
+        dipole = dipoles[0].scale(dipole_scaling).smooth(dipole_smoothing)
 
         # count the drive spikes in each time bin
         histogram = count_drive_spikes(
@@ -559,7 +596,7 @@ with MPIBackend(ncores):
             resample(
                 dipole.times,
                 dipole.data["agg"],
-                threshold_times,
+                experimental_times,
             ),
         )
 
@@ -568,23 +605,39 @@ n_means = len(mean_values)
 n_stds = len(std_values)
 
 drive_counts = {
-    label: np.asarray(counts).reshape(n_means, n_stds, -1)
+    label: np.asarray(counts).reshape(
+        n_means,
+        n_stds,
+        -1,
+    )
     for label, counts in flat_counts.items()
 }
-simulated = np.asarray(flat_dipoles).reshape(n_means, n_stds, -1)
-rmse_labels = np.asarray(rmse_labels).reshape(n_means, n_stds).tolist()
+simulated = np.asarray(flat_dipoles).reshape(
+    n_means,
+    n_stds,
+    -1,
+)
+rmse_labels = (
+    np.asarray(rmse_labels)
+    .reshape(
+        n_means,
+        n_stds,
+    )
+    .tolist()
+)
 
 payload = build_drive_dipole_payload(
-    bin_edges=histogram["bin_edges"],
+    hist_bin_edges=histogram["bin_edges"],
     drive_counts=drive_counts,
     drive_colors={
         "Proximal": "r",
         "Distal": "g",
     },
     inverted_groups=["Distal"],
-    dipole_times=threshold_times,
+    dipole_times=experimental_times,
     simulated=simulated,
-    experimental=threshold_data,
+    experimental=experimental_data,
+    scaling=dipole_scaling,
     rmse_labels=rmse_labels,
     sliders=[
         {
