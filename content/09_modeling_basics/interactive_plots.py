@@ -1,6 +1,7 @@
 # %% [code]
 # imports
 import json
+import pickle
 from copy import deepcopy
 from itertools import product
 from pathlib import Path
@@ -18,6 +19,14 @@ from hnn_core import (
 from hnn_core.dipole import _rmse
 from hnn_core.network_models import add_erp_drives_to_jones_model
 from matplotlib.colors import to_hex
+
+# define output directory
+if "__file__" in globals():
+    out_dir = Path(__file__).parent
+# fall back to the cwd (e.g., this may be triggered in a jupyter environment)
+else:
+    out_dir = Path.cwd()
+
 
 # %% [code]
 # helper functions
@@ -223,15 +232,17 @@ def write_widget_js(
 def count_drive_spikes(
     cell_response,
     drive_groups,
+    bin_edges=None,
 ):
     """Count the spikes from each group of drives in each time bin."""
     spike_times = np.concatenate(cell_response.spike_times)
     spike_types = np.concatenate(cell_response.spike_types).astype(str)
-    bin_edges = np.linspace(
-        0,
-        cell_response.times[-1],
-        50,
-    )
+    if bin_edges is None:
+        bin_edges = np.linspace(
+            0,
+            cell_response.times[-1],
+            50,
+        )
 
     # count the spikes in each time bin for each group of drives
     counts = {}
@@ -259,139 +270,194 @@ def count_drive_spikes(
     return histogram
 
 
-def build_drive_dipole_payload(
-    *,
-    hist_bin_edges,
-    drive_counts,
-    drive_colors,
-    inverted_groups,
-    dipole_times,
-    simulated,
-    experimental,
-    scaling,
-    rmse_labels,
+def padded_peaks(
+    peaks,
+    dynamic,
+):
+    """Give the top of the y-axis for each pair of slider positions."""
+    peaks = np.asarray(
+        peaks,
+        float,
+    )
+
+    # use the overall peak everywhere unless the axis follows the sliders
+    if not dynamic:
+        peaks = np.full_like(
+            peaks,
+            peaks.max(),
+        )
+
+    # leave a little room above the peak, and avoid a zero-height axis
+    tops = np.where(peaks > 0, peaks, 1.0) * 1.05
+
+    return tops
+
+
+def get_slider_shape(
     sliders,
-    xdomain,
-    xlabel="Time (ms)",
-    hist_title="External Drive Spike Arrival Times",
-    hist_ylabel="Counts",
-    dipole_ylabel="Dipole (nAm)",
-    simulated_label="Simulation",
-    simulated_color="#1f77b4",
-    experimental_label="Experimental data",
-    experimental_color="#ff7f0e",
-    width=720,
-    height=640,
+):
+    """Count the positions of each slider, and check each starting position exists."""
+    # get the length of every slider
+    # ------------------------------
+    slider_shape = tuple(len(slider["tick_labels"]) for slider in sliders)
+
+    # sanity checks
+    # ------------------------------
+    for slider, n_positions in zip(
+        sliders,
+        slider_shape,
+        strict=True,
+    ):
+        if not 0 <= slider.get("initial", 0) < n_positions:
+            print(f"{slider['label']}: initial position is out of range")
+            print("\nResetting initial position to 0")
+            slider["initial"] = 0
+
+    return slider_shape
+
+
+def build_histogram_panel(
+    *,
+    bin_edges,
+    counts,
+    colors,
+    inverted_groups,
+    slider_shape,
+    title,
+    ylabel,
 ):
     # set up
     # ------------------------------
     # cast histogram bin_edges to an array
-    hist_bin_edges = np.asarray(hist_bin_edges, float)
+    bin_edges = np.asarray(
+        bin_edges,
+        float,
+    )
 
     # get histogram bin counts
-    hist_n_bins = len(hist_bin_edges) - 1
+    n_bins = len(bin_edges) - 1
 
-    # cast dipoles to arrays
-    simulated = np.asarray(simulated, float)
-    experimental = np.asarray(experimental, float)
-
-    # get the two slider lengths
-    slider_1, slider_2 = sliders
-    len_slider_1 = len(slider_1["tick_labels"])
-    len_slider_2 = len(slider_2["tick_labels"])
-
-    # `drive_counts` maps each *grouped* drive label ("Proximal", "Distal") to an array
-    # whose dimensions are (len_slider_1, len_slider_2, n_hist_bins)
+    # `counts` maps each *grouped* drive label ("Proximal", "Distal") to an array
+    # whose dimensions are (*slider_shape, n_bins), with one dimension per slider
     #
     # for example: if slider 1 (i) has 5 positions and slider 2 (j) has 4 positions,
-    # `counts` must have shape (i=5, j=4, n_hist_bins). `counts[i, j]` returns the bins
+    # each array must have shape (i=5, j=4, n_bins). `counts[i, j]` returns the bins
     # (spike counts) for slider 1 at index `i` and slider 2 at index `j`
     #
-    # this 3D grid is *always* necessary because the "front end" (javascript) does not
-    # know whether one, both, or neither slider parameters will affect the histogram
+    # this grid is *always* necessary because the "front end" (javascript) does not
+    # know whether any, some, or all of the slider parameters will affect the histogram
     # output of the simulation, and so the histogram data are needed for every
     # slider permutation
     groups = []
-    for label, counts in drive_counts.items():
-        counts = np.asarray(counts)
-        if counts.shape != (
-            len_slider_1,
-            len_slider_2,
-            hist_n_bins,
-        ):
-            raise ValueError(f"{label}: counts shape {counts.shape} does not fit")
+    for label, group_counts in counts.items():
+        group_counts = np.asarray(group_counts)
+        if group_counts.shape != slider_shape + (n_bins,):
+            raise ValueError(f"{label}: counts shape {group_counts.shape} does not fit")
         groups.append(
             {
                 "label": label,
-                "color": to_hex(drive_colors[label]),
+                "color": to_hex(colors[label]),
                 "inverted": label in inverted_groups,
-                "counts": counts.tolist(),
+                "counts": group_counts.tolist(),
             },
         )
 
-    # sanity checks
+    # prepare panel
     # ------------------------------
-    if simulated.shape != (
-        len_slider_1,
-        len_slider_2,
-        len(dipole_times),
-    ):
-        raise ValueError(f"simulated shape {simulated.shape} does not fit")
-    if len(experimental) != len(dipole_times):
-        raise ValueError("experimental data must match the time points")
-    if np.asarray(rmse_labels).shape != (len_slider_1, len_slider_2):
-        raise ValueError("rmse_labels must have one entry per slider pair")
-    for slider in sliders:
-        if not 0 <= slider.get("initial", 0) < len(slider["tick_labels"]):
-            raise ValueError(f"{slider['label']}: initial is out of range")
+    # keep the y-axis the same for every slider position so the bars can be compared
+    tallest = max(np.max(group_counts) for group_counts in counts.values())
 
-    # prepare payload
-    # ------------------------------
-    # use one y-axis range for every slider position so the axes don't jump
-    hist_max = max(np.max(group["counts"]) for group in groups)
-    hist_top = (float(hist_max) or 1.0) * 1.05
-    dipole_max = max(
-        float(np.max(np.abs(simulated))),
-        float(np.max(np.abs(experimental))),
-    )
-    dipole_top = (dipole_max or 1.0) * 1.05
-
-    dipole_ylabel += f" x {scaling}"
-
-    payload = {
-        "width": width,
-        "height": height,
-        "x": {
-            "label": xlabel,
-            "domain": list(xdomain),
-        },
-        "sliders": sliders,
-        "hist": {
-            "title": hist_title,
-            "ylabel": hist_ylabel,
-            "bin_edges": hist_bin_edges.tolist(),
-            "domain": [0, hist_top],
-            "groups": groups,
-        },
-        "dipole": {
-            "ylabel": dipole_ylabel,
-            "times": np.asarray(dipole_times, float).tolist(),
-            "domain": [-dipole_top, dipole_top],
-            "simulated": {
-                "label": simulated_label,
-                "color": simulated_color,
-                "frames": simulated.tolist(),
-            },
-            "experimental": {
-                "label": experimental_label,
-                "color": experimental_color,
-                "data": experimental.tolist(),
-            },
-            "rmse": np.asarray(rmse_labels).tolist(),
-        },
+    panel = {
+        "title": title,
+        "ylabel": ylabel,
+        "bin_edges": bin_edges.tolist(),
+        "domain": [0, float(padded_peaks(tallest, False))],
+        "groups": groups,
     }
 
-    return payload
+    return panel
+
+
+def build_dipole_panel(
+    *,
+    times,
+    simulated,
+    experimental,
+    rmse_labels,
+    slider_shape,
+    dynamic_y,
+    ylabel,
+    simulated_label="Simulation",
+    simulated_color="#1f77b4",
+    experimental_label="Experimental data",
+    experimental_color="#ff7f0e",
+):
+    """Collect the dipole lines and RMSE text into one package."""
+    # set up
+    # ------------------------------
+    # cast times and dipoles to arrays
+    times = np.asarray(
+        times,
+        float,
+    )
+    simulated = np.asarray(
+        simulated,
+        float,
+    )
+    experimental = np.asarray(
+        experimental,
+        float,
+    )
+
+    # `simulated` has dimensions (*slider_shape, n_times): one dipole for every
+    # combination of slider positions, because the simulation is re-run for each one.
+    # `experimental` is a single dipole, since it never changes with the sliders
+
+    # sanity checks
+    # ------------------------------
+    if simulated.shape != slider_shape + (len(times),):
+        raise ValueError(f"simulated shape {simulated.shape} does not fit")
+    if experimental.shape != times.shape:
+        raise ValueError("experimental data must match the time points")
+    if np.asarray(rmse_labels).shape != slider_shape:
+        raise ValueError("rmse_labels must have one entry per combination of sliders")
+
+    # prepare panel
+    # ------------------------------
+    # find the tallest value for every combination of slider positions
+    peaks = np.maximum(
+        np.abs(simulated).max(axis=-1),
+        np.abs(experimental).max(),
+    )
+    tops = padded_peaks(
+        peaks,
+        dynamic_y,
+    )
+
+    # center the y-axis on zero, with one range per combination of slider positions
+    domains = np.stack(
+        [-tops, tops],
+        axis=-1,
+    )
+
+    panel = {
+        "ylabel": ylabel,
+        "times": times.tolist(),
+        "domains": domains.tolist(),
+        "simulated": {
+            "label": simulated_label,
+            "color": simulated_color,
+            "frames": simulated.tolist(),
+        },
+        "experimental": {
+            "label": experimental_label,
+            "color": experimental_color,
+            "data": experimental.tolist(),
+        },
+        "rmse": np.asarray(rmse_labels).tolist(),
+    }
+
+    return panel
 
 
 # %% [code]
@@ -508,12 +574,6 @@ payload = build_slider_payload(
 )
 
 if save_js:
-    if "__file__" in globals():
-        out_dir = Path(__file__).parent
-    # fall back to the cwd (e.g., this may be triggered in a jupyter environment)
-    else:
-        out_dir = Path.cwd()
-
     write_widget_js(
         payload,
         out_dir / "scaling_widget.js",
@@ -525,144 +585,298 @@ if save_js:
 # Interactive plot for adjusting drive mu and sigma
 # --------------------------------------------------
 
-save_js = True
+# set simulation specifications, params
+# ---------------------------------------
+outname = "drive_dipole_widget"
 
+save_js = True
+run_simulations = True
+
+sim_output_path = out_dir / f"{outname}_data.pkl"
 drive_name = "evdist1"
 dipole_scaling = 3000
 dipole_smoothing = 30
 
-mean_values = [
-    49,
-    56,
-    63,
-    70,
-    77,
-]
-std_values = [
-    1,
-    2,
-    3,
-    4,
-    5,
+
+def set_drive_mu(
+    net,
+    new_val,
+    drive_name,
+):
+    net.external_drives[drive_name]["dynamics"]["mu"] = new_val
+    return
+
+
+def set_drive_sigma(
+    net,
+    new_val,
+    drive_name,
+):
+    net.external_drives[drive_name]["dynamics"]["sigma"] = new_val
+    return
+
+
+param_1_sim_data = {
+    "name": "Mean arrival time",
+    "param": "mu",
+    "initial_index": 2,
+    "values": [
+        51,
+        54,
+        57,
+        60,
+        63,
+        66,
+        69,
+        72,
+        75,
+    ],
+    "setter": set_drive_mu,
+    "setter_args": {
+        "drive_name": drive_name,
+    },
+}
+param_2_sim_data = {
+    "name": "Std. deviation",
+    "param": "sigma",
+    "initial_index": 2,
+    "values": [
+        1,
+        1.5,
+        2,
+        2.5,
+        3,
+        3.5,
+        4,
+        4.5,
+        5,
+    ],
+    "setter": set_drive_sigma,
+    "setter_args": {
+        "drive_name": drive_name,
+    },
+}
+
+# the order here sets the slider order (top to bottom)
+param_sim_data = [
+    param_1_sim_data,
+    param_2_sim_data,
 ]
 
+# %% [code]
+
+# run simulation loop
+# ----------------------------------------
+if run_simulations:
+    sim_net = neymotin_2020_model()
+    add_erp_drives_to_jones_model(sim_net)
+
+    # fetch the list of dynamic slider parameters
+    # - for example: [param_1_value_list, param_2_value_list]
+    param_value_lists = []
+    for param_data in param_sim_data:
+        param_value_lists.append(param_data["values"])
+
+    # simulate every combination of param values
+    # ----------------------------------------
+    # - e.g., the first parameter is held at its first value while
+    #   the remaining parameters cycle through all of their values
+    # - the result matches the order expected by `.reshape(*slider_shape, -1)`
+    #   when folding simulation data into a grid indexed by slider
+    raw_runs = []
+    with MPIBackend(ncores):
+        for param_combination in product(*param_value_lists):
+            # configure the network for this combination of parameter values:
+            # - `param_combination` holds the value of each dynamic parameter to
+            #   be used in the current simulation run. E.g., for a simulation with
+            #   two parameters "mu"=[45, 50] and "sigma"=[1, 2] at index i=0, j=0,
+            #   we get `(mu_i, sigma_j)` = (45, 1)
+            drive_net = deepcopy(sim_net)
+            run_data = {}
+
+            # pair each param's value with its corresponding config dict, which we
+            # need as it contains the "setter" needed to update its network value;
+            # - e.g., `zip` will pair the values with their param configs like so:
+            #   `[(mu_param_sim_data, 45), (sigma_param_sim_data, 1)]`
+            for param_data, new_val in zip(
+                param_sim_data,
+                param_combination,
+                # `strict=True` checks that both inputs have the same length and
+                # raises an error if they don't; by default, zip stops silently
+                # at the shorter input
+                strict=True,
+            ):
+                # look up the setter function and call it to update the network
+                # for example:
+                # On the first simulation run, which uses `(45, 1)`, we call:
+                #    > set_drive_mu(net, 45, drive_name="name")
+                #    > set_drive_sigma(net, 1, drive_name="name")
+                # On second simulation run, we call the same functions with `(45, 2)`
+                setter = param_data["setter"]
+                setter_args = param_data.get("setter_args", {})
+                setter(
+                    drive_net,
+                    new_val,
+                    **setter_args,
+                )
+                run_data[param_data["param"]] = new_val
+
+            dipoles = simulate_dipole(
+                net=drive_net,
+                tstop=tstop,
+                n_trials=n_trials,
+                dt=dt,
+            )
+
+            run_data["dipole"] = dipoles[0]
+            run_data["cell_response"] = drive_net.cell_response
+            raw_runs.append(run_data)
+
+    # remove setter functions before pickling sothe saved file only
+    # holds plain data
+    saved_param_data = []
+    for param_data in param_sim_data:
+        param_copy = param_data.copy()
+        param_copy.pop("setter", None)
+        saved_param_data.append(param_copy)
+
+    sim_output_data = {
+        "params": saved_param_data,
+        "runs": raw_runs,
+    }
+    with open(sim_output_path, "wb") as f:
+        pickle.dump(
+            sim_output_data,
+            f,
+        )
+else:
+    with open(sim_output_path, "rb") as f:
+        sim_output_data = pickle.load(f)
+
+# %% [code]
+
+# read the data from the stored simulation output
+# ----------------------------------------
 drive_groups = {
     "Proximal": ["evprox"],
     "Distal": ["evdist"],
 }
 
-sim_net = neymotin_2020_model()
-add_erp_drives_to_jones_model(sim_net)
+sliders = []
+for param in sim_output_data["params"]:
+    sliders.append(
+        {
+            "label": param["name"],
+            "tick_labels": [str(val) for val in param["values"]],
+            "initial": param["initial_index"],
+        }
+    )
 
-# run one simulation for every pair of mean and standard deviation
+# sliders = [
+#     {
+#         "label": sim_output_data["param_1"]["name"],
+#         "tick_labels": [str(val) for val in sim_output_data["param_1"]["values"]],
+#         "initial": sim_output_data["param_1"]["initial_index"],
+#     },
+#     {
+#         "label": sim_output_data["param_2"]["name"],
+#         "tick_labels": [str(val) for val in sim_output_data["param_2"]["values"]],
+#         "initial": sim_output_data["param_2"]["initial_index"],
+#     },
+# ]
+slider_shape = get_slider_shape(sliders)
+
+# process the simulation outputs
+# ----------------------------------------
 flat_counts = {label: [] for label in drive_groups}
 flat_dipoles = []
 rmse_labels = []
 
-with MPIBackend(ncores):
-    for mean, std in product(
-        mean_values,
-        std_values,
-    ):
-        drive_net = deepcopy(sim_net)
-        drive_net.external_drives[drive_name]["dynamics"]["mu"] = mean
-        drive_net.external_drives[drive_name]["dynamics"]["sigma"] = std
+# NOTE: the runs are saved in param 1 x param 2 order,
+# which the reshape below depends on
+for run in sim_output_data["runs"]:
+    # scale and smooth a copy, so the stored dipole is never changed
+    processed_dipole = (
+        deepcopy(run["dipole"]).scale(dipole_scaling).smooth(dipole_smoothing)
+    )
 
-        dipoles = simulate_dipole(
-            net=drive_net,
-            tstop=tstop,
-            n_trials=n_trials,
-            dt=dt,
-        )
-        dipole = dipoles[0].scale(dipole_scaling).smooth(dipole_smoothing)
+    # count the drive spikes in each time bin
+    histogram = count_drive_spikes(
+        run["cell_response"],
+        drive_groups,
+    )
+    for label in drive_groups:
+        flat_counts[label].append(histogram["counts"][label])
 
-        # count the drive spikes in each time bin
-        histogram = count_drive_spikes(
-            drive_net.cell_response,
-            drive_groups,
-        )
-        for label in drive_groups:
-            flat_counts[label].append(histogram["counts"][label])
-
-        # compare to the experimental data, then use fewer time points
-        rmse = _rmse(
-            dipole,
-            threshold_experimental_dpl,
-            0.0,
-            tstop,
-        )
-        rmse_labels.append(f"RMSE: {rmse:.4f}")
-        flat_dipoles.append(
-            resample(
-                dipole.times,
-                dipole.data["agg"],
-                experimental_times,
-            ),
-        )
-
-# arrange the results as mean x standard deviation
-n_means = len(mean_values)
-n_stds = len(std_values)
+    # compare to the experimental data, then use fewer time points
+    rmse = _rmse(
+        processed_dipole,
+        threshold_experimental_dpl,
+        0.0,
+        tstop,
+    )
+    rmse_labels.append(f"RMSE: {rmse:.4f}")
+    flat_dipoles.append(
+        resample(
+            processed_dipole.times,
+            processed_dipole.data["agg"],
+            experimental_times,
+        ),
+    )
 
 drive_counts = {
     label: np.asarray(counts).reshape(
-        n_means,
-        n_stds,
+        *slider_shape,
         -1,
     )
     for label, counts in flat_counts.items()
 }
 simulated = np.asarray(flat_dipoles).reshape(
-    n_means,
-    n_stds,
+    *slider_shape,
     -1,
 )
-rmse_labels = (
-    np.asarray(rmse_labels)
-    .reshape(
-        n_means,
-        n_stds,
-    )
-    .tolist()
-)
+rmse_labels = np.asarray(rmse_labels).reshape(slider_shape)
 
-payload = build_drive_dipole_payload(
-    hist_bin_edges=histogram["bin_edges"],
-    drive_counts=drive_counts,
-    drive_colors={
+hist_panel = build_histogram_panel(
+    bin_edges=histogram["bin_edges"],
+    counts=drive_counts,
+    colors={
         "Proximal": "r",
         "Distal": "g",
     },
     inverted_groups=["Distal"],
-    dipole_times=experimental_times,
-    simulated=simulated,
-    experimental=experimental_data,
-    scaling=dipole_scaling,
-    rmse_labels=rmse_labels,
-    sliders=[
-        {
-            "label": "Mean arrival time",
-            "tick_labels": [str(v) for v in mean_values],
-            "initial": 2,
-        },
-        {
-            "label": "Std. deviation",
-            "tick_labels": [str(v) for v in std_values],
-            "initial": 2,
-        },
-    ],
-    xdomain=[0, tstop],
+    slider_shape=slider_shape,
+    title="External Drive Spike Arrival Times",
+    ylabel="Counts",
 )
 
-if save_js:
-    # fall back to the current folder when run as a notebook
-    out_dir = Path.cwd()
-    if "__file__" in globals():
-        out_dir = Path(__file__).parent
+dipole_panel = build_dipole_panel(
+    times=experimental_times,
+    simulated=simulated,
+    experimental=experimental_data,
+    rmse_labels=rmse_labels,
+    slider_shape=slider_shape,
+    dynamic_y=True,
+    ylabel=f"Dipole (nAm) x {dipole_scaling}",
+)
 
+payload = {
+    "width": 720,
+    "height": 640,
+    "x": {
+        "label": "Time (ms)",
+        "domain": [0, tstop],
+    },
+    "sliders": sliders,
+    "hist": hist_panel,
+    "dipole": dipole_panel,
+}
+
+if save_js:
     write_widget_js(
         payload,
-        out_dir / "drive_dipole_widget.js",
+        out_dir / f"{outname}.js",
+        sig=5,
     )
 
 # %% [code]

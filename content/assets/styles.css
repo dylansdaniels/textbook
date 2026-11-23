@@ -2455,6 +2455,25 @@ body.dark-mode .hnn-slider-ticks {
 }
 
 /* 
+    Element: .hnn-slider-group
+    Description: Stacks several sliders so their tracks line up in one column
+*/
+.hnn-slider-group {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    align-items: center;
+    column-gap: 16px;
+}
+
+.hnn-slider-group .hnn-slider-controls {
+    display: contents;
+}
+
+.hnn-slider-group .hnn-slider-controls > * {
+    margin: 34px 0 24px;
+}
+
+/* 
 # ------------------------------------------------------------
 # Responsiveness
 # ------------------------------------------------------------ 

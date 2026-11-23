@@ -1,0 +1,1317 @@
+// ----------------------------------------
+// Define page load ordering
+// ----------------------------------------
+function initSidebar() {
+    const sidebar = document.getElementById("mySidebar");
+    const savedState = localStorage.getItem("sidebarState");
+
+    if (savedState === "closed") {
+        sidebar.style.width = "0";
+    } else {
+        sidebar.style.width = maxWidth;
+    }
+
+    sidebar.style.visibility = "visible";
+}
+
+function initTopbar() {
+    const topbar = document.querySelector(".topbar");
+    const sidebarWidth = localStorage.getItem("sidebarState") === "closed" ? "0" : maxWidth;
+
+    topbar.style.marginLeft = sidebarWidth;
+    topbar.style.width = sidebarWidth === "0" ? "100%" : `calc(100% - ${sidebarWidth})`;
+    topbar.style.visibility = "visible";
+}
+
+function initMainContent() {
+    const main = document.getElementById("main");
+    main.style.visibility = "visible";
+}
+
+function injectIframe() {
+    // Note: pages may contain multiple video containers, so this must use
+    // querySelectorAll and not getElementById (which only returns the first)
+    document.querySelectorAll('[id="video-container"]').forEach(container => {
+        if (container.dataset.src && !container.querySelector("iframe")) {
+            const iframe = document.createElement("iframe");
+            iframe.src = container.dataset.src;
+            iframe.width = "640";
+            iframe.height = "480";
+            iframe.style.border = "none";
+            iframe.style.display = "block";
+            iframe.style.margin = "0 auto";
+            iframe.allowFullscreen = true;
+            container.appendChild(iframe);
+        }
+    });
+}
+
+function hideIframes() {
+    // Hide all iframes initially
+    document.querySelectorAll('iframe').forEach(iframe => {
+        iframe.style.visibility = 'hidden';
+    });
+}
+
+function showIframes() {
+    // Reveal all iframes after delay
+    document.querySelectorAll('iframe').forEach(iframe => {
+        iframe.style.visibility = 'visible';
+    });
+}
+
+// ----------------------------------------
+// Get scrollbar width
+// ----------------------------------------
+// We need to add padding to the topbar that equals the scrollbar width since the
+// scrollbar gutter is always present in the main body. This ensures the HNN image
+// in the topbar remains perfectly centered relative to the main body. Since scrollbar
+// width can vary accross browser, we can compute it dynamically (with a fallback of
+// 15px set in styles.css)
+
+function getScrollbarWidth() {
+    const element = document.createElement("div");
+
+    element.style.cssText = `
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        overflow: scroll;
+        visibility: hidden;
+        top: -9999px;
+    `;
+
+    document.body.appendChild(element);
+    const scrollbarWidth = element.offsetWidth - element.clientWidth;
+    element.remove();
+
+    return scrollbarWidth;
+}
+
+function initTopbarScrollbarSpacing() {
+    document.documentElement.style.setProperty(
+        "--browser-scrollbar-width",
+        `${getScrollbarWidth()}px`
+    );
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+    initSidebar();
+    resizeCodeCells();
+});
+
+window.addEventListener("load", () => {
+    initTopbar();
+    initTopbarScrollbarSpacing();
+    initMainContent();
+    hideIframes();
+    injectIframe();
+
+    setTimeout(() => {
+        showIframes();
+    }, 500);
+});
+
+// ----------------------------------------
+// Manage footer
+// ----------------------------------------
+// This function will update the footer links when a page is loaded
+// locally so that naivagation remains functional without a server
+// Note: this solution is specific to MacOS
+
+document.addEventListener("DOMContentLoaded", function() {
+    if (window.location.protocol === "file:") {
+        // Get the current local directory path
+        const currentDir = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+
+        // Process both previous and next links
+        document.querySelectorAll('.previous-area, .next-area').forEach(function(area) {
+            const link = area.getAttribute('data-link');
+            
+            if (link && link.startsWith("/")) {
+                // Extract the local root directory
+                const rootPath = currentDir.split("/textbook/")[0];
+                // Prepend root path to link
+                const resolvedLink = "file://" + rootPath + link;
+                area.setAttribute("data-link", resolvedLink);
+            }
+        });
+    }
+});
+// Hide the area if data-link is 'None'
+document.querySelectorAll('.previous-area, .next-area').forEach(function(area) {
+    if (area.getAttribute('data-link') === 'None') {
+        area.style.display = 'none'; 
+    }
+});
+
+// Redirect to the specified link
+document.querySelectorAll('.previous-area, .next-area').forEach(function(area) {
+    area.addEventListener('click', function() {
+        window.location.href = area.getAttribute('data-link');
+    });
+});
+
+// ----------------------------------------
+// Manage sidebar
+// ----------------------------------------
+let isSidebarOpen = true; // Sidebar is initially open
+let isSidebarFullyOpen = true; // Sidebar is fully open
+const maxWidth = '350px';
+
+function toggleNav() {
+    const sidebar = document.getElementById("mySidebar");
+    const main = document.getElementById("main-scroll-container");
+    const topbar = document.querySelector(".topbar");
+
+    // Toggle sidebar state
+    if (isSidebarOpen) {
+        sidebar.style.width = "0";
+        main.style.marginLeft = "0";
+        topbar.style.marginLeft = "0";
+        topbar.style.width = "100%";
+        isSidebarFullyOpen = false;
+    } else {
+        sidebar.style.width = maxWidth;
+        main.style.marginLeft = maxWidth;
+            // match margin to new width
+        topbar.style.marginLeft = maxWidth;
+        topbar.style.width = `calc(100% - ${maxWidth})`;
+            // adjust topbar width
+    }
+
+    // Toggle the sidebar state
+    isSidebarOpen = !isSidebarOpen;
+
+    // Store the sidebar state in localStorage
+    localStorage.setItem("sidebarState", isSidebarOpen ? "open" : "closed");
+}
+
+// Always listen for the transitionend on the sidebar
+const sidebar = document.getElementById("mySidebar");
+sidebar.addEventListener('transitionend', function() {
+    if (sidebar.style.width === maxWidth) {
+        // Sidebar has fully opened
+        isSidebarFullyOpen = true;
+    } else {
+        // Sidebar is not fully open
+        isSidebarFullyOpen = false;
+    }
+});
+
+// add event listener to the sidebar close button
+// that appears only on small screens
+const closeBtn = document.querySelector(".sidebar-close");
+if (closeBtn) {
+  closeBtn.addEventListener("click", toggleNav);
+}
+
+// Open the sidebar on page load
+// -----------------------------
+
+// Apply sidebar state before the page renders
+// Added to help with initial page "flicker" as the position is
+// calculated and applied
+const savedState = localStorage.getItem("sidebarState");
+if (savedState === "closed") {
+    document.body.classList.add("sidebar-closed");
+} else {
+    document.body.classList.add("sidebar-open");
+}
+
+window.onload = function() {
+    const sidebar = document.getElementById("mySidebar");
+    const main = document.getElementById("main-scroll-container");
+    const topbar = document.querySelector(".topbar");
+
+    // Retrieve stored state
+    const savedState = localStorage.getItem("sidebarState");
+
+    // Determine initial state
+    if (savedState === "closed") {
+        sidebar.style.width = "0";
+        main.style.marginLeft = "0";
+        topbar.style.marginLeft = "0";
+        topbar.style.width = "100%";
+        isSidebarOpen = false;
+        isSidebarFullyOpen = false;
+    } else {
+        sidebar.style.width = maxWidth;
+        main.style.marginLeft = maxWidth;
+        topbar.style.marginLeft = maxWidth;
+        topbar.style.width = `calc(100% - ${maxWidth})`;
+        isSidebarOpen = true;
+        isSidebarFullyOpen = true;
+    }
+
+    // Disable transition for the initial state
+    sidebar.style.transition = "none";
+    main.style.transition = "none";
+    topbar.style.transition = "none";
+
+    // Re-enable transition for subsequent toggles
+    setTimeout(() => {
+        sidebar.style.transition = "width 0.5s";
+        main.style.transition = "margin-left 0.5s";
+        topbar.style.transition = "margin-left 0.5s, width 0.5s";
+    }, 10);
+}
+
+function toggleSubmenu(event) {
+    const header = event.target.closest('#sidebar-section');
+        // Get the clicked header
+    const submenu = header.nextElementSibling;
+        // Get the submenu
+    const toggleIcon = header.querySelector('.toggle-icon');
+        // Get the icon
+
+    if (submenu && submenu.classList.contains('submenu')) {
+        submenu.classList.toggle('open'); 
+            // Toggle the 'open' class to control visibility
+        toggleIcon.textContent = submenu.classList.contains('open') ? '-' : '+'; 
+            // Update icon
+    }
+}
+
+// Resolve sidebar links for local development
+// -------------------------------------------
+// This function will update the sidebar links when a page is loaded
+// locally so that sidebar naivagation remains functional without a server
+// Note: this solution is specific to MacOS
+
+document.addEventListener("DOMContentLoaded", function() {
+    if (window.location.protocol === "file:") {
+        // get the current local directory path
+        const currentDir = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+
+        // get 'absolute' links with root of 'textbook'
+        const links = document.querySelectorAll("#mySidebar a");
+        links.forEach(link => {
+            const href = link.getAttribute("href");
+
+            if (href && href.startsWith("/")) {
+                // extract the local root directory
+                const rootPath = currentDir.split("/textbook/")[0];
+                // prepend root path to link
+                const resolvedHref = "file://" + rootPath + href;
+                link.setAttribute("href", resolvedHref);
+            }
+        });
+
+        // Update image sources for icons
+        const images = document.querySelectorAll(".social-icons img, .menu-icons img");
+        images.forEach(img => {
+            const src = img.getAttribute("src");
+
+            if (src && src.startsWith("/")) {
+                // extract the local root directory
+                const rootPath = currentDir.split("/textbook/")[0];
+                // prepend root path to image source
+                const resolvedSrc = "file://" + rootPath + src;
+                img.setAttribute("src", resolvedSrc);
+            }
+        });
+    }
+});
+
+// Custom tooltips for the sidebar
+// -------------------------------
+// Flag to track tooltip visibility
+let isTooltipVisible = false;
+// Track pending tooltip timeout
+let tooltipTimeoutId = null;
+
+// Add text to the 'sidebar-tooltip' attribute for sidebar anchor tags
+document.querySelectorAll('.sidebar a').forEach(anchor => {
+    const cleanedText = anchor.textContent.replace(/[+\-]/g, '').trim();
+    anchor.setAttribute('sidebar-tooltip', cleanedText);
+});
+
+// Handle sidebar tooltips
+document.querySelectorAll('.sidebar a').forEach(function(link) {
+    link.addEventListener('mouseenter', function(event) {
+        const tooltipText = event.target.getAttribute('sidebar-tooltip');
+        
+        if (!tooltipText || isTooltipVisible || !isSidebarFullyOpen) return; // Only show tooltip if none is visible
+
+        // Check if the text is overflowing
+        if (event.target.scrollWidth > event.target.offsetWidth) {
+            const delay = 500; // Set the delay time (in ms), adjust as needed
+
+            // Create the tooltip after the delay
+            tooltipTimeoutId = setTimeout(function() {
+                // Remove any existing tooltips
+                const existingTooltip = document.querySelector('.sidebar-tooltip');
+                if (existingTooltip) {
+                    existingTooltip.remove();
+                }
+
+                // Create the tooltip element dynamically
+                const tooltip = document.createElement('div');
+                tooltip.classList.add('sidebar-tooltip');  // Use the existing class
+                tooltip.innerText = tooltipText;
+
+                // Append the tooltip to the sidebar container
+                const sidebarContainer = document.querySelector('.sidebar');
+                sidebarContainer.appendChild(tooltip);
+
+                // Get the position of the link and the sidebar container
+                const rect = event.target.getBoundingClientRect();
+                const sidebarRect = sidebarContainer.getBoundingClientRect();
+
+                // Position the tooltip relative to the sidebar container
+                tooltip.style.position = 'absolute';
+                tooltip.style.left = `${rect.left - sidebarRect.left + sidebarContainer.scrollLeft + 20}px`;
+                tooltip.style.top = `${rect.bottom - sidebarRect.top + sidebarContainer.scrollTop + 5}px`;
+
+                // Make sure the tooltip is visible
+                tooltip.style.opacity = '1';
+
+                // Set the flag to true indicating that the tooltip is visible
+                isTooltipVisible = true;
+
+                // Reset the timeout id
+                tooltipTimeoutId = null;
+            }, delay); // Delay the tooltip creation
+        }
+    });
+
+    link.addEventListener('mouseleave', function(event) {
+        if (tooltipTimeoutId !== null) {
+            clearTimeout(tooltipTimeoutId);
+            tooltipTimeoutId = null;
+        }
+
+        // Remove the tooltip when the mouse leaves
+        const tooltip = document.querySelector('.sidebar-tooltip');
+        if (tooltip) {
+            tooltip.remove();
+        }
+
+        // Reset the flag to false when the tooltip is removed
+        isTooltipVisible = false;
+    });
+});
+
+// Close all open submenus in the sidebar
+// --------------------------------------
+document.addEventListener("DOMContentLoaded", function() {
+    // Function to close all open submenus in the sidebar
+    function closeAllSubmenus() {
+        const allSubmenus = document.querySelectorAll('.submenu.open'); // Select all open submenus
+        allSubmenus.forEach(submenu => {
+            submenu.classList.remove('open'); // Remove 'open' class to collapse
+            const toggleIcon = submenu.previousElementSibling.querySelector('.toggle-icon');
+            if (toggleIcon) {
+                toggleIcon.textContent = '+'; // Reset icon to '+'
+            }
+        });
+    }
+
+    // Add functionality to collapse button (SVG icon)
+    const collapseIcon = document.querySelector('.collapse-icon');
+    if (collapseIcon) {
+        collapseIcon.addEventListener('click', function(event) {
+            event.stopPropagation(); // Prevent event propagation to avoid unwanted behavior
+            closeAllSubmenus(); // Close all open submenus when the icon is clicked
+        });
+    }
+});
+
+// Keep the current page open in the sidebar
+// -----------------------------------------
+document.addEventListener("DOMContentLoaded", function () {
+    // Get the full path relative to the 'content' folder
+    // TODO? Currently breaks automatic sidebar display of current page  on "dev"
+    // builds, but probably not worth fixing
+    const currentPage = window.location.pathname.split("/content/")[1].split("?")[0];
+
+    // Find the active link using the full path
+    const activeLink = document.querySelector(`#mySidebar a[href$='${currentPage}']`);
+
+    if (activeLink) {
+        // Apply the active class
+        activeLink.classList.add("active");
+            // Find the closest submenu
+        const submenu = activeLink.closest('.submenu');
+
+        if (submenu) {
+            // Keep the submenu open
+            submenu.classList.add('open');
+            const toggleIcon = submenu.previousElementSibling.querySelector('.toggle-icon');
+
+            if (toggleIcon) {
+                // Ensure the toggle icon reflects the open state
+                toggleIcon.textContent = '-';
+            }
+        }
+    }
+});
+
+// ------------------------------
+// Font size buttons and dropdown
+// ------------------------------
+document.addEventListener("DOMContentLoaded", function() {
+    const content = document.getElementById("content");
+
+    // Retrieve and apply the saved font size
+    const savedFontSize = localStorage.getItem("fontSize");
+    if (savedFontSize && content) {
+        content.style.fontSize = savedFontSize + "px";
+    }
+});
+
+function increaseFontSize() {
+    event.stopPropagation();  // Prevent dropdown from closing
+    const content = document.getElementById("content");
+    const currentSize = parseFloat(window.getComputedStyle(content).fontSize);
+    const newSize = currentSize + 1;
+
+    content.style.fontSize = newSize + "px";
+
+    // save font size to localStorage
+    localStorage.setItem("fontSize", newSize);
+
+    resizeHeadings();
+    resizeCodeCells();
+}
+
+function decreaseFontSize() {
+    event.stopPropagation();  // Prevent dropdown from closing
+    const content = document.getElementById("content");
+    const currentSize = parseFloat(window.getComputedStyle(content).fontSize);
+    const newSize = currentSize - 1;
+
+    content.style.fontSize = newSize + "px";
+
+    // save font size to localStorage
+    localStorage.setItem("fontSize", newSize);
+
+    resizeHeadings();
+    resizeCodeCells();
+}
+
+// Dropdown for font buttons
+function toggleDropdown() {
+    const dropdownContent = document.querySelector('.dropdown-content');
+    dropdownContent.style.display = dropdownContent.style.display === 'block' ? 'none' : 'block';
+}
+
+// Open/close dropdown on click of the button
+document.getElementById('dropdownButton').onclick = function(event) {
+    event.stopPropagation();  // Prevent the click from triggering the window.onclick event
+    toggleDropdown();
+};
+
+// Close dropdown if clicking outside
+window.onclick = function(event) {
+    const dropdownContent = document.querySelector('.dropdown-content');
+    if (!event.target.closest('.dropdown')) {  // Close if click outside the dropdown
+        dropdownContent.style.display = 'none';
+    }
+};
+
+// ----------------------------------------
+// Toggle between light and dark themes
+// ----------------------------------------
+// Wait for the DOM to be fully loaded
+
+document.addEventListener('DOMContentLoaded', () => {
+    const themeToggle = document.querySelector('.theme-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const sunSVG = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <path d="M361.5 1.2c5 2.1 8.6 6.6 9.6 11.9L391 121l107.9 19.8c5.3 1 9.8 4.6 11.9 9.6s1.5 10.7-1.6 15.2L446.9 256l62.3 90.3c3.1 4.5 3.7 10.2 1.6 15.2s-6.6 8.6-11.9 9.6L391 391 371.1 498.9c-1 5.3-4.6 9.8-9.6 11.9s-10.7 1.5-15.2-1.6L256 446.9l-90.3 62.3c-4.5 3.1-10.2 3.7-15.2 1.6s-8.6-6.6-9.6-11.9L121 391 13.1 371.1c-5.3-1-9.8-4.6-11.9-9.6s-1.5-10.7 1.6-15.2L65.1 256 2.8 165.7c-3.1-4.5-3.7-10.2-1.6-15.2s6.6-8.6 11.9-9.6L121 121 140.9 13.1c1-5.3 4.6-9.8 9.6-11.9s10.7-1.5 15.2 1.6L256 65.1 346.3 2.8c4.5-3.1 10.2-3.7 15.2-1.6zM160 256a96 96 0 1 1 192 0 96 96 0 1 1 -192 0zm224 0a128 128 0 1 0 -256 0 128 128 0 1 0 256 0z"></path>
+        </svg>
+    `;
+    const moonSVG = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+            <path d="M223.5 32C100 32 0 132.3 0 256S100 480 223.5 480c60.6 0 115.5-24.2 155.8-63.4c5-4.9 6.3-12.5 3.1-18.7s-10.1-9.7-17-8.5c-9.8 1.7-19.8 2.6-30.1 2.6c-96.9 0-175.5-78.8-175.5-176c0-65.8 36-123.1 89.3-153.3c6.1-3.5 9.2-10.5 7.7-17.3s-7.3-11.9-14.3-12.5c-6.3-.5-12.6-.8-19-.8z"></path>
+        </svg>
+    `;
+
+    // Check the saved theme preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        document.body.classList.toggle('dark-mode', savedTheme === 'dark');
+        themeToggle.innerHTML = savedTheme === 'dark' ? moonSVG : sunSVG;
+        sidebar.classList.toggle('dark-mode', savedTheme === 'dark');
+    } else {
+        // Default to light theme if no saved preference
+        themeToggle.innerHTML = sunSVG;
+    }
+
+    // Add click event to toggle theme
+    themeToggle.addEventListener('click', () => {
+        const isDarkMode = document.body.classList.toggle('dark-mode');
+        themeToggle.innerHTML = isDarkMode ? moonSVG : sunSVG;
+        sidebar.classList.toggle('dark-mode', isDarkMode);
+        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    });
+});
+
+// ----------------------------------------
+// Add a clickable '#' for each heading 
+// that directs to that heading
+// ----------------------------------------
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach(header => {
+        if (!header.id) {
+            let text = header.textContent.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]/g, '');
+            header.id = text;
+        }
+
+        // Avoid adding duplicate links if the script runs multiple times
+        if (!header.querySelector(".headerlink")) {
+            let link = document.createElement("a");
+            link.className = "headerlink";
+            link.href = `#${header.id}`;
+            link.title = "Link to this heading";
+            link.textContent = " #"; // Space before # for spacing
+
+            header.appendChild(link);
+        }
+    });
+});
+
+// ----------------------------------------
+// Keep headings on one line
+// ----------------------------------------
+// - This also accounts for the clickable '#' that is dynamically added to headers
+// - The text is dynamically resized down to 12px to (in most reasonable cases) prevent 
+//   the headers from wrapping onto new lines
+function resizeHeadings() {
+    document.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach(header => {
+        // Remove any previous adjustment so the current inherited
+        // font size can be used as the starting point
+        header.style.fontSize = "";
+        header.style.whiteSpace = "nowrap";
+
+        const originalFontSize = parseFloat(getComputedStyle(header).fontSize);
+        let fontSize = originalFontSize;
+
+        while (header.scrollWidth > header.clientWidth) {
+            fontSize -= 1;
+
+            if (fontSize <= 12) {
+                fontSize = 12;
+                break;
+            }
+
+            header.style.fontSize = `${fontSize}px`;
+        }
+    });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    resizeHeadings();
+    window.addEventListener("resize", resizeHeadings);
+});
+
+window.addEventListener("load", resizeHeadings);
+
+// ----------------------------------------
+// Code syntax highlighting
+// ----------------------------------------
+
+// Remove the leading whitespace/newlines around code blocks 
+// caused by the html structure used for readability
+document.addEventListener("DOMContentLoaded", function() {
+    // Select all code blocks
+    const codeBlocks = document.querySelectorAll('.code-cell code.language-python');
+
+    codeBlocks.forEach(function(block) {
+        // Apply syntax highlighting to the code block
+        // Note: The below line is not needed with this setup
+        //  but may be useful in the case that the method
+        //  is later changed
+        // Prism.highlightElement(block);
+
+        // Get the code with highlighted classes
+        const highlightedHTML = block.innerHTML;
+
+        // Remove leading/trailing whitespace/newlines
+        block.innerHTML = highlightedHTML.trim();
+    });
+
+    // Select all output-code blocks
+    const outputBlocks = document.querySelectorAll('.output-cell .output-code');
+
+    outputBlocks.forEach(function(block) {
+        // Remove unwanted leading/trailing whitespace or newlines
+        block.textContent = block.textContent.trim();
+    });
+});
+
+// ----------------------------------------
+// Copy button on code cells
+// ----------------------------------------
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('.code-cell').forEach(cell => {
+        // Avoid inserting the button multiple times
+        if (cell.querySelector('.copy-button')) return;
+
+        const button = document.createElement('button');
+        button.className = 'copy-button';
+
+        // Define copy icon and text
+        button.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.25em;">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>Copy</span>
+        `;
+
+        // copy text and add click effects
+        button.addEventListener('click', () => {
+            // const code = cell.innerText;
+            const code = cell.querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                button.querySelector('span').textContent = 'Copied!';
+                setTimeout(() => {
+                    button.querySelector('span').textContent = 'Copy';
+                }, 1000);
+            });
+        });
+
+        cell.appendChild(button);
+    });
+});
+
+// ----------------------------------------
+// Copy button on command-line code blocks
+// ----------------------------------------
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(
+        'div.sourceCode:has(code.sourceCode.bash, code.sourceCode.sh, code.sourceCode.console)'
+    ).forEach(cell => {
+        // Avoid inserting the button multiple times
+        if (cell.querySelector('.copy-button')) return;
+
+        const button = document.createElement('button');
+        button.className = 'copy-button';
+
+        // Define copy icon and text
+        button.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.25em;">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>Copy</span>
+        `;
+
+        // Copy text and add click effects
+        button.addEventListener('click', () => {
+            const code = cell.querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                button.querySelector('span').textContent = 'Copied!';
+                setTimeout(() => {
+                    button.querySelector('span').textContent = 'Copy';
+                }, 1000);
+            });
+        });
+
+        cell.appendChild(button);
+    });
+});
+
+// ----------------------------------------
+// Code cell wrap width
+// ----------------------------------------
+// Notes:
+//   - set .code-cell elements that have a child "language-python" to use
+//     a max-width of 80 characters before the overflow goes into effect
+
+function resizeCodeCells() {
+    document.querySelectorAll(".code-cell code.language-python").forEach(code => {
+        const wrapper = code.parentElement;
+
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+
+        context.font = getComputedStyle(code).font;
+
+        const textWidth = context.measureText("0".repeat(80)).width;
+        const padding = parseFloat(getComputedStyle(wrapper).paddingLeft)
+            + parseFloat(getComputedStyle(wrapper).paddingRight);
+
+        const maxWidth = `${textWidth + padding}px`;
+
+        let style = document.getElementById("dynamic-cell-widths");
+
+        if (!style) {
+            style = document.createElement("style");
+            style.id = "dynamic-cell-widths";
+            document.head.appendChild(style);
+        }
+
+        style.textContent = `
+            .code-cell,
+            .output-cell {
+                max-width: ${maxWidth};
+            }
+        `;
+    });
+}
+
+// ----------------------------------------
+// Collapsible sections
+// ----------------------------------------
+
+document.querySelectorAll(".collapsible-header").forEach(header => {
+    const originalHeaderText = header.textContent.trim();
+
+    header.addEventListener("click", function () {
+        const section = this.closest(".collapsible-section"); // Get parent section
+        section.classList.toggle("active");
+        this.classList.toggle("active"); // Keep this for toggling the plus/minus sign
+
+        const content = section.querySelector(".collapsible-content");
+        content.style.display = content.style.display === "block" ? "none" : "block";
+
+        // [DEV] 
+        //      Option for dynamically-updated "Open"/"Close" text
+        //      Note: currently doesn't populate text correctly when 
+        //            hyperlinking to the api tutorial in an open state
+        // if (section.classList.contains("collapsible-api-notebook")) {
+        //     const headerText = originalHeaderText.replace(
+        //         /\b(Open|Close)( the API Walkthrough)\b/,
+        //         this.classList.contains("active")
+        //             ? "Close$2"
+        //             : "Open$2"
+        //     );
+
+        //     this.textContent = headerText;
+
+        //     resizeHeadings();
+        // }
+    });
+});
+
+// ----------------------------------------
+// Open collapsible section for "page-jump" links
+// ----------------------------------------
+// - Headers with page-jump links embedded within collapsible sections should cause
+//   the page to load with the collapsible section *open* so that the page loads at
+//   the correct window location  
+
+function openCollapsibleForHash() {
+    const targetId = window.location.hash.slice(1);
+
+    if (!targetId) {
+        return;
+    }
+
+    const target = document.getElementById(targetId);
+
+    if (!target) {
+        return;
+    }
+
+    const section = target.closest(".collapsible-section");
+
+    if (!section) {
+        return;
+    }
+
+    const content = section.querySelector(".collapsible-content");
+
+    if (!content) {
+        return;
+    }
+
+    section.classList.add("active");
+    section.querySelector(".collapsible-header").classList.add("active");
+    content.style.display = "block";
+
+    target.scrollIntoView();
+}
+
+document.addEventListener("DOMContentLoaded", openCollapsibleForHash);
+window.addEventListener("hashchange", openCollapsibleForHash);
+
+// ----------------------------------------
+// Style standard markdown table
+// ----------------------------------------
+//     Notes:
+//     To apply the standard markdown table formatting, insert the 
+//     following code (including the new line) before your table in 
+//     your markdown file.
+//         ```
+//         <div class="md_table md_table--equal-cols">
+
+//         ```
+//     Additionally, you must close the div element as follows, 
+//     again including the new line.
+//         ```
+
+//         </div>
+//         ```
+//     Note that the "md_table--equal-cols" class is an optional
+//     addition that ensures the columns widths are equal. 
+
+// set equal column widths when the --equal-cols class is added 
+// to the div
+
+document.querySelectorAll('.md_table.md-equal-cols').forEach(container => {
+    const table = container.querySelector('table');
+    if (!table) return;
+
+    // Get number of columns from first row's cells
+    const firstRow = table.querySelector('tr');
+    if (!firstRow) return;
+
+    const colCount = firstRow.children.length;
+    container.style.setProperty('--col-count', colCount);
+});
+
+// blur the table edges when scroll is present
+document.querySelectorAll('.md_table').forEach(container => {
+    // Create wrapper div with relative position
+    const wrapper = document.createElement('div');
+    wrapper.className = 'md_table-wrapper';
+    wrapper.style.position = 'relative';
+
+    // Move container into wrapper
+    container.parentNode.insertBefore(wrapper, container);
+    wrapper.appendChild(container);
+
+    // Create blur overlays
+    const leftBlur = document.createElement('div');
+    const rightBlur = document.createElement('div');
+    leftBlur.className = 'md-table-blur left';
+    rightBlur.className = 'md-table-blur right';
+
+    wrapper.appendChild(leftBlur);
+    wrapper.appendChild(rightBlur);
+
+    // Position blur overlays inside wrapper
+    const positionBlur = () => {
+        leftBlur.style.top = '0';
+        leftBlur.style.left = '0';
+        leftBlur.style.height = '100%';
+
+        rightBlur.style.top = '0';
+        rightBlur.style.right = '0';
+        rightBlur.style.height = '100%';
+    };
+
+  // Update blur opacity based on scroll position
+    const updateBlur = () => {
+        const scrollLeft = container.scrollLeft;
+        const maxScrollLeft = container.scrollWidth - container.clientWidth;
+
+        leftBlur.style.opacity = scrollLeft > 0 ? 1 : 0;
+        rightBlur.style.opacity = scrollLeft < maxScrollLeft ? 1 : 0;
+        positionBlur();
+    };
+
+    container.addEventListener('scroll', updateBlur);
+    window.addEventListener('resize', updateBlur);
+    updateBlur();
+});
+
+// ----------------------------------------
+// Check for mobile devices
+// ----------------------------------------
+function isMobileDevice() {
+    return /Mobi|Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+if (isMobileDevice()) {
+    document.body.classList.add("is-mobile");
+}
+
+
+// ----------------------------------------
+// Create link variables and assign to corresponding div elements 
+// ----------------------------------------
+// Install page link
+const installUrl = "https://jonescompneurolab.github.io/textbook/content/01_getting_started/installation.html";
+
+// Get all <a> children of .install-row
+const installLinks = document.querySelectorAll(".install-row > a");
+
+// Set the href of each link
+installLinks.forEach(link => {
+    link.href = installUrl;
+});
+
+
+// Survey page link
+const surveyUrl = "https://docs.google.com/forms/d/e/1FAIpQLSfN2F4IkGATs6cy1QBO78C6QJqvm9y14TqsCUsuR4Rrkmr1Mg/viewform";
+
+// Get all <a> children of .survey-row
+const surveyLinks = document.querySelectorAll(".survey-row > a");
+
+// Set the href of each link
+surveyLinks.forEach(link => {
+    link.href = surveyUrl;
+});
+
+// ----------------------------------------
+// Interactive pre-computed slider widgets
+// ----------------------------------------
+// Usage in markdown:
+//     <div class="hnn-slider" data-src="scaling_widget.js"></div>
+(() => {
+    const cache = (window.HNN_WIDGET_DATA = window.HNN_WIDGET_DATA || {});
+
+    const loadPayload = src => new Promise((resolve, reject) => {
+        if (cache[src]) return resolve(cache[src]);
+
+        // Resolve against content/ so widgets work in both content/ and dev/ builds
+        const baseHref = window.location.href.replace(/\/dev(\/|$)/, '/content$1');
+        const url = new URL(src, baseHref).href;
+        const s = document.createElement('script');
+        s.src = url;
+        s.onload = () => cache[src]
+            ? resolve(cache[src])
+            : reject(new Error(`${url} did not register "${src}"`));
+        s.onerror = () => reject(new Error(`Failed to load ${url}`));
+        document.head.appendChild(s);
+    });
+
+    // Builds one labelled slider and returns a function that reports its position
+    const buildSliderControls = (parent, slider, onChange) => {
+        const controls = document.createElement('div');
+        controls.className = 'hnn-slider-controls';
+        controls.innerHTML = `
+            <label></label>
+            <div class="hnn-slider-track">
+                <input type="range" step="1">
+                <output aria-live="polite"></output>
+                <div class="hnn-slider-ticks"></div>
+            </div>`;
+        parent.appendChild(controls);
+
+        const tickLabels = slider.tick_labels;
+        const last = Math.max(tickLabels.length - 1, 1);
+        const trackEl = controls.querySelector('.hnn-slider-track');
+        const inputEl = controls.querySelector('input');
+        const outputEl = controls.querySelector('output');
+        const ticksEl = controls.querySelector('.hnn-slider-ticks');
+
+        controls.querySelector('label').textContent = slider.label;
+        inputEl.min = 0;
+        inputEl.max = tickLabels.length - 1;
+        inputEl.value = slider.initial ?? 0;
+        inputEl.setAttribute('aria-label', slider.label);
+
+        tickLabels.forEach((t, i) => {
+            const span = document.createElement('span');
+            span.style.setProperty('--at', tickLabels.length > 1 ? i / last : 0);
+            span.textContent = t;
+            ticksEl.appendChild(span);
+        });
+
+        const getIndex = () => parseInt(inputEl.value, 10);
+        const refresh = () => {
+            const idx = getIndex();
+            trackEl.style.setProperty('--fill', tickLabels.length > 1 ? idx / last : 0);
+            outputEl.textContent = tickLabels[idx];
+        };
+
+        inputEl.addEventListener('input', () => {
+            refresh();
+            onChange();
+        });
+        refresh();
+
+        return getIndex;
+    };
+
+    const renderDriveDipoleWidget = (el, spec) => {
+        const W = spec.width ?? 720;
+        const H = spec.height ?? 640;
+        const m = { top: 30, right: 55, bottom: 42, left: 60 };
+        const gap = 40;
+        const iw = W - m.left - m.right;
+        const ih = H - m.top - m.bottom - gap;
+        const histH = ih * 0.25;   // top panel is 1 part,
+        const dipoleH = ih * 0.75; // bottom panel is 3 parts
+        const hist = spec.hist;
+        const dipole = spec.dipole;
+        const edges = hist.bin_edges;
+        const hasInverted = hist.groups.some(g => g.inverted);
+
+        // ---- DOM scaffold ----
+        el.innerHTML = `
+            <div class="hnn-slider-legend"></div>
+            <div class="hnn-slider-plot"></div>
+            <div class="hnn-slider-group"></div>`;
+
+        const legendEl = el.querySelector('.hnn-slider-legend');
+        [...hist.groups, dipole.simulated, dipole.experimental].forEach(item => {
+            const span = document.createElement('span');
+            span.textContent = item.label;
+            span.style.setProperty('--swatch', item.color);
+            legendEl.appendChild(span);
+        });
+
+        // Sliders go in one group so their tracks line up; render() runs on user input
+        const groupEl = el.querySelector('.hnn-slider-group');
+        const getIndexFns = spec.sliders.map(
+            slider => buildSliderControls(groupEl, slider, () => render(true)),
+        );
+
+        // ---- Plot scaffold ----
+        const svg = d3.select(el.querySelector('.hnn-slider-plot'))
+            .append('svg')
+            .attr('viewBox', `0 0 ${W} ${H}`);
+        const histG = svg.append('g')
+            .attr('transform', `translate(${m.left},${m.top})`);
+        const dipoleG = svg.append('g')
+            .attr('transform', `translate(${m.left},${m.top + histH + gap})`);
+
+        // Both panels share the x scale; the histogram y range is fixed,
+        // and the dipole y range is set per slider position in render()
+        const xScale = d3.scaleLinear().domain(spec.x.domain).range([0, iw]);
+        const histY = d3.scaleLinear().domain(hist.domain).range([histH, 0]);
+        const histYInv = d3.scaleLinear().domain(hist.domain).range([0, histH]);
+        const dipoleY = d3.scaleLinear().range([dipoleH, 0]);
+
+        // ---- Histogram panel ----
+        histG.append('g').attr('class', 'hnn-x-axis')
+            .attr('transform', `translate(0,${histH})`)
+            .call(d3.axisBottom(xScale));
+        histG.append('g').attr('class', 'hnn-y-axis')
+            .call(d3.axisLeft(histY).ticks(3));
+        histG.append('line').attr('class', 'hnn-spine').attr('y2', histH);
+
+        // Inverted drives hang from the top and read against the right-hand axis
+        if (hasInverted) {
+            histG.append('g').attr('class', 'hnn-y-axis')
+                .attr('transform', `translate(${iw},0)`)
+                .call(d3.axisRight(histYInv).ticks(3));
+            histG.append('line').attr('class', 'hnn-spine')
+                .attr('x1', iw).attr('x2', iw).attr('y2', histH);
+        }
+
+        hist.groups.forEach(group => {
+            group.rects = histG.append('g')
+                .selectAll('rect')
+                .data(d3.range(edges.length - 1))
+                .join('rect')
+                .attr('fill', group.color)
+                .attr('x', k => xScale(edges[k]))
+                .attr('width', k => xScale(edges[k + 1]) - xScale(edges[k]));
+        });
+
+        // ---- Dipole panel ----
+        dipoleG.append('g').attr('class', 'hnn-x-axis')
+            .attr('transform', `translate(0,${dipoleH})`)
+            .call(d3.axisBottom(xScale));
+        const dipoleAxisG = dipoleG.append('g').attr('class', 'hnn-y-axis');
+        dipoleG.append('line').attr('class', 'hnn-spine').attr('y2', dipoleH);
+        const zeroLine = dipoleG.append('line').attr('class', 'hnn-zero')
+            .attr('x2', iw);
+
+        const lineGen = d3.line()
+            .x((_, i) => xScale(dipole.times[i]))
+            .y(d => dipoleY(d));
+
+        const expPath = dipoleG.append('path')
+            .datum(dipole.experimental.data)
+            .attr('class', 'hnn-line')
+            .attr('stroke', dipole.experimental.color)
+            .attr('stroke-width', 2);
+
+        const simPath = dipoleG.append('path')
+            .attr('class', 'hnn-line')
+            .attr('stroke', dipole.simulated.color)
+            .attr('stroke-width', 2);
+
+        const rmseEl = dipoleG.append('text')
+            .attr('class', 'hnn-annotation')
+            .attr('x', iw * 0.95)
+            .attr('y', dipoleH * 0.95);
+
+        // ---- Titles and axis labels ----
+        svg.append('text').attr('class', 'hnn-axis-label hnn-panel-title')
+            .attr('x', m.left + iw / 2).attr('y', m.top - 10)
+            .text(hist.title);
+        svg.append('text').attr('class', 'hnn-axis-label')
+            .attr('transform', `translate(14,${m.top + histH / 2}) rotate(-90)`)
+            .text(hist.ylabel);
+        svg.append('text').attr('class', 'hnn-axis-label')
+            .attr('transform', `translate(14,${m.top + histH + gap + dipoleH / 2}) rotate(-90)`)
+            .text(dipole.ylabel);
+        svg.append('text').attr('class', 'hnn-axis-label')
+            .attr('x', m.left + iw / 2).attr('y', H - 6)
+            .text(spec.x.label);
+
+        const render = animate => {
+            const indices = getIndexFns.map(getIndex => getIndex());
+            dipoleY.domain(frameAt(dipole.domains, indices));
+
+            const t = svg.transition().duration(animate ? 200 : 0).ease(d3.easeCubicOut);
+
+            dipoleAxisG.transition(t).call(d3.axisLeft(dipoleY).ticks(6));
+            zeroLine.transition(t).attr('y1', dipoleY(0)).attr('y2', dipoleY(0));
+
+            hist.groups.forEach(group => {
+                const counts = frameAt(group.counts, indices);
+                group.rects.transition(t)
+                    .attr('y', k => (group.inverted ? 0 : histY(counts[k])))
+                    .attr('height', k => (
+                        group.inverted ? histYInv(counts[k]) : histH - histY(counts[k])
+                    ));
+            });
+
+            expPath.transition(t).attr('d', lineGen);
+            simPath.datum(frameAt(dipole.simulated.frames, indices)).transition(t).attr('d', lineGen);
+            rmseEl.text(frameAt(dipole.rmse, indices));
+        };
+
+        render(false);
+    };
+
+    const renderSliderWidget = (el, spec) => {
+        const W = spec.width ?? 720;
+        const H = spec.height ?? 360;
+        const m = { top: 20, right: 20, bottom: 42, left: 60, ...(spec.margin || {}) };
+        const iw = W - m.left - m.right;
+        const ih = H - m.top - m.bottom;
+
+        const yCfg = spec.y || {};
+        const slider = spec.slider;
+        const tickLabels = slider.tick_labels;
+        const last = Math.max(tickLabels.length - 1, 1);
+
+        const series = spec.series.map((s, i) => ({
+            ...s,
+            color: s.color || d3.schemeTableau10[i % 10],
+            dynamic: Array.isArray(s.data[0]),
+        }));
+
+        // ---- DOM scaffold (all text via textContent) ----
+        el.innerHTML = `
+            <div class="hnn-slider-title"></div>
+            <div class="hnn-slider-legend"></div>
+            <div class="hnn-slider-plot"></div>
+            <div class="hnn-slider-controls">
+                <label></label>
+                <div class="hnn-slider-track">
+                    <input type="range" step="1">
+                    <output aria-live="polite"></output>
+                    <div class="hnn-slider-ticks"></div>
+                </div>
+            </div>`;
+
+        const titleEl = el.querySelector('.hnn-slider-title');
+        spec.title ? (titleEl.textContent = spec.title) : titleEl.remove();
+
+        const legendEl = el.querySelector('.hnn-slider-legend');
+        series.forEach(s => {
+            const span = document.createElement('span');
+            span.textContent = s.label;
+            span.style.setProperty('--swatch', s.color);
+            legendEl.appendChild(span);
+        });
+
+        const trackEl = el.querySelector('.hnn-slider-track');
+        const inputEl = el.querySelector('input');
+        const outputEl = el.querySelector('output');
+        el.querySelector('label').textContent = slider.label;
+        inputEl.min = 0;
+        inputEl.max = tickLabels.length - 1;
+        inputEl.value = slider.initial ?? 0;
+        inputEl.setAttribute('aria-label', slider.label);
+
+        const ticksEl = el.querySelector('.hnn-slider-ticks');
+        tickLabels.forEach((t, i) => {
+            const span = document.createElement('span');
+            span.style.setProperty('--at', tickLabels.length > 1 ? i / last : 0);
+            span.textContent = t;
+            ticksEl.appendChild(span);
+        });
+
+        // ---- Plot scaffold ----
+        const svg = d3.select(el.querySelector('.hnn-slider-plot'))
+            .append('svg')
+            .attr('viewBox', `0 0 ${W} ${H}`);
+        const g = svg.append('g').attr('transform', `translate(${m.left},${m.top})`);
+
+        const xScale = d3.scaleLinear().domain(d3.extent(spec.x.values)).range([0, iw]);
+        const yScale = d3.scaleLinear().range([ih, 0]);
+
+        g.append('g')
+            .attr('class', 'hnn-x-axis')
+            .attr('transform', `translate(0,${ih})`)
+            .call(d3.axisBottom(xScale));
+        g.append('line')
+            .attr('class', 'hnn-spine')
+            .attr('y2', ih);
+        const yAxisG = g.append('g').attr('class', 'hnn-y-axis');
+
+        svg.append('text')
+            .attr('class', 'hnn-axis-label')
+            .attr('x', m.left + iw / 2).attr('y', H - 6)
+            .text(spec.x.label);
+
+        const yLabelEl = svg.append('text')
+            .attr('class', 'hnn-axis-label')
+            .attr('transform', `translate(14,${m.top + ih / 2}) rotate(-90)`);
+
+        const zeroLine = yCfg.zero_line === false ? null : g.append('line')
+            .attr('class', 'hnn-zero')
+            .attr('x2', iw);
+
+        const lineGen = d3.line()
+            .x((_, i) => xScale(spec.x.values[i]))
+            .y(d => yScale(d));
+
+        series.forEach(s => {
+            s.path = g.append('path')
+                .attr('class', 'hnn-line')
+                .attr('stroke', s.color)
+                .attr('stroke-width', s.width ?? 2);
+        });
+
+        const render = animate => {
+            const idx = parseInt(inputEl.value, 10);
+            const fill = tickLabels.length > 1 ? idx / last : 0;
+            trackEl.style.setProperty('--fill', fill);
+            outputEl.textContent = tickLabels[idx];
+            yLabelEl.text(yCfg.labels[idx]);
+            yScale.domain(yCfg.domains[idx]);
+
+            const t = animate ? svg.transition().duration(200).ease(d3.easeCubicOut) : svg;
+            yAxisG.transition(t).call(d3.axisLeft(yScale).ticks(6));
+            if (zeroLine) {
+                zeroLine.transition(t).attr('y1', yScale(0)).attr('y2', yScale(0));
+            }
+            series.forEach(s => s.path.datum(s.dynamic ? s.data[idx] : s.data).transition(t).attr('d', lineGen));
+        };
+
+        inputEl.addEventListener('input', () => render(true));
+        render(false);
+    };
+
+    document.querySelectorAll('.hnn-slider').forEach(el => {
+        const src = el.dataset.src;
+        if (!src) return;
+        loadPayload(src)
+            .then(spec => renderSliderWidget(el, spec))
+            .catch(err => {
+                console.error(err);
+                el.textContent = 'Interactive figure failed to load.';
+            });
+    });
+
+    document.querySelectorAll('.hnn-dipole-spikes').forEach(el => {
+        const src = el.dataset.src;
+        if (!src) return;
+        loadPayload(src)
+            .then(spec => renderDriveDipoleWidget(el, spec))
+            .catch(err => {
+                console.error(err);
+                el.textContent = 'Interactive figure failed to load.';
+            });
+    });
+
+})();

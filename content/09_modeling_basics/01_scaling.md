@@ -9,6 +9,10 @@
 
 <div class="hnn-slider" data-src="scaling_widget.js"></div>
 
-<hr>
+<div style="height: 50px;"></div>
 
 <div class="hnn-dipole-spikes" data-src="drive_dipole_widget.js"></div>
+
+<div style="height: 50px;"></div>
+
+<div class="hnn-dipole-spikes" data-src="TEST_widget.js"></div>

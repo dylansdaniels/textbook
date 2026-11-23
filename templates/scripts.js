@@ -1024,6 +1024,8 @@ surveyLinks.forEach(link => {
         return getIndex;
     };
 
+    const frameAt = (arr, indices) => indices.reduce((sub, i) => sub[i], arr);
+
     const renderDriveDipoleWidget = (el, spec) => {
         const W = spec.width ?? 720;
         const H = spec.height ?? 640;
@@ -1041,7 +1043,8 @@ surveyLinks.forEach(link => {
         // ---- DOM scaffold ----
         el.innerHTML = `
             <div class="hnn-slider-legend"></div>
-            <div class="hnn-slider-plot"></div>`;
+            <div class="hnn-slider-plot"></div>
+            <div class="hnn-slider-group"></div>`;
 
         const legendEl = el.querySelector('.hnn-slider-legend');
         [...hist.groups, dipole.simulated, dipole.experimental].forEach(item => {
@@ -1051,9 +1054,10 @@ surveyLinks.forEach(link => {
             legendEl.appendChild(span);
         });
 
-        // Sliders are added below the plot; render() is only called on user input
+        // Sliders go in one group so their tracks line up; render() runs on user input
+        const groupEl = el.querySelector('.hnn-slider-group');
         const getIndexFns = spec.sliders.map(
-            slider => buildSliderControls(el, slider, () => render(true)),
+            slider => buildSliderControls(groupEl, slider, () => render(true)),
         );
 
         // ---- Plot scaffold ----
@@ -1065,11 +1069,12 @@ surveyLinks.forEach(link => {
         const dipoleG = svg.append('g')
             .attr('transform', `translate(${m.left},${m.top + histH + gap})`);
 
-        // Both panels share the x scale; y ranges are fixed across slider positions
+        // Both panels share the x scale; the histogram y range is fixed,
+        // and the dipole y range is set per slider position in render()
         const xScale = d3.scaleLinear().domain(spec.x.domain).range([0, iw]);
         const histY = d3.scaleLinear().domain(hist.domain).range([histH, 0]);
         const histYInv = d3.scaleLinear().domain(hist.domain).range([0, histH]);
-        const dipoleY = d3.scaleLinear().domain(dipole.domain).range([dipoleH, 0]);
+        const dipoleY = d3.scaleLinear().range([dipoleH, 0]);
 
         // ---- Histogram panel ----
         histG.append('g').attr('class', 'hnn-x-axis')
@@ -1102,24 +1107,20 @@ surveyLinks.forEach(link => {
         dipoleG.append('g').attr('class', 'hnn-x-axis')
             .attr('transform', `translate(0,${dipoleH})`)
             .call(d3.axisBottom(xScale));
-        dipoleG.append('g').attr('class', 'hnn-y-axis')
-            .call(d3.axisLeft(dipoleY).ticks(6));
+        const dipoleAxisG = dipoleG.append('g').attr('class', 'hnn-y-axis');
         dipoleG.append('line').attr('class', 'hnn-spine').attr('y2', dipoleH);
-        dipoleG.append('line').attr('class', 'hnn-zero')
-            .attr('x2', iw)
-            .attr('y1', dipoleY(0))
-            .attr('y2', dipoleY(0));
+        const zeroLine = dipoleG.append('line').attr('class', 'hnn-zero')
+            .attr('x2', iw);
 
         const lineGen = d3.line()
             .x((_, i) => xScale(dipole.times[i]))
             .y(d => dipoleY(d));
 
-        dipoleG.append('path')
+        const expPath = dipoleG.append('path')
             .datum(dipole.experimental.data)
             .attr('class', 'hnn-line')
             .attr('stroke', dipole.experimental.color)
-            .attr('stroke-width', 2)
-            .attr('d', lineGen);
+            .attr('stroke-width', 2);
 
         const simPath = dipoleG.append('path')
             .attr('class', 'hnn-line')
@@ -1146,11 +1147,16 @@ surveyLinks.forEach(link => {
             .text(spec.x.label);
 
         const render = animate => {
-            const [i, j] = getIndexFns.map(getIndex => getIndex());
+            const indices = getIndexFns.map(getIndex => getIndex());
+            dipoleY.domain(frameAt(dipole.domains, indices));
+
             const t = svg.transition().duration(animate ? 200 : 0).ease(d3.easeCubicOut);
 
+            dipoleAxisG.transition(t).call(d3.axisLeft(dipoleY).ticks(6));
+            zeroLine.transition(t).attr('y1', dipoleY(0)).attr('y2', dipoleY(0));
+
             hist.groups.forEach(group => {
-                const counts = group.counts[i][j];
+                const counts = frameAt(group.counts, indices);
                 group.rects.transition(t)
                     .attr('y', k => (group.inverted ? 0 : histY(counts[k])))
                     .attr('height', k => (
@@ -1158,8 +1164,9 @@ surveyLinks.forEach(link => {
                     ));
             });
 
-            simPath.datum(dipole.simulated.frames[i][j]).transition(t).attr('d', lineGen);
-            rmseEl.text(dipole.rmse[i][j]);
+            expPath.transition(t).attr('d', lineGen);
+            simPath.datum(frameAt(dipole.simulated.frames, indices)).transition(t).attr('d', lineGen);
+            rmseEl.text(frameAt(dipole.rmse, indices));
         };
 
         render(false);
